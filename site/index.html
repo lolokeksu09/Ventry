@@ -17,6 +17,7 @@
   <link rel="canonical" href="https://135-106-227-179.sslip.io/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css?v=20261118b">
   <script defer src="/app.js?v=20261118b"></script>
 </head>
@@ -41,10 +42,14 @@
       <article class="project-feature" aria-labelledby="project-title">
         <div class="feature-meta"><span class="status-tag">В разработке</span><span>Учёт и организация</span></div>
         <div class="feature-main">
-          <div class="feature-copy"><h3 id="project-title">Расчёт</h3><p class="feature-subtitle">Цифровая долговая книга.</p><p>Чтобы записи о долгах и возвратах были под рукой, а прошлые расчёты можно было восстановить по истории.</p></div>
-          <div class="feature-purpose"><p>Задачи будущего приложения</p><ul><li>Фиксировать долги</li><li>Отмечать возвраты</li><li>Хранить историю операций</li></ul></div>
+          <div class="feature-copy"><h3 id="project-title">Расчёт</h3><p class="feature-subtitle">Долги и возвраты.<br>В одной истории.</p><p class="feature-description">Цифровая долговая книга для повседневных расчётов. Записать долг, отметить возврат, вернуться к истории.</p><div class="project-actions"><a class="primary-button" href="/projects/raschet/">Подробнее о проекте <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="quick-view" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Краткий обзор</button></div></div>
+          <figure class="ledger-sheet" aria-labelledby="ledger-caption-home">
+            <figcaption id="ledger-caption-home">Долг и возврат: пример</figcaption>
+            <dl class="ledger-entries"><div><dt>Записан долг</dt><dd>3 000 <span>₽</span></dd></div><div><dt>Отмечен возврат</dt><dd>3 000 <span>₽</span></dd></div><div class="ledger-balance"><dt>Остаток</dt><dd>0 <span>₽</span></dd></div></dl>
+            <p class="ledger-history"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5h14v14H5zM8 9h8M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Операции остаются в истории</p>
+            <p class="ledger-note">Иллюстрация сценария, не экран приложения.</p>
+          </figure>
         </div>
-        <div class="project-actions"><a class="primary-button" href="/projects/raschet/">Подробнее о проекте <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="quick-view" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Краткий обзор</button></div>
       </article>
       <p class="catalogue-note">Новые проекты добавим по мере их появления.</p>
     </section>
