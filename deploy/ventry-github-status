@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Restricted SSH entrypoint for the ventry-github-deploy key.
+set -euo pipefail
+
+if [[ "${SSH_ORIGINAL_COMMAND:-}" == "ventry-deploy" ]]; then
+    umask 022
+    install -d -m 755 /opt/ventry
+    workdir="$(mktemp -d /opt/ventry/.incoming.XXXXXXXX)"
+    trap 'rm -rf "$workdir"' EXIT
+    cat > "$workdir/release.tar.gz"
+
+    # Reject unexpected paths, links and special files before root extraction.
+    python3 - "$workdir/release.tar.gz" "$workdir/unpacked" <<'PY'
+import pathlib
+import sys
+import tarfile
+
+archive, destination = sys.argv[1:]
+with tarfile.open(archive, "r:gz") as bundle:
+    members = bundle.getmembers()
+    if not members:
+        raise SystemExit("Empty release")
+    paths = set()
+    for member in members:
+        parts = pathlib.PurePosixPath(member.name).parts
+        if not parts or ".." in parts or member.name.startswith("/"):
+            raise SystemExit("Unsafe release path")
+        if member.name != "compose.yaml" and parts[0] not in ("site", "deploy"):
+            raise SystemExit("Unexpected release path")
+        if not (member.isfile() or member.isdir()):
+            raise SystemExit("Unsupported release entry")
+        paths.add(member.name)
+    if not {"compose.yaml", "site/index.html", "deploy/Caddyfile"} <= paths:
+        raise SystemExit("Incomplete release")
+    bundle.extractall(destination, filter="data")
+PY
+
+    install -d -m 755 /opt/ventry/site /opt/ventry/deploy
+    cp -a "$workdir/unpacked/site/." /opt/ventry/site/
+    cp -a "$workdir/unpacked/deploy/." /opt/ventry/deploy/
+    install -m 644 "$workdir/unpacked/compose.yaml" /opt/ventry/compose.yaml
+    cd /opt/ventry
+    docker compose --project-name ventry config --quiet
+    docker compose --project-name ventry up -d --pull always --force-recreate --remove-orphans
+    docker compose --project-name ventry ps
+    printf "%s\n" "VENTRY_DEPLOY_OK"
+    exit 0
+fi
+
+if [[ -n "${SSH_ORIGINAL_COMMAND:-}" ]]; then
+    echo 'Denied: unsupported Ventry operation' >&2
+    exit 126
+fi
+
+printf '%s\n' '--- SERVER ---'
+hostname
+printf '%s\n' '--- DOCKER ---'
+systemctl is-active docker
+(docker --version && docker compose version)
+printf '%s\n' '--- DISK ---'
+df -h /

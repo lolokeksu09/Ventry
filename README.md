@@ -37,11 +37,13 @@ cd /opt/ventry && docker compose --project-name ventry up -d
 `Deploy Ventry` выполняет:
 
 1. Проверку JavaScript, Docker Compose и Caddyfile.
-2. Синхронизацию **только** каталогов `site/` и `deploy/`, а также файла `compose.yaml` на VDS.
-3. `docker compose up -d --pull always --remove-orphans` в отдельном проекте `ventry`.
+2. Отправку tar-архива через ограниченную SSH-команду `ventry-deploy`.
+3. Проверку путей внутри архива, развёртывание файлов в `/opt/ventry/` и запуск отдельного Compose-проекта.
 4. HTTP smoke-check `/healthz` и главной страницы.
 
-Каталоги `/opt/ventry/site/` и `/opt/ventry/deploy/` управляются деплоем: удалённые лишние файлы внутри них будут удалены `rsync --delete`. Файл `/opt/ventry/.env`, данные Docker-томов и проекты вне `/opt/ventry/` не затрагиваются.
+Перед первым деплоем **один раз** установите `deploy/ventry-github-status` как `/usr/local/sbin/ventry-github-status` на VDS (права 755, владелец root). Это сохраняет `restrict,command=...` в `/root/.ssh/authorized_keys` и разрешает только проверку статуса и операцию `ventry-deploy`.
+
+Каталоги `/opt/ventry/site/` и `/opt/ventry/deploy/` управляются деплоем; файлы обновляются поверх существующих без удаления данных вне `/opt/ventry/`. Файл `/opt/ventry/.env`, Docker-тома и другие проекты не затрагиваются.
 
 **Порты:** веб-сервер привязывается к TCP 80/443 и UDP 443. Если они заняты другим приложением, запуск завершится ошибкой — перед развёртыванием требуется освободить порты или согласовать reverse proxy.
 

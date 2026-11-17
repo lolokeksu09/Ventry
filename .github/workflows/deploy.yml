@@ -54,19 +54,13 @@ jobs:
           printf '%s\n' "$VENTRY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/ventry_key" "$HOME/.ssh/known_hosts"
           ssh-keygen -y -f "$HOME/.ssh/ventry_key" >/dev/null
-      - name: Синхронизировать файлы Ventry
+      - name: Опубликовать пакет через ограниченную SSH-команду
         run: |
-          set -eu
-          SSH="ssh -i $HOME/.ssh/ventry_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15"
-          $SSH root@135.106.227.179 'install -d -m 755 /opt/ventry/site /opt/ventry/deploy'
-          rsync -az --delete -e "$SSH" site/ root@135.106.227.179:/opt/ventry/site/
-          rsync -az --delete -e "$SSH" deploy/ root@135.106.227.179:/opt/ventry/deploy/
-          scp -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes compose.yaml root@135.106.227.179:/opt/ventry/compose.yaml
-      - name: Запустить Docker Compose
-        run: |
-          set -eu
-          ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes root@135.106.227.179 \
-            'cd /opt/ventry && docker compose --project-name ventry config --quiet && docker compose --project-name ventry up -d --pull always --remove-orphans && docker compose --project-name ventry ps'
+          set -euo pipefail
+          tar -czf ventry-release.tar.gz compose.yaml site deploy
+          ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
+            root@135.106.227.179 ventry-deploy < ventry-release.tar.gz | tee deploy-output.log
+          grep -Fxq 'VENTRY_DEPLOY_OK' deploy-output.log
       - name: Проверить ответ сайта
         run: |
           set -eu
