@@ -7,14 +7,17 @@ on:
       - 'site/**'
       - 'deploy/**'
       - 'compose.yaml'
+      - 'tools/**'
       - '.github/workflows/deploy.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ventry-production
+  group: ventry-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
   cancel-in-progress: false
 
 jobs:
@@ -27,6 +30,7 @@ jobs:
         run: |
           set -eu
           node --check site/app.js
+          python3 tools/verify-site.py
           test -s site/index.html
           test -s site/styles.css
           test -s site/favicon.svg
@@ -36,6 +40,7 @@ jobs:
         run: docker run --rm -e VENTRY_SITE_ADDRESS=135-106-227-179.sslip.io -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -57,6 +62,11 @@ jobs:
       - name: Опубликовать пакет через ограниченную SSH-команду
         run: |
           set -euo pipefail
+          python3 - <<'PYVERSION'
+          import json, os
+          from pathlib import Path
+          Path('site/version.json').write_text(json.dumps({'commit': os.environ['GITHUB_SHA']}))
+          PYVERSION
           tar -czf ventry-release.tar.gz compose.yaml site deploy
           ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
             root@135.106.227.179 ventry-deploy < ventry-release.tar.gz | tee deploy-output.log
@@ -69,7 +79,17 @@ jobs:
           # curl verifies the public certificate chain and hostname (no -k).
           curl --fail --silent --show-error --retry 15 --retry-delay 4 --retry-all-errors --max-time 12 "$url/healthz" | grep -Fx 'ok'
           curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-homepage.html" "$url/"
-          grep -q 'Ventry' "$RUNNER_TEMP/ventry-homepage.html"
+          cmp site/index.html "$RUNNER_TEMP/ventry-homepage.html"
+          # Prove the exact release and all shipped assets, including the project page.
+          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-version.json" "$url/version.json"
+          cmp site/version.json "$RUNNER_TEMP/ventry-version.json"
+          while IFS= read -r file; do
+            path="${file#site/}"
+            curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-asset" "$url/$path"
+            cmp "$file" "$RUNNER_TEMP/ventry-asset"
+          done < <(find site -type f ! -name index.html ! -name version.json | sort)
+          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-project.html" "$url/projects/raschet/"
+          cmp site/projects/raschet/index.html "$RUNNER_TEMP/ventry-project.html"
           test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$ip/")" = 308
           test "$(curl --silent --show-error -o /dev/null -w '%{redirect_url}' "$ip/")" = "$url/"
           test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$url/__ventry_not_found__")" = 404

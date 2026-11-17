@@ -14,7 +14,10 @@
     }
 
     @assets path *.css *.js *.svg
-    header @assets Cache-Control "public, max-age=3600"
+    header @assets Cache-Control "public, max-age=0, must-revalidate"
+
+    @release path /version.json
+    header @release Cache-Control "no-store"
 
     file_server
 }
