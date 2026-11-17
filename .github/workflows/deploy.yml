@@ -33,7 +33,7 @@ jobs:
       - name: Проверить Docker Compose
         run: docker compose -f compose.yaml config --quiet
       - name: Проверить конфигурацию Caddy
-        run: docker run --rm -e VENTRY_SITE_ADDRESS=:80 -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+        run: docker run --rm -e VENTRY_SITE_ADDRESS=135-106-227-179.sslip.io -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
   deploy:
     needs: validate
@@ -61,8 +61,14 @@ jobs:
           ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
             root@135.106.227.179 ventry-deploy < ventry-release.tar.gz | tee deploy-output.log
           grep -Fxq 'VENTRY_DEPLOY_OK' deploy-output.log
-      - name: Проверить ответ сайта
+      - name: Проверить HTTPS, перенаправление и 404
         run: |
-          set -eu
-          curl --fail --silent --show-error --max-time 15 --retry 8 --retry-delay 3 --retry-all-errors http://135.106.227.179/healthz | grep -Fx 'ok'
-          curl --fail --silent --show-error --max-time 15 http://135.106.227.179/ | grep -q 'Ventry'
+          set -euo pipefail
+          url='https://135-106-227-179.sslip.io'
+          ip='http://135.106.227.179'
+          # curl verifies the public certificate chain and hostname (no -k).
+          curl --fail --silent --show-error --retry 15 --retry-delay 4 --retry-all-errors --max-time 12 "$url/healthz" | grep -Fx 'ok'
+          curl --fail --silent --show-error --max-time 15 "$url/" | grep -q 'Ventry'
+          test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$ip/")" = 308
+          test "$(curl --silent --show-error -o /dev/null -w '%{redirect_url}' "$ip/")" = "$url/"
+          test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$url/__ventry_not_found__")" = 404

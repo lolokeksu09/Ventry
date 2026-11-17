@@ -10,10 +10,16 @@
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Strict-Transport-Security "max-age=604800"
     }
 
     @assets path *.css *.js *.svg
     header @assets Cache-Control "public, max-age=3600"
 
     file_server
+}
+
+# Preserve the original IP link, but redirect visitors to the TLS hostname.
+http://135.106.227.179 {
+    redir https://{$VENTRY_SITE_ADDRESS}{uri} 308
 }
