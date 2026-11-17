@@ -1,0 +1,25 @@
+name: Проверка VDS
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Проверить подключение и Docker
+        env:
+          VENTRY_SSH_KEY: ${{ secrets.VENTRY_SSH_KEY }}
+          VENTRY_KNOWN_HOSTS: ${{ secrets.VENTRY_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          test -n "$VENTRY_SSH_KEY"
+          test -n "$VENTRY_KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$VENTRY_SSH_KEY" > "$HOME/.ssh/ventry_key"
+          printf '%s\n' "$VENTRY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/ventry_key" "$HOME/.ssh/known_hosts"
+          ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 root@135.106.227.179
