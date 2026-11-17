@@ -1,0 +1,74 @@
+name: Deploy Ventry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'deploy/**'
+      - 'compose.yaml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ventry-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить JS и файлы сайта
+        run: |
+          set -eu
+          node --check site/app.js
+          test -s site/index.html
+          test -s site/styles.css
+          test -s site/favicon.svg
+      - name: Проверить Docker Compose
+        run: docker compose -f compose.yaml config --quiet
+      - name: Проверить конфигурацию Caddy
+        run: docker run --rm -e VENTRY_SITE_ADDRESS=:80 -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Подготовить SSH
+        env:
+          VENTRY_SSH_KEY: ${{ secrets.VENTRY_SSH_KEY }}
+          VENTRY_KNOWN_HOSTS: ${{ secrets.VENTRY_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          test -n "$VENTRY_SSH_KEY"
+          test -n "$VENTRY_KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$VENTRY_SSH_KEY" > "$HOME/.ssh/ventry_key"
+          printf '%s\n' "$VENTRY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/ventry_key" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/ventry_key" >/dev/null
+      - name: Синхронизировать файлы Ventry
+        run: |
+          set -eu
+          SSH="ssh -i $HOME/.ssh/ventry_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15"
+          $SSH root@135.106.227.179 'install -d -m 755 /opt/ventry/site /opt/ventry/deploy'
+          rsync -az --delete -e "$SSH" site/ root@135.106.227.179:/opt/ventry/site/
+          rsync -az --delete -e "$SSH" deploy/ root@135.106.227.179:/opt/ventry/deploy/
+          scp -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes compose.yaml root@135.106.227.179:/opt/ventry/compose.yaml
+      - name: Запустить Docker Compose
+        run: |
+          set -eu
+          ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes root@135.106.227.179 \
+            'cd /opt/ventry && docker compose --project-name ventry config --quiet && docker compose --project-name ventry up -d --pull always --remove-orphans && docker compose --project-name ventry ps'
+      - name: Проверить ответ сайта
+        run: |
+          set -eu
+          curl --fail --silent --show-error --max-time 15 --retry 8 --retry-delay 3 --retry-all-errors http://135.106.227.179/healthz | grep -Fx 'ok'
+          curl --fail --silent --show-error --max-time 15 http://135.106.227.179/ | grep -q 'Ventry'

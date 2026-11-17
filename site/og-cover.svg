@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c1324"/><stop offset="1" stop-color="#182344"/></linearGradient><linearGradient id="v" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9df5ff"/><stop offset=".5" stop-color="#7aa4ff"/><stop offset="1" stop-color="#b48fff"/></linearGradient></defs>
+<rect width="1200" height="630" fill="url(#bg)"/><circle cx="1025" cy="155" r="275" fill="#667afe" opacity=".16"/><circle cx="925" cy="500" r="220" fill="#8b67ce" opacity=".13"/>
+<path d="M770 133h68l81 218 81-218h68L947 491h-57z" fill="url(#v)"/>
+<text x="80" y="132" fill="#dce4ff" font-family="Arial,sans-serif" font-size="48" font-weight="700">ventry.</text>
+<text x="80" y="297" fill="#fff" font-family="Arial,sans-serif" font-size="63" font-weight="700">Создаём понятное.</text>
+<text x="80" y="373" fill="#a4bbff" font-family="Arial,sans-serif" font-size="63" font-weight="700">Делаем полезное.</text>
+<text x="82" y="480" fill="#a5b0c8" font-family="Arial,sans-serif" font-size="27">Пространство цифровых проектов</text>
+</svg>

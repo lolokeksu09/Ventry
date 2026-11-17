@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b111f">
+  <meta name="description" content="Ventry — пространство цифровых продуктов. Знакомьтесь с проектами и следите за их развитием.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Ventry — цифровые продукты с характером">
+  <meta property="og:description" content="Проекты, которые создаются для реальных задач. Первый проект — «Расчёт». ">
+  <meta property="og:image" content="/og-cover.svg">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+  <title>Ventry — цифровые продукты с характером</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+  <div class="site-shell">
+    <header class="site-header" id="top">
+      <div class="header-inner content-width">
+        <a class="brand" href="#top" aria-label="Ventry — на главную">
+          <svg class="brand-symbol" viewBox="0 0 44 44" role="img" aria-label="Символ Ventry">
+            <defs><linearGradient id="brand-grad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#83ecff"/><stop offset=".52" stop-color="#7b97ff"/><stop offset="1" stop-color="#b28cff"/></linearGradient></defs>
+            <path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="url(#brand-grad)"/>
+            <path d="m20.6 25.4 5.7-12.2 4.5-4.2h8.2L24.3 37h-5l-2.1-4.7z" fill="#c8a7ff" opacity=".54"/>
+          </svg>
+          <span>ventry<span class="brand-dot">.</span></span>
+        </a>
+        <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+        <nav id="main-nav" class="site-nav" aria-label="Основная навигация">
+          <a href="#about">О Ventry</a>
+          <a href="#projects">Проекты</a>
+          <a href="#approach">Подход</a>
+          <a class="nav-cta" href="#projects">Смотреть проекты <span aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
+        <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
+        <div class="content-width hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> Независимые цифровые проекты</p>
+            <h1 id="hero-title">Создаём <em>понятное.</em><br>Делаем <span class="hero-accent">полезное.</span></h1>
+            <p class="hero-lead">Ventry — пространство, где идеи превращаются в цифровые инструменты для реальных задач. Здесь можно познакомиться с нашими проектами и следить за их развитием.</p>
+            <div class="hero-actions">
+              <a class="primary-button" href="#projects">Исследовать проекты <span aria-hidden="true">↗</span></a>
+              <a class="text-link" href="#about">Узнать о Ventry <span aria-hidden="true">↘</span></a>
+            </div>
+            <div class="hero-footnote"><span class="hero-pulse" aria-hidden="true"></span> Первый проект уже в разработке</div>
+          </div>
+          <div class="hero-art" aria-label="Графическая композиция Ventry">
+            <div class="art-halo art-halo-one"></div><div class="art-halo art-halo-two"></div>
+            <div class="art-frame">
+              <div class="art-topline"><span>V / 001</span><span>VENTRY STUDIO</span></div>
+              <svg class="art-monogram" viewBox="0 0 280 295" aria-hidden="true">
+                <defs>
+                  <linearGradient id="hero-v" x1="0%" y1="0%" x2="95%" y2="100%"><stop stop-color="#9df5ff"/><stop offset=".42" stop-color="#7aa4ff"/><stop offset="1" stop-color="#b48fff"/></linearGradient>
+                  <linearGradient id="hero-v-side" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6a70fa"/><stop offset="1" stop-color="#d28fff"/></linearGradient>
+                </defs>
+                <path d="M12 29h56l72 177 73-177h55L157 269h-34z" fill="url(#hero-v)"/>
+                <path d="m115 145 25 61 73-177h55L157 269h-34l-23-56z" fill="url(#hero-v-side)" opacity=".78"/>
+                <path d="m12 29 128 177-72-177Z" fill="#e8ffff" opacity=".21"/>
+              </svg>
+              <div class="art-bottomline"><span>Идея → Продукт</span><span class="art-sparkle" aria-hidden="true">✳</span></div>
+            </div>
+            <div class="art-floating art-floating-top"><span class="float-indicator"></span> В разработке</div>
+            <div class="art-floating art-floating-bottom">01 <span>Проект в фокусе</span></div>
+          </div>
+        </div>
+        <div class="hero-bottom content-width"><span>Ниже — то, над чем работаем</span><a href="#about" aria-label="Прокрутить вниз"><span aria-hidden="true">↓</span></a></div>
+      </section>
+
+      <section class="about-section light-section section-pad" id="about" aria-labelledby="about-title">
+        <div class="content-width about-grid">
+          <div class="section-aside"><span class="section-index">01 / О компании</span><span class="aside-rule" aria-hidden="true"></span></div>
+          <div class="about-main">
+            <p class="overline">Кто мы</p>
+            <h2 id="about-title">Не просто название.<br><span>Место для новых решений.</span></h2>
+            <div class="about-bottom">
+              <p>Ventry объединяет наши цифровые проекты под одним именем. У каждого — своя задача, свой путь и собственный характер. Общее — внимание к тому, как продукт работает в повседневной жизни.</p>
+              <div class="principle-stack"><div><span>01</span>Польза прежде сложности</div><div><span>02</span>Продуманное взаимодействие</div><div><span>03</span>Развитие шаг за шагом</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="projects-section section-pad" id="projects" aria-labelledby="projects-title">
+        <div class="content-width">
+          <div class="section-heading"><div><p class="overline">Наши продукты</p><h2 id="projects-title">Проекты <span>Ventry</span></h2></div><p>Каждому проекту — своё пространство. Начинаем с инструмента для учёта расчётов.</p></div>
+          <article class="project-card" aria-labelledby="project-title">
+            <div class="project-copy">
+              <div class="project-meta"><span class="project-number">ПРОЕКТ / 001</span><span class="status-tag"><span aria-hidden="true"></span> В разработке</span></div>
+              <div><div class="project-type">Учёт и организация</div><h3 id="project-title">Расчёт<span class="project-title-dot">.</span></h3><p>Цифровая долговая книга для понятного учёта долгов, возвратов и истории операций. Отдельное приложение — без лишней сложности.</p></div>
+              <button class="project-button" type="button" data-open-project="raschet" aria-haspopup="dialog">Подробнее о проекте <span aria-hidden="true">↗</span></button>
+            </div>
+            <div class="project-visual" aria-hidden="true">
+              <div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div>
+              <div class="visual-board"><div class="board-top"><span>РАСЧЁТ</span><span>— / 001</span></div><div class="board-symbol"><span>₽</span></div><div class="board-bottom"><div class="board-line short"></div><div class="board-line"></div><div class="board-line medium"></div></div></div>
+              <span class="visual-caption">Порядок в каждом расчёте</span>
+            </div>
+          </article>
+          <div class="project-after"><span>Больше проектов появится здесь по мере развития Ventry.</span><span aria-hidden="true">↗</span></div>
+        </div>
+      </section>
+
+      <section class="approach-section light-section section-pad" id="approach" aria-labelledby="approach-title">
+        <div class="content-width approach-layout">
+          <div><span class="section-index">03 / Наш подход</span><h2 id="approach-title">Меньше шума.<br><span>Больше смысла.</span></h2></div>
+          <div class="approach-copy"><p>Мы хотим, чтобы цифровые инструменты помогали решать задачи, а не добавляли новые. Поэтому начинаем с конкретной потребности, продумываем сценарии и последовательно улучшаем продукт.</p><a class="dark-link" href="#projects">Посмотреть, что создаём <span aria-hidden="true">↗</span></a></div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer"><div class="content-width footer-inner"><div><a class="brand footer-brand" href="#top"><svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true"><path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="#a9baff"/></svg><span>ventry<span class="brand-dot">.</span></span></a><p>Пространство цифровых проектов.</p></div><div class="footer-right"><a href="#top">Наверх ↑</a><span>© <span id="year">2026</span> Ventry</span></div></div></footer>
+  </div>
+
+  <dialog id="project-dialog" class="project-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-inner"><div class="dialog-header"><span>VENTRY / ПРОЕКТ 001</span><button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть окно">×</button></div><div class="dialog-icon" aria-hidden="true">₽</div><h2 id="dialog-title">Расчёт<span>.</span></h2><p class="dialog-lead">Цифровая долговая книга</p><p>Самостоятельное приложение для фиксации долгов, возвратов и истории расчётов. Его задача — сделать ведение записей наглядным и удобным.</p><div class="dialog-status"><span class="status-tag"><span aria-hidden="true"></span> В разработке</span><span>Публичный запуск пока не объявлен</span></div><button class="dialog-bottom-button" type="button" data-close-dialog>Вернуться к проектам <span aria-hidden="true">←</span></button></div>
+  </dialog>
+</body>
+</html>

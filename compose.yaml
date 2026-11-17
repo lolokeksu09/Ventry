@@ -1,0 +1,24 @@
+name: ventry
+
+services:
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      VENTRY_SITE_ADDRESS: ${VENTRY_SITE_ADDRESS:-:80}
+    volumes:
+      - ./site:/srv:ro
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    read_only: true
+    tmpfs:
+      - /tmp
+
+volumes:
+  caddy_data:
+  caddy_config:
