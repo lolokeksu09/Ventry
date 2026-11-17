@@ -17,6 +17,7 @@
   <link rel="canonical" href="https://135-106-227-179.sslip.io/projects/raschet/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css?v=20261118b">
   <script defer src="/app.js?v=20261118b"></script>
 </head>
@@ -35,12 +36,18 @@
     <div class="content-width"><nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="/">Ventry</a><span aria-hidden="true">/</span><a href="/#projects">Проекты</a><span aria-hidden="true">/</span><span aria-current="page">Расчёт</span></nav></div>
     <section class="product-hero content-width" aria-labelledby="product-title">
       <div class="product-copy"><span class="status-tag">В разработке</span><h1 id="product-title">Расчёт</h1><p class="product-subtitle">Цифровая долговая книга.</p><p class="product-description">Отдельное приложение для учёта долгов, возвратов и истории операций. Создаём его, чтобы поддерживать порядок в повседневных расчётах.</p>
-        <div class="hero-actions"><a class="primary-button" href="#possibilities">Что задумано <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="share-button" type="button" data-copy-link hidden>Скопировать ссылку <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        <div class="hero-actions"><a class="primary-button" href="#possibilities">Что задумано <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="share-button" type="button" data-copy-link hidden>Скопировать ссылку <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button></div>
         <p class="share-status" role="status" aria-live="polite" data-copy-status></p>
         <div class="copy-fallback" hidden><label for="project-url">Скопируйте адрес вручную</label><input id="project-url" type="url" readonly value="https://135-106-227-179.sslip.io/projects/raschet/"></div>
       </div>
-      <aside class="release-note" aria-labelledby="availability-title"><h2 id="availability-title">Когда можно попробовать?</h2><p>Дата публичного запуска пока не объявлена. Актуальный статус будем указывать здесь.</p><p class="muted">На этом сайте пока нельзя скачать приложение или вести записи о долгах.</p></aside>
+      <figure class="ledger-sheet" aria-labelledby="ledger-caption-project">
+            <figcaption id="ledger-caption-project">Долг и возврат: пример</figcaption>
+            <dl class="ledger-entries"><div><dt>Записан долг</dt><dd>3 000 <span>₽</span></dd></div><div><dt>Отмечен возврат</dt><dd>3 000 <span>₽</span></dd></div><div class="ledger-balance"><dt>Остаток</dt><dd>0 <span>₽</span></dd></div></dl>
+            <p class="ledger-history"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5h14v14H5zM8 9h8M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Операции остаются в истории</p>
+            <p class="ledger-note">Иллюстрация сценария, не экран приложения.</p>
+          </figure>
     </section>
+    <aside class="release-note content-width" aria-labelledby="availability-title"><h2 id="availability-title">Когда можно попробовать?</h2><p>Дата публичного запуска пока не объявлена. Актуальный статус будем указывать здесь.</p><p class="muted">На этом сайте пока нельзя скачать приложение или вести записи о долгах.</p></aside>
     <section class="product-scope content-width" id="possibilities" aria-labelledby="possibilities-title"><div class="scope-inner"><div class="scope-heading"><h2 id="possibilities-title">Что задумано</h2><p>Сценарии будущего приложения.</p></div><dl class="scope-list"><div><dt>Долги</dt><dd>Записать долг, чтобы не держать важные расчёты в памяти.</dd></div><div><dt>Возвраты</dt><dd>Отметить возврат и сохранить его рядом с остальными записями.</dd></div><div><dt>История</dt><dd>Вернуться к прошлым операциям, когда нужно разобраться в расчётах.</dd></div></dl><p class="scope-note">Это замысел проекта. Готовность приложения объявим отдельно.</p></div></section>
     <section class="product-faq content-width" aria-labelledby="faq-title"><h2 id="faq-title">О проекте</h2><div class="faq-list">
       <details><summary>Можно уже пользоваться «Расчётом»?</summary><p>Пока нет. Приложение находится в разработке. Эта страница знакомит с его назначением и не принимает данные о долгах.</p></details>
