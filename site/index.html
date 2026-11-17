@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f3f4f6">
+  <meta name="theme-color" content="#123027">
   <title>Ventry — цифровые проекты</title>
   <meta name="description" content="Создаём собственные приложения. Знакомьтесь с проектами Ventry: «Расчёт» — цифровая долговая книга в разработке.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ventry — цифровые проекты">
   <meta property="og:description" content="Создаём собственные приложения. Знакомьтесь с проектами Ventry: «Расчёт» — цифровая долговая книга в разработке.">
   <meta property="og:url" content="https://135-106-227-179.sslip.io/">
-  <meta property="og:image" content="https://135-106-227-179.sslip.io/og-cover.png">
-  <meta property="og:image:type" content="image/png">
+  <meta property="og:image" content="https://135-106-227-179.sslip.io/raschet-cover.jpg">
+  <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <link rel="canonical" href="https://135-106-227-179.sslip.io/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=20261118b">
+  <link rel="stylesheet" href="/styles.css?v=ledger-1">
   <script defer src="/app.js?v=20261118b"></script>
 </head>
 <body>
@@ -33,30 +33,38 @@
     </div>
   </header>
   <main id="main">
-    <section class="home-intro content-width" aria-labelledby="hero-title">
-      <h1 id="hero-title">Цифровые проекты<br>Ventry.</h1>
-      <div class="intro-copy"><p>Создаём собственные приложения для повседневных задач. Здесь рассказываем, что разрабатываем и для чего.</p><a class="text-link" href="#projects">Смотреть проекты <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
-    </section>
-    <section class="projects-section content-width" id="projects" aria-labelledby="projects-title">
-      <div class="section-heading"><h2 id="projects-title">Наши проекты</h2><p>Начинаем с учёта долгов.</p></div>
-      <article class="project-feature" aria-labelledby="project-title">
-        <div class="feature-meta"><span class="status-tag">В разработке</span><span>Учёт и организация</span></div>
-        <div class="feature-main">
-          <div class="feature-copy"><h3 id="project-title">Расчёт</h3><p class="feature-subtitle">Долги и возвраты.<br>В одной истории.</p><p class="feature-description">Цифровая долговая книга для повседневных расчётов. Записать долг, отметить возврат, вернуться к истории.</p><div class="project-actions"><a class="primary-button" href="/projects/raschet/">Подробнее о проекте <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a><button class="quick-view" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Краткий обзор</button></div></div>
-          <figure class="ledger-sheet" aria-labelledby="ledger-caption-home">
-            <figcaption id="ledger-caption-home">Долг и возврат: пример</figcaption>
-            <dl class="ledger-entries"><div><dt>Записан долг</dt><dd>3 000 <span>₽</span></dd></div><div><dt>Отмечен возврат</dt><dd>3 000 <span>₽</span></dd></div><div class="ledger-balance"><dt>Остаток</dt><dd>0 <span>₽</span></dd></div></dl>
-            <p class="ledger-history"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5h14v14H5zM8 9h8M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Операции остаются в истории</p>
-            <p class="ledger-note">Иллюстрация сценария, не экран приложения.</p>
-          </figure>
+    <section class="masthead" id="projects" aria-labelledby="project-title">
+      <div class="masthead-copy">
+        <p class="masthead-company">Цифровые проекты Ventry</p>
+        <h1 id="project-title">Расчёт</h1>
+        <p class="masthead-lead">Долговая книга для&nbsp;повседневных расчётов</p>
+        <p class="masthead-description">Записать долг, отметить возврат и&nbsp;найти операцию в&nbsp;истории.</p>
+        <p class="status-tag">Приложение в разработке</p>
+        <div class="project-actions">
+          <a class="primary-button" href="/projects/raschet/">О проекте «Расчёт» <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <button class="quick-view" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Краткий обзор</button>
         </div>
-      </article>
-      <p class="catalogue-note">Новые проекты добавим по мере их появления.</p>
+      </div>
+      <div class="masthead-visual">
+          <img src="/images/raschet-ledger.webp"
+               srcset="/images/raschet-ledger-small.webp 640w, /images/raschet-ledger.webp 1280w"
+               sizes="(max-width: 800px) 100vw, 55vw"
+               width="1280" height="960" fetchpriority="high" alt="">
+      </div>
     </section>
-    <section class="about-section content-width information-row" id="about" aria-labelledby="about-title"><h2 id="about-title">О Ventry</h2><div><p>Ventry — имя, под которым мы разрабатываем свои цифровые продукты. У каждого проекта отдельная задача и собственное приложение.</p><p class="muted">Этот сайт — каталог. Здесь можно узнать о проектах и увидеть их текущий статус.</p></div></section>
-    <section class="approach-section content-width information-row" id="approach" aria-labelledby="approach-title"><h2 id="approach-title">Как работаем</h2><p>Начинаем с конкретной потребности, продумываем основные действия и постепенно развиваем продукт. О готовности приложения сообщаем отдельно от его идеи.</p></section>
+
+    <div class="content-width company-content">
+      <section class="company-section" id="about" aria-labelledby="about-title">
+        <h2 id="about-title">О Ventry</h2>
+        <p>Ventry разрабатывает собственные приложения для повседневных задач. Первый проект в каталоге — «Расчёт», инструмент для учёта долгов и возвратов.</p>
+      </section>
+      <section class="company-section" id="approach" aria-labelledby="approach-title">
+        <h2 id="approach-title">Как работаем</h2>
+        <p>Разработку «Расчёта» начали с трёх действий: записать долг, отметить возврат и найти его в истории. Здесь публикуем назначение проектов и их текущий статус.</p>
+      </section>
+    </div>
   </main>
-  <footer class="site-footer"><div class="content-width footer-inner"><a class="brand footer-brand" href="/" aria-label="Ventry — на главную"><svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true"><path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="currentColor"/></svg><span>ventry</span></a><p>Собственные цифровые проекты.</p><span>© <span id="year">2026</span> Ventry</span></div></footer>
+  <footer class="site-footer"><div class="content-width footer-inner"><a class="brand footer-brand" href="/" aria-label="Ventry — на главную"><svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true"><path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="currentColor"/></svg><span>ventry</span></a><span>© <span id="year">2026</span> Ventry</span></div></footer>
   <dialog id="project-dialog" class="project-dialog" aria-labelledby="dialog-title">
     <div class="dialog-inner">
       <div class="dialog-header"><span>Проект Ventry</span><button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть окно">×</button></div>
