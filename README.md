@@ -57,6 +57,7 @@ VENTRY_SITE_ADDRESS=your-real-domain.example
 ```sh
 docker compose --project-name ventry config --quiet
 node --check site/app.js
+node tests/copy-link.cjs
 python3 tools/verify-site.py
 # Production checks run in the GitHub Actions workflow after deployment.
 ```

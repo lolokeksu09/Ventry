@@ -204,3 +204,6 @@ html:has(dialog[open]) { overflow: hidden; }
   .product-note { padding: 26px; }
   .faq-list summary { font-size: 16px; }
 }
+
+.link-icon { width: 18px; height: 18px; flex-shrink: 0; vertical-align: middle; }
+.share-button { display: inline-flex; align-items: center; gap: 8px; }
