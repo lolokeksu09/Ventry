@@ -3,65 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123027">
-  <title>Ventry — цифровые проекты</title>
-  <meta name="description" content="Создаём собственные приложения. Знакомьтесь с проектами Ventry: «Расчёт» — цифровая долговая книга в разработке.">
+  <meta name="theme-color" content="#151932">
+  <title>Ventry — компания и её проекты</title>
+  <meta name="description" content="Ventry разрабатывает собственные цифровые продукты. Узнайте о компании, её проектах и текущем статусе разработки.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ventry — цифровые проекты">
-  <meta property="og:description" content="Создаём собственные приложения. Знакомьтесь с проектами Ventry: «Расчёт» — цифровая долговая книга в разработке.">
+  <meta property="og:title" content="Ventry — компания и её проекты">
+  <meta property="og:description" content="Ventry разрабатывает собственные цифровые продукты. Узнайте о компании, её проектах и текущем статусе разработки.">
   <meta property="og:url" content="https://135-106-227-179.sslip.io/">
-  <meta property="og:image" content="https://135-106-227-179.sslip.io/raschet-cover.jpg">
-  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image" content="https://135-106-227-179.sslip.io/ventry-company-cover.png">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <link rel="canonical" href="https://135-106-227-179.sslip.io/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=ledger-1">
+  <link rel="stylesheet" href="/styles.css?v=company-1">
   <script defer src="/app.js?v=20261118b"></script>
 </head>
-<body>
+<body class="company-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
   <header class="site-header" id="top">
     <div class="header-inner content-width">
       <a class="brand" href="#top" aria-label="Ventry — на главную"><svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true"><path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="currentColor"/></svg><span>ventry</span></a>
       <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
       <nav id="main-nav" class="site-nav" aria-label="Основная навигация">
-        <a href="#projects">Проекты</a><a href="#about">О Ventry</a><a href="#approach">Как работаем</a>
+        <a href="#about">О компании</a><a href="#projects">Проекты</a>
       </nav>
     </div>
   </header>
   <main id="main">
-    <section class="masthead" id="projects" aria-labelledby="project-title">
-      <div class="masthead-copy">
-        <p class="masthead-company">Цифровые проекты Ventry</p>
-        <h1 id="project-title">Расчёт</h1>
-        <p class="masthead-lead">Долговая книга для&nbsp;повседневных расчётов</p>
-        <p class="masthead-description">Записать долг, отметить возврат и&nbsp;найти операцию в&nbsp;истории.</p>
-        <p class="status-tag">Приложение в разработке</p>
-        <div class="project-actions">
-          <a class="primary-button" href="/projects/raschet/">О проекте «Расчёт» <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          <button class="quick-view" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Краткий обзор</button>
+    <section class="company-hero" aria-labelledby="company-title">
+      <div class="company-hero-inner content-width">
+        <div class="company-hero-copy">
+          <h1 id="company-title">Ventry</h1>
+          <p>Разрабатываем собственные приложения для повседневных задач.</p>
+          <a class="primary-button" href="#projects">Смотреть проекты <svg class="link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
         </div>
-      </div>
-      <div class="masthead-visual">
-          <img src="/images/raschet-ledger.webp"
-               srcset="/images/raschet-ledger-small.webp 640w, /images/raschet-ledger.webp 1280w"
-               sizes="(max-width: 800px) 100vw, 55vw"
-               width="1280" height="960" fetchpriority="high" alt="">
+        <div class="company-hero-mark" aria-hidden="true">
+          <svg viewBox="5 9 34 28" focusable="false"><path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="currentColor"/></svg>
+        </div>
       </div>
     </section>
 
-    <div class="content-width company-content">
-      <section class="company-section" id="about" aria-labelledby="about-title">
-        <h2 id="about-title">О Ventry</h2>
-        <p>Ventry разрабатывает собственные приложения для повседневных задач. Первый проект в каталоге — «Расчёт», инструмент для учёта долгов и возвратов.</p>
-      </section>
-      <section class="company-section" id="approach" aria-labelledby="approach-title">
-        <h2 id="approach-title">Как работаем</h2>
-        <p>Разработку «Расчёта» начали с трёх действий: записать долг, отметить возврат и найти его в истории. Здесь публикуем назначение проектов и их текущий статус.</p>
-      </section>
+    <section class="catalogue-section content-width" id="projects" aria-labelledby="projects-title">
+      <header class="catalogue-header">
+        <h2 id="projects-title">Проекты Ventry</h2>
+      </header>
+      <ul class="catalogue-list">
+        <li>
+          <article class="catalogue-item" aria-labelledby="project-title">
+            <img class="catalogue-thumbnail" src="/images/raschet-ledger-small.webp" width="640" height="480" loading="lazy" decoding="async" alt="">
+            <div class="catalogue-project">
+              <h3 id="project-title"><a class="catalogue-link" href="/projects/raschet/">Расчёт</a></h3>
+              <p>Цифровая долговая книга для учёта долгов, возвратов и истории операций.</p>
+            </div>
+            <p class="catalogue-state status-tag">В разработке</p>
+            <svg class="catalogue-arrow link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </article>
+          <button class="catalogue-preview quick-view" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Краткий обзор «Расчёта»</button>
+        </li>
+      </ul>
+    </section>
+
+    <div class="company-information" id="about">
+      <div class="content-width company-content">
+        <section class="company-section" aria-labelledby="about-title">
+          <h2 id="about-title">О компании</h2>
+          <p>Ventry объединяет наши цифровые продукты. У каждого проекта в каталоге есть своя страница с описанием задачи и текущим статусом.</p>
+        </section>
+        <section class="company-section" id="approach" aria-labelledby="approach-title">
+          <h2 id="approach-title">Как работаем</h2>
+          <p>Сначала определяем, какую задачу должно решать приложение. Затем продумываем, как человек будет им пользоваться. О доступности сообщаем на странице проекта.</p>
+        </section>
+      </div>
     </div>
   </main>
   <footer class="site-footer"><div class="content-width footer-inner"><a class="brand footer-brand" href="/" aria-label="Ventry — на главную"><svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true"><path d="M5 9h8.2l8.8 21L31.4 9H39L24.3 37h-5z" fill="currentColor"/></svg><span>ventry</span></a><span>© <span id="year">2026</span> Ventry</span></div></footer>
