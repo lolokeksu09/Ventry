@@ -93,11 +93,15 @@ jobs:
                   assert record['mobileHeaderVisible'] == (width<=930), (label,'header visibility')
                   assert record['railVisible'] == (width>930),(label,'rail visibility')
                   if width<=930: assert record['menuWidth']<=width,(label,'menu width')
+                  firstfold=browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False,'fromSurface':True})['data']
+                  (Path('artifacts')/(label+'-firstfold.png')).write_bytes(base64.b64decode(firstfold))
+                  # Capture the full document without changing the viewport: 100svh must stay at the actual device height.
                   pageHeight=min(6500,browser.execute_script('return Math.ceil(document.documentElement.scrollHeight)'))
-                  browser.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':width,'height':pageHeight,'deviceScaleFactor':1,'mobile':width<=768})
-                  png=browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False,'fromSurface':True})['data']
+                  png=browser.execute_cdp_cmd('Page.captureScreenshot',{
+                      'format':'png','captureBeyondViewport':True,'fromSurface':True,
+                      'clip':{'x':0,'y':0,'width':width,'height':pageHeight,'scale':1}
+                  })['data']
                   (Path('artifacts')/(label+'.png')).write_bytes(base64.b64decode(png))
-                  browser.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':width,'height':height,'deviceScaleFactor':1,'mobile':width<=768})
                   browser.execute_script('window.scrollTo(0,0)')
                   if width<=930:
                       browser.execute_script("document.querySelector('.mobile-nav summary').click()")
