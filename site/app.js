@@ -4,7 +4,6 @@ document.documentElement.classList.add('js');
 
 const menuButton = document.querySelector('.menu-toggle');
 const menu = document.querySelector('#main-nav');
-const dialog = document.querySelector('#project-dialog');
 const year = document.querySelector('#year');
 
 if (year) year.textContent = String(new Date().getFullYear());
@@ -37,19 +36,6 @@ if (menuButton && menu) {
   });
   document.addEventListener('click', event => {
     if (!menu.contains(event.target) && !menuButton.contains(event.target)) closeMenu();
-  });
-}
-
-if (dialog && typeof dialog.showModal === 'function') {
-  document.querySelectorAll('[data-open-project]').forEach(button => {
-    button.hidden = false;
-    button.addEventListener('click', () => dialog.showModal());
-  });
-  dialog.querySelectorAll('[data-close-dialog]').forEach(button => {
-    button.addEventListener('click', () => dialog.close());
-  });
-  dialog.addEventListener('click', event => {
-    if (event.target === dialog) dialog.close();
   });
 }
 
