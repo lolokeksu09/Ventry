@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#092820">
-  <title>Ventry — приложения для малого бизнеса</title>
-  <meta name="description" content="Ventry разрабатывает приложения для малого бизнеса. Первый проект — «Расчёт», цифровая книга для учёта долгов и оплат.">
+  <title>Ventry — сервисы для бизнеса</title>
+  <meta name="description" content="Ventry разрабатывает сервисы для бизнеса. Первый проект — «Расчёт», цифровая книга для учёта долгов и оплат.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ventry — приложения для малого бизнеса">
-  <meta property="og:description" content="Ventry разрабатывает приложения для малого бизнеса. Первый проект — «Расчёт», цифровая книга для учёта долгов и оплат.">
+  <meta property="og:title" content="Ventry — сервисы для бизнеса">
+  <meta property="og:description" content="Ventry разрабатывает сервисы для бизнеса. Первый проект — «Расчёт», цифровая книга для учёта долгов и оплат.">
   <meta property="og:url" content="https://135-106-227-179.sslip.io/">
   <meta property="og:image" content="https://135-106-227-179.sslip.io/ventry-brand-cover.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -18,8 +18,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <script defer src="/app.js?v=20261118b"></script>
+  <link rel="stylesheet" href="/styles.css?v=company-1">
+  <script defer src="/app.js?v=company-1"></script>
 </head>
 <body class="company-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -28,52 +28,42 @@
       <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
       <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="main-nav"><span></span><span></span></button>
       <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
-        <a href="/#projects">Проекты</a>
         <a href="/#about">О Ventry</a>
+        <a href="/#projects">Проекты</a>
         <a class="nav-contact" href="/#contact">Связаться <span class="arrow" aria-hidden="true"></span></a>
       </nav>
     </div>
   </header>
-  <main id="main">
-    <section class="home-hero content-width" aria-labelledby="company-title">
-      <picture class="hero-art" aria-hidden="true">
-        <source media="(max-width: 800px)" srcset="/images/ventry-glass-mobile.webp">
-        <img src="/images/ventry-glass.webp" width="1350" height="900" fetchpriority="high" alt="">
-      </picture>
+  <main class="company-main content-width" id="main">
+    <section class="home-hero" aria-labelledby="company-title">
       <div class="home-hero-copy">
-        <h1 id="company-title">Приложения<br class="wide-break"> для малого бизнеса</h1>
-        <p>В Ventry создаём инструменты для ежедневной работы. Начали с «Расчёта» — цифровой книги для учёта долгов и оплат.</p>
-        <a class="primary-button" href="/projects/raschet/">Посмотреть «Расчёт» <span class="arrow" aria-hidden="true"></span></a>
+        <h1 id="company-title">Сервисы <span>для бизнеса</span></h1>
+        <p>В Ventry создаём цифровые инструменты для небольших команд и тех, кто ведёт своё дело.</p>
+      </div>
+      <div class="home-hero-mark" aria-hidden="true">
+        <img src="/images/ventry-mark.webp" width="192" height="192" alt="">
       </div>
     </section>
-    <section class="project-section content-width" id="projects" aria-labelledby="projects-title">
-      <h2 id="projects-title">Проекты</h2>
-      <article class="feature" aria-labelledby="feature-title">
-        <div class="feature-layout">
-          <picture class="feature-art">
-            <source media="(max-width: 800px)" srcset="/images/raschet-ledger-small.webp">
-            <img src="/images/raschet-ledger.webp" width="1280" height="960" loading="lazy" decoding="async" alt="">
-          </picture>
-          <div class="feature-copy">
-            <p class="status-tag">В разработке</p>
-            <h3 id="feature-title">Расчёт</h3>
-            <p>Записывайте покупки в долг, отмечайте возвраты и сразу смотрите остаток по каждому клиенту.</p>
-            <div class="feature-actions">
-              <a class="text-link project-link" href="/projects/raschet/">О проекте <span class="arrow" aria-hidden="true"></span></a>
-              <button class="quiet-button" type="button" data-open-project="raschet" aria-haspopup="dialog" hidden>Быстрый обзор</button>
-            </div>
-          </div>
-        </div>
-      </article>
-    </section>
-    <section class="about-section content-width" id="about" aria-labelledby="about-title">
-      <h2 id="about-title">О Ventry</h2>
-      <p>Мы начинаем с задач небольших магазинов. «Расчёт» вырос из простой идеи: перенести записи из бумажной тетради в приложение, где легко найти клиента, проверить остаток и вспомнить последнюю оплату.</p>
-    </section>
-    <section class="contact-section content-width" id="contact" aria-labelledby="contact-title">
-      <div><h2 id="contact-title">Расскажите, как вы ведёте учёт</h2><p>Если пользуетесь тетрадью или таблицей, нам интересно, что в них удобно и где теряется время.</p></div>
-      <a class="primary-button" href="mailto:ventrybusinesswork@gmail.com">Написать Ventry <span class="arrow" aria-hidden="true"></span></a>
-    </section>
+    <div class="company-sections">
+      <section class="company-section company-about" id="about" aria-labelledby="about-title">
+        <h2 id="about-title">О Ventry</h2>
+        <p>Начинаем с повседневной работы предпринимателей. Смотрим, что приходится записывать вручную, искать и перепроверять. Из этих задач вырастают наши продукты.</p>
+      </section>
+      <section class="company-section company-projects" id="projects" aria-labelledby="projects-title">
+        <h2 id="projects-title">Проекты</h2>
+        <a class="company-project" href="/projects/raschet/">
+          <span class="company-project-title">Расчёт</span>
+          <span class="arrow" aria-hidden="true"></span>
+          <span class="company-project-description">Учёт долгов и оплат</span>
+        </a>
+        <p class="status-tag">В разработке</p>
+      </section>
+      <section class="company-section company-contact" id="contact" aria-labelledby="contact-title">
+        <h2 id="contact-title">Контакты</h2>
+        <p>Вопросы о Ventry, идеи и предложения.</p>
+        <a class="text-link" href="mailto:ventrybusinesswork@gmail.com">Написать нам <span class="arrow" aria-hidden="true"></span></a>
+      </section>
+    </div>
   </main>
   <footer class="site-footer">
     <div class="content-width footer-inner">
@@ -86,14 +76,5 @@
       <span>© <span id="year">2026</span> Ventry</span>
     </div>
   </footer>
-  <dialog id="project-dialog" class="project-dialog" aria-labelledby="dialog-title">
-    <div class="dialog-inner">
-      <button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть окно">×</button>
-      <p class="status-tag">В разработке</p>
-      <h2 id="dialog-title">Расчёт</h2>
-      <p>Долговая книга для небольших магазинов. Запись долга, частичная оплата и остаток по каждому клиенту.</p>
-      <a class="primary-button" href="/projects/raschet/">Открыть страницу проекта <span class="arrow" aria-hidden="true"></span></a>
-    </div>
-  </dialog>
 </body>
 </html>
