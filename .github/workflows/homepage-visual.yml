@@ -153,7 +153,7 @@ jobs:
                       time.sleep(.3)
                       assert browser.execute_script("return document.querySelector('#copy-email-status').textContent")=='Адрес скопирован',(label,'copy status')
                       time.sleep(3.2)
-                      assert browser.execute_script("return document.querySelector('#copy-email-status').textContent")==='',(label,'copy status expiration')
+                      assert not browser.execute_script("return document.querySelector('#copy-email-status').textContent"),(label,'copy status expiration')
                   records[label]=record
               browser.execute_cdp_cmd('Emulation.setEmulatedMedia',{'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
               browser.get('http://127.0.0.1:18765/')
