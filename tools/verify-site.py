@@ -2,6 +2,7 @@
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1] / 'site'
 
@@ -51,4 +52,17 @@ for path, page in pages.items():
         assert target.is_file(), f'{path}: missing target {ref}'
         if parsed.fragment and target.suffix == '.html':
             assert unquote(parsed.fragment) in pages[target].ids, f'{path}: missing fragment {ref}'
-print(f'PASS: {len(pages)} pages; internal routes, fragments, assets and canonical URLs')
+sitemap_ns = '{http://www.sitemaps.org/schemas/sitemap/0.9}'
+sitemap_urls = [item.text for item in ElementTree.parse(ROOT / 'sitemap.xml')
+                .findall(f'{sitemap_ns}url/{sitemap_ns}loc')]
+expected_urls = {page.canonical[0] for page in pages.values()}
+assert len(sitemap_urls) == len(set(sitemap_urls)), 'Sitemap includes duplicate URLs'
+assert set(sitemap_urls) == expected_urls, f'Sitemap differs from public pages: {set(sitemap_urls) ^ expected_urls}'
+
+public_email = 'ventrybusinesswork@gmail.com'
+for route in ('index.html', 'projects/raschet/index.html', 'legal/index.html'):
+    content = (ROOT / route).read_text()
+    assert 'href="/legal/"' in content, f'{route}: missing legal footer link'
+    assert f'mailto:{public_email}' in content, f'{route}: missing contact email'
+
+print(f'PASS: {len(pages)} pages; routes, fragments, canonical URLs, sitemap and legal links')
