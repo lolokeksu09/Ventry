@@ -32,6 +32,17 @@ def capture(name):
     (OUTPUT / name).write_bytes(base64.b64decode(data))
 
 
+def open_home_section(section, width):
+    """Use the responsive header instead of a redundant secondary menu."""
+    if width <= 930:
+        js("""document.querySelector('.mobile-nav summary').click()""")
+        assert js("return document.querySelector('.mobile-nav').open")
+        js(f"""document.querySelector('.mobile-nav nav a[href="#{section}"]').click()""")
+        assert not js("return document.querySelector('.mobile-nav').open")
+    else:
+        js(f"""document.querySelector('.rail-links a[href="#{section}"]').click()""")
+
+
 def load(route, width, height):
     driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
         "width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 800
@@ -61,14 +72,15 @@ try:
         assert not js("return !!document.querySelector('.chapter-strip')"), "Duplicate section navigation under hero"
         # Company content should not restate the three principles in Approach.
         assert not js("return !!document.querySelector('[data-panel=about] .company-side')"), "Company duplicates Approach principles"
-        if width <= 390:
-            strip_width = js("return Math.round(document.querySelector('.chapter-strip').getBoundingClientRect().width)")
-            assert strip_width >= width - 2, ("chapter strip is narrower than viewport", width, strip_width)
+        header_selector = ".mobile-top" if width <= 930 else ".rail"
+        assert js(f"""return getComputedStyle(document.querySelector('{header_selector}')).display !== 'none'"""), (
+            "Primary responsive header is hidden", width
+        )
         home_height = js("return Math.ceil(document.documentElement.scrollHeight)")
         assert home_height < max(1100, height + 150), ("home page too tall", width, home_height)
         capture(f"ui-{label}-home.png")
 
-        js("""document.querySelector('.chapter-strip a[href="#projects"]').click()""")
+        open_home_section("projects", width)
         wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
         wait.until(lambda _: js("""return (i=>i.complete&&i.naturalWidth>0)(document.querySelector('[data-panel="projects"] img'))"""))
         assert js("return location.hash") == "#projects"
@@ -123,7 +135,7 @@ try:
 
     load("/", 390, 844)
     initial_length = js("return history.length")
-    js("""document.querySelector('.chapter-strip a[href="#about"]').click()""")
+    open_home_section("about", 390)
     assert js("return history.length") == initial_length + 1
     for part in ("method", "projects", "contact"):
         js(f"""document.querySelector('.dialog-tabs a[href="#{part}"]').click()""")
@@ -135,7 +147,7 @@ try:
     # leaving a duplicate base-page entry on every subsequent open.
     stable_history_length = js("return history.length")
     for cycle, close_action in enumerate(("button", "escape", "start", "button")):
-        js("""document.querySelector('.chapter-strip a[href="#projects"]').click()""")
+        open_home_section("projects", 390)
         wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
         assert js("return history.length") == stable_history_length, (
             "Repeated opening accumulated a browser-history entry", cycle
