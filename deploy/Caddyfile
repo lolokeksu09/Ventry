@@ -5,12 +5,20 @@
     @health path /healthz
     respond @health "ok" 200
 
+    # Deny dotfiles, VCS metadata, credentials, database dumps and backups,
+    # even if a file is accidentally copied into the published site directory.
+    @sensitive path_regexp (?i)(?:^|/)(?:\.[^/]+|[^/]+\.(?:bak|backup|old|orig|swp|sql|sqlite|db|dump|zip|tar|tgz|gz|7z|pem|key|p12|pfx))(?:/|$)
+    respond @sensitive 404
+
+
     header {
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
         Strict-Transport-Security "max-age=604800"
+        # This site has no inline scripts/styles or external asset origins.
+        Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
     }
 
     @assets path *.css *.js *.svg
