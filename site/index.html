@@ -28,9 +28,9 @@
   <header class="mobile-top">
     <a class="mobile-brand" href="/" aria-label="Ventry — на главную"><img src="/images/ventry-mark.webp" alt="" width="36" height="36">Ventry</a>
     <details class="mobile-nav">
-      <summary aria-label="Открыть навигацию"><span class="menu-label">Меню</span><span class="menu-glyph" aria-hidden="true"><i></i><i></i></span></summary>
+      <summary aria-label="Навигация по сайту"><span class="menu-label">Меню</span><span class="menu-glyph" aria-hidden="true"><i></i><i></i></span></summary>
       <nav aria-label="Навигация на смартфоне">
-        <a href="#start">Главная</a>
+        <a href="#start" aria-current="location">Главная</a>
         <a href="#about">Компания</a>
         <a href="#method">Подход</a>
         <a href="#projects">Проекты</a>
@@ -114,7 +114,10 @@
         <p>Для предпринимателей<br>и небольших команд</p>
         <h2 id="about-title">Технологии<br>имеют смысл,<br><span>когда помогают.</span></h2>
         <div class="company-bottom">
-          <div class="company-seal" aria-hidden="true"><span>V</span><span>ENT<br>RY</span></div>
+          <a class="company-follow" href="#method">
+            <img src="/images/ventry-mark.webp" alt="" width="42" height="42">
+            <span>Наш подход <span aria-hidden="true">↗</span></span>
+          </a>
           <p>Ventry разрабатывает собственные цифровые продукты. Мы сосредоточены на задачах, с которыми люди сталкиваются в своей повседневной работе: учёте, информации и понятных действиях.</p>
         </div>
       </div>
