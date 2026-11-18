@@ -10,7 +10,7 @@ const sectionLinks = [...document.querySelectorAll('a[href^="#"]')].filter(link 
   Object.hasOwn(sectionNames, link.getAttribute('href').slice(1)) || link.getAttribute('href') === '#start'
 );
 let previousTrigger = null;
-let openingFromLocation = false;
+let modalBackPending = false;
 
 function setCurrentSection(id) {
   document.querySelectorAll('.rail-links a, .mobile-nav nav a, .chapter-strip a, .dialog-tabs a')
@@ -46,7 +46,18 @@ function resetAddressAfterClose() {
 
 function closeSection(clearAddress = true) {
   if (sectionDialog.open) sectionDialog.close();
-  if (clearAddress) resetAddressAfterClose();
+  if (clearAddress && Object.hasOwn(sectionNames, window.location.hash.slice(1))) {
+    if (history.state?.ventryModal === true) {
+      // Restore the original entry instead of accumulating duplicate base URLs.
+      if (!modalBackPending) {
+        modalBackPending = true;
+        history.back();
+      }
+    } else {
+      // A directly opened /#section has no modal entry to travel back from.
+      resetAddressAfterClose();
+    }
+  }
   setCurrentSection('start');
 }
 
@@ -56,7 +67,6 @@ sectionLinks.forEach(link => {
     event.preventDefault();
     if (id === 'start') {
       closeSection();
-      if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
       window.scrollTo({ top: 0, behavior: 'instant' });
       return;
     }
@@ -73,23 +83,16 @@ sectionDialog.addEventListener('cancel', event => {
   closeSection();
 });
 sectionDialog.addEventListener('close', () => {
-  if (!openingFromLocation) resetAddressAfterClose();
   setCurrentSection('start');
   if (previousTrigger?.isConnected) previousTrigger.focus({ preventScroll: true });
   previousTrigger = null;
 });
 
 function syncLocation() {
+  modalBackPending = false;
   const id = window.location.hash.slice(1);
-  if (Object.hasOwn(sectionNames, id)) {
-    openingFromLocation = true;
-    openSection(id, null, false);
-    openingFromLocation = false;
-  } else {
-    openingFromLocation = true;
-    closeSection(false);
-    openingFromLocation = false;
-  }
+  if (Object.hasOwn(sectionNames, id)) openSection(id, null, false);
+  else closeSection(false);
 }
 window.addEventListener('popstate', syncLocation);
 window.addEventListener('hashchange', syncLocation);
