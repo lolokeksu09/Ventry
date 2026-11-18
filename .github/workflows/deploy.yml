@@ -101,6 +101,12 @@ jobs:
           curl --fail --silent --show-error --retry 15 --retry-delay 4 --retry-all-errors --max-time 12 "$url/healthz" | grep -Fx 'ok'
           curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-homepage.html" "$url/"
           cmp site/index.html "$RUNNER_TEMP/ventry-homepage.html"
+          # Assert production security headers, not only local Caddy tests.
+          curl --fail --silent --show-error --head --max-time 15 "$url/" > "$RUNNER_TEMP/ventry-headers"
+          grep -Fiq "content-security-policy: default-src 'none'; script-src 'self'; style-src 'self';" "$RUNNER_TEMP/ventry-headers"
+          grep -iq '^x-content-type-options: nosniff' "$RUNNER_TEMP/ventry-headers"
+          grep -iq '^x-frame-options: DENY' "$RUNNER_TEMP/ventry-headers"
+
           # Prove the exact release and all shipped assets, including the project page.
           curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-version.json" "$url/version.json"
           cmp site/version.json "$RUNNER_TEMP/ventry-version.json"
