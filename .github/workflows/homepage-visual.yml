@@ -146,7 +146,7 @@ jobs:
               assert browser.execute_script("return getComputedStyle(document.querySelector('.identity-construction')).animationDuration") in ('0.01ms','1e-05s','0s'), 'reduced motion should disable hero animation'
               records['reducedMotion']=True
               browser.execute_cdp_cmd('Emulation.clearDeviceMetricsOverride',{})
-              browser.get(Path('artifacts/Ventry-corporate-redesign.html').resolve().as_uri())
+              browser.get(Path('artifacts/Ventry-compact-v3.html').resolve().as_uri())
               stand=browser.execute_script("""return {
                 title:document.querySelector('h1')?.innerText,
                 logo:(i=>i.complete&&i.naturalWidth>0)(document.querySelector('.mobile-brand img')),
