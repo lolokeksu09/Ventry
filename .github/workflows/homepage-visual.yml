@@ -69,6 +69,7 @@ jobs:
           import base64, json, time
           from selenium import webdriver
           from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
           from selenium.webdriver.common.keys import Keys
 
           options = Options()
@@ -123,7 +124,7 @@ jobs:
                   assert js("return document.querySelectorAll('.chapter-strip a[aria-current=\"location\"]').length===1"),(label,'current tab')
                   if width==390:
                       screenshot(label+'-contact.png')
-                      js("document.querySelector('[data-copy-email]').click()")
+                      browser.find_element(By.CSS_SELECTOR, '[data-copy-email]').click()
                       time.sleep(.2)
                       assert js("return document.querySelector('#copy-email-status').textContent")=='Адрес скопирован',(label,'copy')
                       time.sleep(3.2)

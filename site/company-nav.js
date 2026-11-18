@@ -120,7 +120,7 @@ if (copyEmailButton && copyEmailStatus) {
         temporary.value = email;
         temporary.setAttribute('readonly', '');
         temporary.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
-        document.body.appendChild(temporary);
+        sectionDialog.appendChild(temporary);
         temporary.focus();
         temporary.select();
         try { copied = document.execCommand('copy'); } finally { temporary.remove(); }
