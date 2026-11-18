@@ -101,7 +101,8 @@
 @media(max-width:375px){
 .company-page{--gutter:17px}
 .editorial-nav{gap:13px;font-size:12px}
-.company-page .editorial-hero h1{font-size:70px}
+ .company-page .editorial-hero h1{font-size:70px}
+.editorial-contact h2{font-size:40px;overflow-wrap:anywhere}
 .hero-definition{font-size:27px}
 .hero-foot>span{display:none}
 .hero-foot{justify-content:flex-end}
