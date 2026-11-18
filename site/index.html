@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f3f0e7">
-  <title>Ventry — сервисы для бизнеса</title>
-  <meta name="description" content="Ventry разрабатывает сервисы для бизнеса. Первый проект — «Расчёт», цифровая книга для учёта долгов и оплат.">
+  <meta name="theme-color" content="#09271e">
+  <title>Ventry — цифровые продукты для бизнеса</title>
+  <meta name="description" content="Ventry создаёт понятные цифровые инструменты для предпринимателей и небольших команд. Знакомьтесь с компанией и её первым проектом — «Расчёт».">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ventry — сервисы для бизнеса">
-  <meta property="og:description" content="Ventry разрабатывает сервисы для бизнеса. Первый проект — «Расчёт», цифровая книга для учёта долгов и оплат.">
+  <meta property="og:title" content="Ventry — цифровые продукты для бизнеса">
+  <meta property="og:description" content="Создаём понятные цифровые инструменты для предпринимателей и небольших команд. Первый проект — «Расчёт».">
   <meta property="og:url" content="https://135-106-227-179.sslip.io/">
   <meta property="og:image" content="https://135-106-227-179.sslip.io/ventry-brand-cover.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -18,7 +18,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=company-2">
+  <link rel="preload" href="/images/ventry-glass.webp" as="image" media="(min-width: 641px)">
+  <link rel="stylesheet" href="/styles.css?v=brand-editorial-1">
   <script defer src="/app.js?v=company-1"></script>
 </head>
 <body class="company-page">
@@ -29,43 +30,73 @@
       <nav class="company-nav" aria-label="Основная навигация">
         <a href="#about">О компании</a>
         <a href="#projects">Проекты</a>
-        <a href="#contact">Контакты</a>
+        <a class="company-nav-contact" href="#contact">Связаться <span class="arrow" aria-hidden="true"></span></a>
       </nav>
     </div>
   </header>
-  <main class="company-main content-width" id="main" tabindex="-1">
+  <main class="company-main" id="main" tabindex="-1">
     <section class="home-hero" aria-labelledby="company-title">
-      <div class="home-hero-copy">
-        <h1 id="company-title">Сервисы <span>для бизнеса</span></h1>
-        <p>Создаём цифровые инструменты для небольших команд и тех, кто ведёт своё дело.</p>
-      </div>
-      <div class="home-hero-mark" aria-hidden="true">
-        <img src="/images/ventry-mark-large.webp" srcset="/images/ventry-mark.webp 192w, /images/ventry-mark-large.webp 768w" sizes="(max-width: 560px) 112px, 360px" width="768" height="768" alt="">
+      <picture class="home-hero-art" aria-hidden="true">
+        <source media="(max-width: 640px)" srcset="/images/ventry-glass-mobile.webp">
+        <img src="/images/ventry-glass.webp" width="1350" height="900" alt="" fetchpriority="high" decoding="async">
+      </picture>
+      <div class="content-width hero-content">
+        <p class="hero-kicker">Ventry / цифровые продукты для дела</p>
+        <h1 id="company-title">Меньше рутины.<span>Больше дела.</span></h1>
+        <p class="hero-lead">Создаём понятные цифровые инструменты для предпринимателей и небольших команд.</p>
+        <div class="hero-links">
+          <a class="hero-primary" href="#projects">Смотреть проекты <span class="arrow" aria-hidden="true"></span></a>
+          <a class="hero-secondary" href="#about">О компании</a>
+        </div>
+        <div class="hero-feature">
+          <span>Первый проект</span>
+          <a href="/projects/raschet/">«Расчёт» — учёт долгов и оплат <span class="arrow" aria-hidden="true"></span></a>
+        </div>
       </div>
     </section>
-    <div class="company-sections">
-      <section class="company-section company-about" id="about" aria-labelledby="about-title" tabindex="-1">
-        <h2 id="about-title">О Ventry</h2>
-        <p>Смотрим, где в работе предпринимателей уходит время на записи, поиск и сверку. Для таких задач и создаём свои продукты.</p>
-      </section>
-      <section class="company-section company-projects" id="projects" aria-labelledby="projects-title" tabindex="-1">
-        <h2 id="projects-title">Проекты</h2>
-        <a class="company-project" href="/projects/raschet/">
-          <span class="company-project-title">Расчёт</span>
-          <span class="company-project-arrow" aria-hidden="true"><span class="arrow"></span></span>
-          <span class="company-project-description">Учёт долгов и оплат</span>
-          <span class="status-tag">В разработке</span>
-        </a>
-      </section>
-      <section class="company-section company-contact" id="contact" aria-labelledby="contact-title" tabindex="-1">
-        <h2 id="contact-title">Контакты</h2>
-        <p>Для вопросов, идей и предложений.</p>
-        <a class="company-email" href="mailto:ventrybusinesswork@gmail.com">
-          <span>Написать нам <span class="arrow" aria-hidden="true"></span></span>
-          <span class="company-email-address">ventrybusinesswork<wbr>@gmail.com</span>
-        </a>
-      </section>
-    </div>
+    <section class="company-about content-width" id="about" aria-labelledby="about-title" tabindex="-1">
+      <p class="section-label">О Ventry</p>
+      <div class="company-about-copy">
+        <h2 id="about-title">Хороший инструмент не усложняет работу. Он делает её понятнее.</h2>
+        <p>Мы замечаем задачи, на которые у предпринимателей уходит слишком много времени: записи, поиск информации, сверка оплат. Для таких повседневных задач и создаём продукты Ventry.</p>
+      </div>
+    </section>
+    <section class="company-projects" id="projects" aria-labelledby="projects-title" tabindex="-1">
+      <div class="content-width">
+        <div class="projects-heading">
+          <p class="section-label">Наши продукты</p>
+          <h2 id="projects-title">Создаём то, чем удобно пользоваться каждый день.</h2>
+        </div>
+        <article class="featured-project" aria-labelledby="raschet-title">
+          <div class="featured-copy">
+            <p class="status-tag">В разработке</p>
+            <h3 id="raschet-title">Расчёт</h3>
+            <p class="featured-tagline">Долги и оплаты — в одном месте.</p>
+            <p class="featured-description">Цифровая долговая книга для небольших магазинов. Задумана для записи долгов, частичных возвратов и просмотра истории операций.</p>
+            <a class="featured-link" href="/projects/raschet/">Подробнее о «Расчёте» <span class="arrow" aria-hidden="true"></span></a>
+          </div>
+          <a class="featured-visual" href="/projects/raschet/" aria-label="Открыть страницу проекта «Расчёт»">
+            <picture>
+              <source media="(max-width: 640px)" srcset="/images/raschet-ledger-small.webp">
+              <img src="/images/raschet-ledger.webp" alt="Открытая записная книга и карандаш — образ привычного бумажного учёта" width="960" height="640" loading="lazy" decoding="async">
+            </picture>
+            <span class="featured-visual-caption">От бумажной книги — к цифровому учёту</span>
+          </a>
+        </article>
+      </div>
+    </section>
+    <section class="company-contact" id="contact" aria-labelledby="contact-title" tabindex="-1">
+      <div class="content-width company-contact-inner">
+        <div>
+          <p class="section-label">Связаться с Ventry</p>
+          <h2 id="contact-title">Есть вопрос<br>или предложение?</h2>
+        </div>
+        <div class="contact-action">
+          <p>Напишите нам — обсудим ваш вопрос.</p>
+          <a href="mailto:ventrybusinesswork@gmail.com">ventrybusinesswork<wbr>@gmail.com <span class="arrow" aria-hidden="true"></span></a>
+        </div>
+      </div>
+    </section>
   </main>
   <footer class="site-footer">
     <div class="content-width footer-inner">
