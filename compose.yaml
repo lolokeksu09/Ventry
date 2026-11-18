@@ -2,7 +2,9 @@ name: ventry
 
 services:
   web:
-    image: caddy:2.11.9-alpine
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
     restart: unless-stopped
     ports:
       - "80:80"

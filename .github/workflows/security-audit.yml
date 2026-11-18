@@ -5,11 +5,15 @@ on:
     branches: [main]
     paths:
       - 'compose.yaml'
+      - 'deploy/Dockerfile'
+      - 'tools/build-patched-caddy.sh'
       - '.github/workflows/security-audit.yml'
   push:
     branches: [main]
     paths:
       - 'compose.yaml'
+      - 'deploy/Dockerfile'
+      - 'tools/build-patched-caddy.sh'
       - '.github/workflows/security-audit.yml'
   schedule:
     - cron: '20 3 * * 1'
@@ -21,14 +25,27 @@ permissions:
 jobs:
   scan-caddy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.4'
+          cache: false
+      - name: Build patched Caddy runtime image
+        run: |
+          set -euo pipefail
+          bash tools/build-patched-caddy.sh
+          docker build -t ventry-caddy:patched-test -f deploy/Dockerfile .
       - name: Scan Caddy image for known HIGH and CRITICAL vulnerabilities
         run: |
           set -euo pipefail
-          # Read-only image vulnerability scan: no repository checkout, tokens, or secrets.
+          # Scan the ACTUAL patched image; fail the job on any fixable HIGH/CRITICAL result.
           # Scanner image is pinned by version and digest due to supply-chain risk.
-          docker run --rm \
+          docker save ventry-caddy:patched-test --output "$RUNNER_TEMP/ventry-caddy.tar"
+          docker run --rm --volume "$RUNNER_TEMP:/scan:ro" \
             ghcr.io/aquasecurity/trivy:0.76.2@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c \
-            image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
-            --no-progress --exit-code 0 --format table caddy:2.11.9-alpine
+            image --input /scan/ventry-caddy.tar --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --no-progress --exit-code 1 --format table
