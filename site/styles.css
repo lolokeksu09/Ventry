@@ -94,6 +94,8 @@ button:disabled { opacity: .65; cursor: wait; }
 .home-hero-art { position: absolute; inset: 0; z-index: -1; display: block; overflow: hidden; }
 .home-hero-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; }
 .home-hero-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #061d16 0%, rgba(6,29,22,.96) 27%, rgba(6,29,22,.58) 57%, rgba(6,29,22,.02) 100%); }
+.hero-emblem { position: absolute; z-index: 0; right: clamp(30px, 10vw, 190px); top: clamp(80px, 13vw, 175px); width: clamp(116px, 16vw, 225px); height: auto; mix-blend-mode: screen; opacity: .88; pointer-events: none; }
+.home-hero :focus-visible, .company-contact :focus-visible { outline-color: #f1db9f; }
 .hero-content { position: relative; min-height: inherit; display: flex; flex-direction: column; align-items: flex-start; padding-top: clamp(70px, 11vh, 130px); padding-bottom: 35px; }
 .hero-kicker { margin-bottom: 44px; font-size: 15px; font-weight: 500; color: #d8d6c8; }
 .home-hero h1 { max-width: 13.5ch; font-size: clamp(61px, 8.05vw, 120px); line-height: .99; letter-spacing: -.067em; text-wrap: balance; }
@@ -289,6 +291,7 @@ button:disabled { opacity: .65; cursor: wait; }
   .company-nav .company-nav-contact { gap: 4px; }
   .home-hero { min-height: 730px; }
   .home-hero-art { top: 35%; }
+  .hero-emblem { top: auto; bottom: 105px; right: 12px; width: clamp(95px, 26vw, 134px); opacity: .82; }
   .home-hero-art img { object-position: 60% 65%; }
   .home-hero-art::after { background: linear-gradient(180deg, #09271e 0%, rgba(9,39,30,.2) 38%, rgba(9,39,30,.12) 100%); }
   .hero-content { min-height: 730px; padding-top: 46px; padding-bottom: 22px; }
@@ -309,7 +312,7 @@ button:disabled { opacity: .65; cursor: wait; }
   .projects-heading { margin-bottom: 35px; }
   .projects-heading h2 { font-size: clamp(37px, 8vw, 51px); }
   .featured-copy { min-height: 490px; padding: 30px 24px 37px; }
-  .featured-copy h3 { font-size: clamp(76px, 20vw, 110px); }
+  .featured-copy h3 { font-size: clamp(58px, 17.5vw, 96px); }
   .featured-tagline { font-size: 26px; }
   .featured-description { font-size: 16px; }
   .featured-visual { min-height: 310px; }
