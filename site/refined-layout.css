@@ -181,3 +181,33 @@
 @media(prefers-reduced-motion:reduce){
   .ventry-amoled .identity-orbit,.ventry-amoled .identity-construction {animation:none!important;}
 }
+
+/* Keep the mobile seal circular regardless of the artwork panel's aspect ratio. */
+@media(max-width:650px){
+  .ventry-amoled .identity-object::before,
+  .ventry-amoled .identity-object::after {
+    inset:auto;top:50%;left:50%;transform:translate(-50%,-50%);
+    border-radius:50%;
+  }
+  .ventry-amoled .identity-object::before {width:208px;height:208px;}
+  .ventry-amoled .identity-object::after {width:156px;height:156px;}
+  .ventry-amoled .identity-orbit--one {
+    width:184px;height:184px;top:50%;left:50%;
+    transform:translate(-50%,-50%) rotate(-22deg);
+  }
+  .ventry-amoled .identity-orbit--two {
+    width:140px;height:140px;top:50%;left:50%;
+    transform:translate(-50%,-50%) rotate(-22deg);
+  }
+  .ventry-amoled .identity-construction {
+    width:110px;height:110px;top:50%;left:50%;
+    transform:translate(-50%,-50%) rotate(-7deg);
+  }
+}
+@media(max-width:360px){
+  .ventry-amoled .identity-object::before{width:156px;height:156px;}
+  .ventry-amoled .identity-object::after{width:122px;height:122px;}
+  .ventry-amoled .identity-orbit--one{width:144px;height:144px;}
+  .ventry-amoled .identity-orbit--two{width:112px;height:112px;}
+  .ventry-amoled .identity-construction{width:95px;height:95px;}
+}
