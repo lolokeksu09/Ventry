@@ -111,7 +111,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .opening-content{width:68%}
  .opening h1{font-size:clamp(67px,11vw,105px)}
  .identity-object{width:45%}
-.company-grid{max-width:760px}
 }
 @media(max-width:620px){
  :root{--gutter:21px}
@@ -189,7 +188,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .dialog-scroll{overflow-y:auto;overscroll-behavior:contain;min-height:0;flex:1;scrollbar-color:#42644a #0b130e;scrollbar-width:thin}
 .dialog-section{max-width:none!important;margin:0!important;padding:32px 34px 40px!important;scroll-margin:0!important;overflow:visible}
 .dialog-section[hidden]{display:none!important}
-.dialog-section.company .company-grid{max-width:760px}
 .dialog-section.company .company-main h2{font-size:clamp(35px,4.2vw,52px)}
 .dialog-section.company .company-main>p{font-size:15px;margin-top:18px}
 .dialog-section.method .method-grid{gap:32px}
