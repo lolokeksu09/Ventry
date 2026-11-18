@@ -15,7 +15,7 @@ if (mobileMenu) {
   });
 }
 
-const chapterLinks = [...document.querySelectorAll('.rail-links a[href^="#"], .mobile-nav nav a[href^="#"]')];
+const chapterLinks = [...document.querySelectorAll('.rail-links a[href^="#"], .mobile-nav nav a[href^="#"], .chapter-strip a[href^="#"]')];
 const chapters = [...new Set(chapterLinks.map(link => link.getAttribute('href')?.slice(1)))]
   .map(id => document.getElementById(id)).filter(Boolean);
 

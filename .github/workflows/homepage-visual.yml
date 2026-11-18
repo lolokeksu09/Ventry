@@ -43,16 +43,16 @@ jobs:
               encoded = base64.b64encode((root/'images'/name).read_bytes()).decode('ascii')
               html = html.replace('/images/'+name, 'data:image/webp;base64,'+encoded)
           html = re.sub(r'  <link rel="preload"[^>]*>\n', '', html)
-          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=anti-slop-1">','<style>\n'+css+'\n</style>')
+          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=amoled-editorial-1">','<style>\n'+css+'\n</style>')
           src = (root/'company-nav.js').read_text(encoding='utf-8')
-          html = html.replace('<script defer src="/company-nav.js?v=anti-slop-1"></script>', '')
+          html = html.replace('<script defer src="/company-nav.js?v=amoled-editorial-1"></script>', '')
           html = html.replace('</body>', '<script>\n'+src+'\n</script>\n</body>')
           html = html.replace('href="/"','href="#start"')
           for path in ('/projects/raschet/','/legal/','/privacy/'):
               html = html.replace('href="'+path+'"','href="https://135-106-227-179.sslip.io'+path+'"')
           assert '<style>' in html and 'href="/home-company.css' not in html
           assert 'data:image/webp;base64,' in html
-          (Path('artifacts')/'Ventry-anti-slop-patched.html').write_text(html,encoding='utf-8')
+          (Path('artifacts')/'Ventry-amoled-editorial.html').write_text(html,encoding='utf-8')
           PY
           python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview-http.log 2>&1 &
           python3 - <<'PY'
@@ -140,11 +140,11 @@ jobs:
                       browser.execute_script("document.querySelector('.mobile-nav a[href=\"#contact\"]').click()")
                       time.sleep(1.3)
                       smoothActive=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"],.mobile-nav nav a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
-                      assert smoothActive==['#contact','#contact'],(label,'smooth-scroll nav',smoothActive)
+                      assert smoothActive==['#contact','#contact','#contact'],(label,'smooth-scroll nav',smoothActive)
                   browser.execute_script("document.querySelector('#contact').scrollIntoView({behavior:'instant'})")
                   time.sleep(.35)
                   active=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"], .mobile-nav nav a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
-                  assert active==['#contact','#contact'],(label,'active section visible',active)
+                  assert active==['#contact','#contact','#contact'],(label,'active section visible',active)
                   record['contactCurrentInBothMenus']=True
                   browser.execute_script("document.querySelectorAll('.method-entries details')[1].querySelector('summary').click()")
                   assert browser.execute_script("return document.querySelectorAll('.method-entries details')[1].open"),(label,'native accordion')
@@ -160,7 +160,7 @@ jobs:
               assert browser.execute_script("return getComputedStyle(document.querySelector('.identity-construction')).animationDuration") in ('0.01ms','1e-05s','0s'), 'reduced motion should disable hero animation'
               records['reducedMotion']=True
               browser.execute_cdp_cmd('Emulation.clearDeviceMetricsOverride',{})
-              browser.get(Path('artifacts/Ventry-anti-slop-patched.html').resolve().as_uri())
+              browser.get(Path('artifacts/Ventry-amoled-editorial.html').resolve().as_uri())
               stand=browser.execute_script("""return {
                 title:document.querySelector('h1')?.innerText,
                 logo:document.querySelector('.mobile-brand svg.brand-logo use')!==null,
