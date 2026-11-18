@@ -16,8 +16,9 @@
   <meta property="og:image:height" content="675">
   <link rel="canonical" href="https://135-106-227-179.sslip.io/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/home-company.css?v=dialog-tabs-1">
-  <script defer src="/company-nav.js?v=dialog-tabs-1"></script>
+  <link rel="preload" as="image" href="/images/raschet-ledger-small.webp" fetchpriority="low">
+  <link rel="stylesheet" href="/home-company.css?v=ui-audit-2">
+  <script defer src="/company-nav.js?v=ui-audit-2"></script>
 </head>
 <body class="ventry-amoled">
   <svg xmlns="http://www.w3.org/2000/svg" class="brand-sprite" aria-hidden="true" focusable="false" width="0" height="0">
@@ -86,7 +87,7 @@
       </footer>
   </main>
 
-  <dialog class="section-dialog" id="section-dialog" aria-label="Разделы Ventry">
+  <dialog class="section-dialog" id="section-dialog" aria-labelledby="dialog-section-name">
     <div class="dialog-shell">
       <header class="dialog-head">
         <div class="dialog-identity"><svg class="brand-logo" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#ventry-brand-logo"/></svg><span>Ventry <span class="dialog-identity-divider" aria-hidden="true">/</span> <span id="dialog-section-name">Компания</span></span></div>
@@ -143,7 +144,7 @@
       <div class="section-lead"><span class="section-index">Проекты</span><span class="section-rule"></span></div>
       <h2 id="projects-title">В разработке</h2>
       <a class="work-item" href="/projects/raschet/" aria-label="Подробнее о проекте «Расчёт»">
-        <div class="work-thumbnail"><img src="/images/raschet-ledger.webp" width="960" height="640" loading="lazy" decoding="async" alt="Открытая тетрадь и карандаш — образ ручного учёта долгов"></div>
+        <div class="work-thumbnail"><img src="/images/raschet-ledger-small.webp" width="960" height="640" loading="eager" decoding="async" alt="Открытая тетрадь и карандаш — образ ручного учёта долгов"></div>
         <div class="work-detail"><span class="work-type">Цифровой продукт · В разработке</span><strong>Расчёт</strong><p>Цифровая долговая книга для небольших магазинов.</p></div>
         <span class="work-arrow" aria-hidden="true">↗</span>
       </a>

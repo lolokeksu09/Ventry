@@ -249,3 +249,17 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .dialog-section.reach .copy-email{min-height:43px}
  .frames>.site-footer{margin-top:0;min-height:85px;padding-top:19px}
 }
+
+/* The footer is the last item in the viewport, not stranded halfway down. */
+.frames{display:flex;flex-direction:column;min-height:calc(100svh - 76px)}
+.frames>.site-footer{margin-top:auto}
+@media(max-width:930px){.frames{min-height:calc(100svh - 65px)}}
+@media(max-width:620px){
+ .chapter-strip a{min-height:48px}
+ .dialog-section.company .company-main h2{font-size:clamp(29px,7vw,40px);line-height:1.13}
+ .dialog-section.work .work-thumbnail{background:#172b31}
+ .dialog-section.reach .contact-panel{background:#10281c}
+}
+@media(prefers-reduced-motion:reduce){
+ .section-dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none}
+}
