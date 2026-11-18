@@ -60,6 +60,7 @@ jobs:
           import base64, json, time
           from selenium import webdriver
           from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.keys import Keys
           options = Options()
           for arg in ('--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--window-size=1440,900'):
               options.add_argument(arg)
@@ -104,17 +105,35 @@ jobs:
                   (Path('artifacts')/(label+'.png')).write_bytes(base64.b64decode(png))
                   browser.execute_script('window.scrollTo(0,0)')
                   if width<=930:
+                      # The menu is a native <details> control: test keyboard open, Escape and link close.
+                      browser.execute_script("document.querySelector('.mobile-nav summary').focus()")
+                      browser.switch_to.active_element.send_keys(Keys.ENTER)
+                      assert browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'keyboard menu opens')
+                      if width==390:
+                          menuShot=browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False,'fromSurface':True})['data']
+                          (Path('artifacts')/'mobile-390-menu.png').write_bytes(base64.b64decode(menuShot))
+                      browser.switch_to.active_element.send_keys(Keys.ESCAPE)
+                      assert not browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'Escape closes menu')
+                      assert browser.execute_script("return document.activeElement===document.querySelector('.mobile-nav summary')"),(label,'Escape restores focus')
                       browser.execute_script("document.querySelector('.mobile-nav summary').click()")
-                      assert browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'menu opens')
                       browser.execute_script("document.querySelector('.mobile-nav a[href=\"#contact\"]').click()")
                       assert browser.execute_script('return location.hash')=='#contact',(label,'mobile contact')
                       assert not browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'menu closes')
                   else:
                       browser.execute_script("document.querySelector('.rail-links a[href=\"#contact\"]').click()")
                       assert browser.execute_script('return location.hash')=='#contact',(label,'desktop contact')
+                  browser.execute_script("document.querySelector('#contact').scrollIntoView({behavior:'instant'})")
+                  time.sleep(.35)
+                  active=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"], .mobile-nav nav a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
+                  assert active==['#contact','#contact'],(label,'active section visible',active)
+                  record['contactCurrentInBothMenus']=True
                   browser.execute_script("document.querySelectorAll('.method-entries details')[1].querySelector('summary').click()")
                   assert browser.execute_script("return document.querySelectorAll('.method-entries details')[1].open"),(label,'native accordion')
                   records[label]=record
+              browser.execute_cdp_cmd('Emulation.setEmulatedMedia',{'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
+              browser.get('http://127.0.0.1:18765/')
+              assert browser.execute_script("return getComputedStyle(document.querySelector('.identity-construction')).animationDuration") in ('0.01ms','1e-05s','0s'), 'reduced motion should disable hero animation'
+              records['reducedMotion']=True
               browser.execute_cdp_cmd('Emulation.clearDeviceMetricsOverride',{})
               browser.get(Path('artifacts/Ventry-corporate-redesign.html').resolve().as_uri())
               stand=browser.execute_script("""return {
