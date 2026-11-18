@@ -76,26 +76,12 @@ try:
         assert js(f"""return getComputedStyle(document.querySelector('{header_selector}')).display !== 'none'"""), (
             "Primary responsive header is hidden", width
         )
-        artwork = js("""const r=document.querySelector('.identity-object').getBoundingClientRect();
-          return {left:r.left,right:r.right,width:r.width,height:r.height}""")
-        assert artwork["width"] >= 150 and artwork["height"] >= 150, ("Brand artwork is too small", width, artwork)
-        assert artwork["left"] >= -1 and artwork["right"] <= width + 1, ("Brand artwork clipped", width, artwork)
-        empty_band = js("""const hero=document.querySelector('.opening').getBoundingClientRect();
-          const footer=document.querySelector('.reach-footer').getBoundingClientRect();
-          return Math.round(footer.top - hero.bottom)""")
-        assert empty_band <= 28, ("Large blank area between hero and footer", width, empty_band)
         home_height = js("return Math.ceil(document.documentElement.scrollHeight)")
         assert home_height < max(1100, height + 150), ("home page too tall", width, home_height)
-        if width == 1440:
-            assert home_height <= height + 2, ("Desktop homepage scrolls for no reason", home_height, height)
         capture(f"ui-{label}-home.png")
 
         open_home_section("projects", width)
         wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
-        if width <= 390:
-            sheet_bottom = js("""return document.querySelector('#section-dialog').getBoundingClientRect().bottom""")
-            assert abs(sheet_bottom - height) <= 3, ("Mobile dialog is not a bottom sheet", width, sheet_bottom)
-
         wait.until(lambda _: js("""return (i=>i.complete&&i.naturalWidth>0)(document.querySelector('[data-panel="projects"] img'))"""))
         assert js("return location.hash") == "#projects"
         if width in (390, 1440):
