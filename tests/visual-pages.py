@@ -56,6 +56,11 @@ try:
     for width, height in ((320, 760), (390, 844), (768, 1000), (1440, 900)):
         label = str(width)
         page = load("/", width, height)
+        # The header provides navigation at every width. A second page-level
+        # menu beneath the hero must not duplicate those same four links.
+        assert not js("return !!document.querySelector('.chapter-strip')"), "Duplicate section navigation under hero"
+        # Company content should not restate the three principles in Approach.
+        assert not js("return !!document.querySelector('[data-panel=about] .company-side')"), "Company duplicates Approach principles"
         if width <= 390:
             strip_width = js("return Math.round(document.querySelector('.chapter-strip').getBoundingClientRect().width)")
             assert strip_width >= width - 2, ("chapter strip is narrower than viewport", width, strip_width)
@@ -86,6 +91,7 @@ try:
         page["homeHeight"] = home_height
 
         product = load("/projects/raschet/", width, height)
+        assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
         assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 000 ₽"
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         js("""document.querySelector('.faq-list summary').click()""")
