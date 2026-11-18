@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://135-106-227-179.sslip.io/sitemap.xml
