@@ -86,6 +86,8 @@ try:
         assert empty_band <= 28, ("Large blank area between hero and footer", width, empty_band)
         home_height = js("return Math.ceil(document.documentElement.scrollHeight)")
         assert home_height < max(1100, height + 150), ("home page too tall", width, home_height)
+        if width == 1440:
+            assert home_height <= height + 2, ("Desktop homepage scrolls for no reason", home_height, height)
         capture(f"ui-{label}-home.png")
 
         open_home_section("projects", width)
