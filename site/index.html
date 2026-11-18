@@ -16,8 +16,8 @@
   <meta property="og:image:height" content="675">
   <link rel="canonical" href="https://135-106-227-179.sslip.io/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/home-company.css?v=amoled-editorial-1">
-  <script defer src="/company-nav.js?v=amoled-editorial-1"></script>
+  <link rel="stylesheet" href="/home-company.css?v=dialog-tabs-1">
+  <script defer src="/company-nav.js?v=dialog-tabs-1"></script>
 </head>
 <body class="ventry-amoled">
   <svg xmlns="http://www.w3.org/2000/svg" class="brand-sprite" aria-hidden="true" focusable="false" width="0" height="0">
@@ -79,7 +79,27 @@
       <a href="#projects">Проекты</a>
       <a href="#contact">Контакты</a>
     </nav>
-    <section class="frame company" id="about" aria-labelledby="about-title" tabindex="-1">
+    <footer class="site-footer reach-footer">
+        <a class="foot-identity" href="/" aria-label="Ventry — на главную"><svg class="brand-logo" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#ventry-brand-logo"/></svg><span>Ventry</span></a>
+        <nav aria-label="Правовая информация"><a href="/legal/">Правовая информация</a><a href="/privacy/">Персональные данные</a><a href="mailto:ventrybusinesswork@gmail.com">Связаться</a></nav>
+        <span>© <span id="year">2026</span> Ventry</span>
+      </footer>
+  </main>
+
+  <dialog class="section-dialog" id="section-dialog" aria-label="Разделы Ventry">
+    <div class="dialog-shell">
+      <header class="dialog-head">
+        <div class="dialog-identity"><svg class="brand-logo" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#ventry-brand-logo"/></svg><span>Ventry <span class="dialog-identity-divider" aria-hidden="true">/</span> <span id="dialog-section-name">Компания</span></span></div>
+        <button type="button" class="dialog-close" data-close-dialog aria-label="Закрыть окно"><span aria-hidden="true">×</span></button>
+      </header>
+      <nav class="dialog-tabs" aria-label="Разделы Ventry">
+        <a href="#about">Компания</a>
+        <a href="#method">Подход</a>
+        <a href="#projects">Проекты</a>
+        <a href="#contact">Контакты</a>
+      </nav>
+      <div class="dialog-scroll" id="dialog-scroll">
+<section class="dialog-section company" data-panel="about" hidden id="about" aria-labelledby="about-title" tabindex="-1">
       <div class="section-lead"><span class="section-index">О компании</span><span class="section-rule"></span></div>
       <div class="company-grid">
         <div class="company-main">
@@ -94,7 +114,8 @@
         </div>
       </div>
     </section>
-    <section class="frame method" id="method" aria-labelledby="method-title" tabindex="-1">
+
+<section class="dialog-section method" data-panel="method" hidden id="method" aria-labelledby="method-title" tabindex="-1">
       <div class="section-lead"><span class="section-index">Подход</span><span class="section-rule"></span></div>
       <div class="method-grid">
         <div>
@@ -117,7 +138,8 @@
         </div>
       </div>
     </section>
-    <section class="frame work" id="projects" aria-labelledby="projects-title" tabindex="-1">
+
+<section class="dialog-section work" data-panel="projects" hidden id="projects" aria-labelledby="projects-title" tabindex="-1">
       <div class="section-lead"><span class="section-index">Проекты</span><span class="section-rule"></span></div>
       <h2 id="projects-title">В разработке</h2>
       <a class="work-item" href="/projects/raschet/" aria-label="Подробнее о проекте «Расчёт»">
@@ -126,7 +148,8 @@
         <span class="work-arrow" aria-hidden="true">↗</span>
       </a>
     </section>
-    <section class="frame reach" id="contact" aria-labelledby="contact-title" tabindex="-1">
+
+<section class="dialog-section reach" data-panel="contact" hidden id="contact" aria-labelledby="contact-title" tabindex="-1">
       <div class="contact-panel">
         <div>
           <p class="contact-kicker">Контакты · Ventry</p>
@@ -144,12 +167,9 @@
           <p class="copy-status" id="copy-email-status" role="status" aria-live="polite" aria-atomic="true"></p>
         </div>
       </div>
-      <footer class="reach-footer">
-        <a class="foot-identity" href="/" aria-label="Ventry — на главную"><svg class="brand-logo" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#ventry-brand-logo"/></svg><span>Ventry</span></a>
-        <nav aria-label="Правовая информация"><a href="/legal/">Правовая информация</a><a href="/privacy/">Персональные данные</a><a href="mailto:ventrybusinesswork@gmail.com">Связаться</a></nav>
-        <span>© <span id="year">2026</span> Ventry</span>
-      </footer>
     </section>
-  </main>
+      </div>
+    </div>
+  </dialog>
 </body>
 </html>
