@@ -59,7 +59,7 @@ jobs:
               css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
           encoded = base64.b64encode((root/'images'/'raschet-ledger-small.webp').read_bytes()).decode('ascii')
           html = html.replace('/images/raschet-ledger-small.webp','data:image/webp;base64,'+encoded)
-          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=dedup-1">','<style>\n'+css+'\n</style>')
+          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=composition-1">','<style>\n'+css+'\n</style>')
           js = (root/'company-nav.js').read_text(encoding='utf-8')
           html = html.replace('<script defer src="/company-nav.js?v=dedup-1"></script>','')
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
