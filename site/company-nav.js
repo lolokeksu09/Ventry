@@ -27,8 +27,15 @@ if ('IntersectionObserver' in window && chapterLinks.length && chapters.length) 
     entries.forEach(entry => {
       visible.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
     });
-    const next = chapters.filter(section => (visible.get(section.id) || 0) > 0)
-      .sort((a, b) => (visible.get(b.id) || 0) - (visible.get(a.id) || 0))[0];
+    // The last chapter can share the viewport with the previous one on short pages.
+    // At the end of the document, the active item must be "Контакты".
+    const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 3;
+    const next = atEnd ? chapters[chapters.length - 1] : chapters
+      .filter(section => (visible.get(section.id) || 0) > 0)
+      .sort((a, b) => {
+        const ratioDifference = (visible.get(b.id) || 0) - (visible.get(a.id) || 0);
+        return ratioDifference || chapters.indexOf(b) - chapters.indexOf(a);
+      })[0];
     if (next) {
       chapterLinks.forEach(link => {
         if (link.getAttribute('href') === '#' + next.id) {
