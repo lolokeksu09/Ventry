@@ -14,7 +14,7 @@
 .ventry-amoled .opening {
   flex:1 0 auto;
   width:100%;
-  min-height:min(755px,calc(100svh - 165px));
+  min-height:min(755px,calc(100svh - 171px));
   display:grid;
   grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);
   align-items:center;
