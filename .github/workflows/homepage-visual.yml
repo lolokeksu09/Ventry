@@ -68,7 +68,9 @@ jobs:
               for tag,w,h in [('mobile-320',320,760),('mobile-390',390,844),('tablet-768',768,1000),('desktop-1440',1440,900)]:
                   driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':w,'height':h,'deviceScaleFactor':1,'mobile':w<769})
                   driver.get('http://127.0.0.1:18765/')
-                  driver.execute_async_script("const done=arguments[0];Promise.all([document.fonts.ready,document.querySelector('.project-row__image img').decode()]).then(()=>done('ready'),e=>done(String(e)))")
+                  driver.execute_script("document.querySelector('.project-row__image img').loading = 'eager'; document.querySelector('.project-row__image img').scrollIntoView({block:'center'})")
+                  driver.execute_async_script("const done=arguments[0];Promise.race([Promise.all([document.fonts.ready, document.querySelector('.project-row__image img').decode()]).then(()=> 'ready').catch(e=>String(e)),new Promise(r=>setTimeout(()=>r('timeout'),8000))]).then(done)")
+                  driver.execute_script('window.scrollTo(0,0)')
                   driver.execute_script('window.scrollTo(0,0)')
                   time.sleep(.25)
                   info=driver.execute_script("""return {
