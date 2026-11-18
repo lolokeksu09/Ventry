@@ -1,0 +1,110 @@
+
+/* Standalone company visual system. Do not affect products, legal pages or app.js. */
+.company-page{--v-paper:#f3f0e8;--v-green:#0d3025;--v-ink:#103428;--v-line:#cbd4c8;color:var(--v-ink);background:var(--v-paper)}
+.company-page h1,.company-page h2,.company-page h3{font-weight:500;letter-spacing:-.058em;line-height:1.07}
+.company-page .site-header{background:var(--v-paper);border-bottom:1px solid var(--v-line)}
+.editorial-header-inner{width:min(1280px,calc(100% - var(--gutter)*2));margin-inline:auto;min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.editorial-nav{display:flex;align-items:center;gap:clamp(20px,3.2vw,52px);font-size:14px;font-weight:600}
+.editorial-nav a{display:inline-flex;align-items:center;min-height:44px;border-bottom:1px solid transparent}
+.editorial-nav a:hover{border-bottom-color:currentColor}
+.editorial-hero{background:var(--v-paper)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.16fr) minmax(0,.84fr);min-height:min(74svh,710px);gap:clamp(30px,5vw,88px);padding-block:clamp(38px,5vw,70px)}
+.hero-statement{display:flex;align-items:flex-start;flex-direction:column;min-width:0}
+.editorial-eyebrow{font-size:15px;font-weight:600;line-height:1.4;color:#53665b}
+.company-page .editorial-hero h1{margin-top:clamp(50px,7vw,96px);font-size:clamp(104px,13.3vw,190px);line-height:.9;letter-spacing:-.085em}
+.hero-period{color:#bc985e}
+.hero-definition{margin-top:32px;max-width:19ch;font-size:clamp(28px,3.1vw,45px);line-height:1.14;letter-spacing:-.045em;font-weight:500}
+.hero-lower{width:100%;margin-top:auto;padding-top:42px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:25px;align-items:end}
+.hero-lower p{max-width:39ch;font-size:16px;line-height:1.5;color:#53675c}
+.editorial-link{display:inline-flex;gap:14px;align-items:center;justify-content:space-between;white-space:nowrap;min-height:45px;border-bottom:1px solid #698275;font-weight:600;font-size:15px}
+.editorial-link:hover{border-color:var(--v-ink)}
+.hero-graphic{position:relative;overflow:hidden;display:grid;place-items:center;min-height:450px;background:var(--v-green);color:#f9efd8}
+.identity-v{display:block;width:88%;height:auto;transform:translate(4%,3%) rotate(-6deg);fill:#f2e9cf}
+.graphic-caption{position:absolute;bottom:24px;left:28px;color:#c9d6c4;font-size:13px;letter-spacing:.01em}
+.hero-foot{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:16px;border-top:1px solid var(--v-line);color:#52665a;font-size:13px}
+.hero-foot a{color:var(--v-ink);font-weight:600}
+.editorial-about{display:grid;grid-template-columns:1fr 2.3fr;gap:50px;padding-block:clamp(92px,11vw,175px);scroll-margin-top:20px}
+.editorial-section-index{font-size:15px;color:#66776b;font-weight:600}
+.editorial-about h2{max-width:18ch;font-size:clamp(40px,5.1vw,76px);line-height:1.08}
+.editorial-about-main p{max-width:49ch;margin-top:35px;color:#55665c;font-size:clamp(17px,1.55vw,21px);line-height:1.6}
+.editorial-projects{background:#e2e9df;padding-block:clamp(75px,8.8vw,135px) clamp(90px,10vw,150px);scroll-margin-top:0}
+.editorial-projects-head{display:flex;justify-content:space-between;align-items:baseline;gap:25px;margin-bottom:37px}
+.editorial-projects-head span{font-size:15px;color:#52665b;font-weight:600}
+.editorial-projects-head h2{font-size:clamp(39px,4.4vw,68px)}
+.project-feature{display:grid;grid-template-columns:1fr 1fr;min-height:565px;background:#102f29;color:#fff4dd}
+.project-photo{position:relative;min-height:500px;display:block;overflow:hidden;background:#234c82}
+.project-photo picture{position:absolute;inset:0}
+.project-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.project-info{padding:clamp(35px,4.3vw,70px);display:flex;flex-direction:column;align-items:flex-start}
+.project-stage{font-size:13px;display:inline-flex;gap:10px;align-items:center;color:#dde9d6}
+.stage-dot{width:7px;height:7px;background:#9ec89f;border-radius:50%}
+.project-info h3{margin-top:auto;font-size:clamp(80px,8vw,120px);line-height:1}
+.project-short{margin-top:16px;max-width:19ch;font-size:clamp(23px,2.7vw,38px);letter-spacing:-.035em;line-height:1.2}
+.project-long{margin-top:24px;max-width:36ch;color:#c3d7c9;font-size:16px;line-height:1.6}
+.project-go{display:inline-flex;justify-content:space-between;align-items:center;min-width:205px;min-height:44px;margin-top:34px;padding-bottom:11px;border-bottom:1px solid #b2cdb8;font-size:16px;font-weight:600}
+.project-go:hover{border-color:#fff8dc}
+.editorial-contact{padding-block:clamp(90px,11vw,165px);background:var(--v-paper);scroll-margin-top:0}
+.contact-layout{display:grid;grid-template-columns:1.1fr 1fr;align-items:end;gap:40px}
+.editorial-contact h2{margin-top:28px;font-size:clamp(51px,6.5vw,100px)}
+.contact-email{display:flex;gap:14px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere;border-bottom:1px solid #617f6b;padding-bottom:12px;font-size:clamp(17px,2.05vw,29px);font-weight:600}
+.contact-email:hover{color:#1d7552}
+.company-page .site-footer{background:var(--v-paper);margin-top:0}
+@media(max-width:880px){
+.hero-grid{grid-template-columns:1fr .8fr;min-height:630px}
+.company-page .editorial-hero h1{font-size:clamp(95px,13vw,120px)}
+.hero-definition{font-size:30px}
+.hero-lower{display:block}
+.editorial-link{margin-top:22px}
+.identity-v{width:100%}
+.editorial-about{grid-template-columns:1fr 2fr}
+.project-feature{grid-template-columns:1fr}
+.project-photo{min-height:430px}
+.project-info{min-height:505px}
+.project-info h3{font-size:105px}
+.contact-layout{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+.company-page{--gutter:22px}
+.editorial-header-inner{min-height:66px;gap:12px}
+.company-page .brand{font-size:23px}
+.company-page .brand-symbol{width:34px;height:34px}
+.editorial-nav{margin-left:auto;gap:19px;font-size:13px}
+.editorial-nav .nav-about{display:none}
+.hero-grid{display:flex;flex-direction:column;gap:0;min-height:0;padding-block:36px 0}
+.editorial-eyebrow{font-size:12px}
+.company-page .editorial-hero h1{margin-top:43px;font-size:clamp(72px,18.5vw,112px);letter-spacing:-.082em}
+.hero-definition{max-width:21ch;margin-top:25px;font-size:clamp(28px,7vw,38px);line-height:1.12}
+.hero-lower{padding-top:28px}
+.hero-lower p{max-width:35ch;font-size:15px}
+.editorial-link{margin-top:16px;font-size:15px}
+.hero-graphic{min-height:0;height:245px;margin-top:34px}
+.identity-v{width:54%;height:auto;transform:rotate(-6deg) translateY(-4%)}
+.graphic-caption{font-size:11px;bottom:17px;left:18px}
+.hero-foot{padding-block:14px;font-size:11px}
+.hero-foot>span{max-width:22ch}
+.editorial-about{display:block;padding-block:75px 95px}
+.editorial-about h2{margin-top:25px;font-size:clamp(35px,9vw,52px)}
+.editorial-about-main p{margin-top:24px;font-size:16px}
+.editorial-projects{padding-block:68px 94px}
+.editorial-projects-head{display:block;margin-bottom:26px}
+.editorial-projects-head h2{margin-top:16px;font-size:clamp(40px,10vw,56px)}
+.project-photo{min-height:260px}
+.project-info{min-height:435px;padding:30px 25px 36px}
+.project-info h3{font-size:clamp(72px,19vw,100px)}
+.project-short{font-size:26px}
+.project-long{margin-top:17px;font-size:15px}
+.project-go{min-width:180px;margin-top:26px}
+.editorial-contact{padding-block:90px}
+.editorial-contact h2{font-size:clamp(52px,13vw,71px)}
+.contact-email{margin-top:50px;font-size:clamp(17px,4.7vw,23px)}
+}
+@media(max-width:375px){
+.company-page{--gutter:17px}
+.editorial-nav{gap:13px;font-size:12px}
+.company-page .editorial-hero h1{font-size:70px}
+.hero-definition{font-size:27px}
+.hero-foot>span{display:none}
+.hero-foot{justify-content:flex-end}
+.project-info h3{font-size:73px}
+}
+@media(prefers-reduced-motion:reduce){.company-page{scroll-behavior:auto}}
