@@ -60,9 +60,12 @@ assert len(sitemap_urls) == len(set(sitemap_urls)), 'Sitemap includes duplicate 
 assert set(sitemap_urls) == expected_urls, f'Sitemap differs from public pages: {set(sitemap_urls) ^ expected_urls}'
 
 public_email = 'ventrybusinesswork@gmail.com'
-for route in ('index.html', 'projects/raschet/index.html', 'legal/index.html'):
+for route in ('index.html', 'projects/raschet/index.html', 'legal/index.html', 'privacy/index.html'):
     content = (ROOT / route).read_text()
     assert 'href="/legal/"' in content, f'{route}: missing legal footer link'
+    assert 'href="/privacy/"' in content, f'{route}: missing privacy policy link'
     assert f'mailto:{public_email}' in content, f'{route}: missing contact email'
+
+assert 'Google (Gmail)' in (ROOT / 'privacy/index.html').read_text(), 'Privacy policy must disclose mail provider'
 
 print(f'PASS: {len(pages)} pages; routes, fragments, canonical URLs, sitemap and legal links')
