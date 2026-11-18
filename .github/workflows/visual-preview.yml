@@ -1,0 +1,92 @@
+name: Ventry visual preview
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/visual-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare screenshot environment
+        run: |
+          python3 -m pip install --quiet --break-system-packages selenium==4.38.0
+          command -v google-chrome || command -v chromium
+          command -v chromedriver || true
+      - name: Capture real browser layouts
+        run: |
+          set -eu
+          python3 -m http.server 18765 --bind 127.0.0.1 --directory site > /tmp/ventry-preview-server.log 2>&1 &
+          mkdir -p screenshots
+          python3 - <<'PY'
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          import base64, json, time
+          from pathlib import Path
+
+          opts = Options()
+          opts.add_argument('--headless=new')
+          opts.add_argument('--no-sandbox')
+          opts.add_argument('--disable-gpu')
+          opts.add_argument('--disable-dev-shm-usage')
+          opts.add_argument('--window-size=1440,900')
+          driver = webdriver.Chrome(options=opts)
+          data = {}
+          try:
+              for label, width, height in [('phone-320', 320, 760), ('phone-390', 390, 844), ('desktop-1440', 1440, 900)]:
+                  driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride', {
+                      'width': width, 'height': height, 'deviceScaleFactor': 1, 'mobile': width < 641
+                  })
+                  driver.get('http://127.0.0.1:18765/')
+                  time.sleep(.4)
+                  metrics = driver.execute_script("""
+                      const hero = document.querySelector('.editorial-hero');
+                      const header = document.querySelector('.editorial-header-inner');
+                      const logo = document.querySelector('.brand-symbol');
+                      const project = document.querySelector('.project-photo img');
+                      return {
+                        viewport: innerWidth,
+                        scrollWidth: document.documentElement.scrollWidth,
+                        heroHeight: Math.round(hero.getBoundingClientRect().height),
+                        headerHeight: Math.round(header.getBoundingClientRect().height),
+                        logoLoaded: logo.complete && logo.naturalWidth > 0,
+                        projectLoaded: project.complete && project.naturalWidth > 0,
+                        h1Text: document.querySelector('h1').textContent
+                      }
+                  """)
+                  assert metrics['viewport'] == width, (label, metrics)
+                  assert metrics['scrollWidth'] <= width, (label, metrics)
+                  assert metrics['logoLoaded'], (label, 'brand image missing')
+                  assert metrics['projectLoaded'], (label, 'project image missing')
+                  full_height = min(3300, driver.execute_script('return Math.ceil(document.documentElement.scrollHeight)'))
+                  driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride', {
+                      'width': width, 'height': full_height, 'deviceScaleFactor': 1, 'mobile': width < 641
+                  })
+                  shot = driver.execute_cdp_cmd('Page.captureScreenshot', {
+                      'format': 'png', 'captureBeyondViewport': False, 'fromSurface': True
+                  })['data']
+                  Path(f'screenshots/{label}.png').write_bytes(base64.b64decode(shot))
+                  data[label] = metrics
+                  print(label, json.dumps(metrics, ensure_ascii=False))
+              Path('screenshots/metrics.json').write_text(json.dumps(data, ensure_ascii=False, indent=2))
+          finally:
+              driver.quit()
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ventry-home-visual-review
+          path: screenshots/
+          retention-days: 5
+          if-no-files-found: warn
