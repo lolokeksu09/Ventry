@@ -26,7 +26,7 @@ docker run --detach --rm --name "$name" \
   --env VENTRY_SITE_ADDRESS=:18080 \
   --volume "$tmp/site:/srv:ro" \
   --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
-  caddy:2.11.9-alpine > /dev/null
+  "${VENTRY_CADDY_IMAGE:-ventry-caddy:patched-test}" > /dev/null
 
 ready=0
 for i in $(seq 1 40); do
