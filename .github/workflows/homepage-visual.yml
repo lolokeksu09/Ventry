@@ -6,6 +6,7 @@ on:
     paths:
       - 'site/index.html'
       - 'site/home-company.css'
+      - 'site/refined-layout.css'
       - 'site/company-nav.js'
       - 'site/inner-pages.css'
       - 'site/app.js'
@@ -60,6 +61,8 @@ jobs:
           encoded = base64.b64encode((root/'images'/'raschet-ledger-small.webp').read_bytes()).decode('ascii')
           html = html.replace('/images/raschet-ledger-small.webp','data:image/webp;base64,'+encoded)
           html = html.replace('<link rel="stylesheet" href="/home-company.css?v=dedup-1">','<style>\n'+css+'\n</style>')
+          refinement = (root/'refined-layout.css').read_text(encoding='utf-8')
+          html = html.replace('<link rel="stylesheet" href="/refined-layout.css?v=editorial-1">','<style>\n'+refinement+'\n</style>')
           js = (root/'company-nav.js').read_text(encoding='utf-8')
           html = html.replace('<script defer src="/company-nav.js?v=dedup-1"></script>','')
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
