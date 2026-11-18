@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#09271e">
+  <meta name="theme-color" content="#f3f0e8">
   <title>Ventry — цифровые продукты для бизнеса</title>
   <meta name="description" content="Ventry создаёт понятные цифровые инструменты для предпринимателей и небольших команд. Знакомьтесь с компанией и её первым проектом — «Расчёт».">
   <meta property="og:type" content="website">
@@ -18,84 +18,75 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/images/ventry-glass.webp" as="image" media="(min-width: 641px)">
+  
   <link rel="stylesheet" href="/styles.css?v=brand-editorial-1">
+  <link rel="stylesheet" href="/home.css?v=brand-rethink-1">
   <script defer src="/app.js?v=company-1"></script>
 </head>
 <body class="company-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
+
   <header class="site-header" id="top">
-    <div class="content-width header-inner">
-      <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
-      <nav class="company-nav" aria-label="Основная навигация">
-        <a href="#about">О компании</a>
+    <div class="content-width editorial-header-inner">
+      <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="36" height="36" alt=""><span>Ventry</span></a>
+      <nav class="editorial-nav" aria-label="Основная навигация">
+        <a class="nav-about" href="#about">О компании</a>
         <a href="#projects">Проекты</a>
-        <a class="company-nav-contact" href="#contact">Связаться <span class="arrow" aria-hidden="true"></span></a>
+        <a href="#contact">Контакты</a>
       </nav>
     </div>
   </header>
-  <main class="company-main" id="main" tabindex="-1">
-    <section class="home-hero" aria-labelledby="company-title">
-      <picture class="home-hero-art" aria-hidden="true">
-        <source media="(max-width: 640px)" srcset="/images/ventry-glass-mobile.webp">
-        <img src="/images/ventry-glass.webp" width="1350" height="900" alt="" fetchpriority="high" decoding="async">
-      </picture>
-      <img class="hero-emblem" src="/images/ventry-mark-large.webp" width="768" height="768" alt="" aria-hidden="true" decoding="async">
-      <div class="content-width hero-content">
-        <p class="hero-kicker">Ventry / цифровые продукты для дела</p>
-        <h1 id="company-title">Меньше рутины.<span>Больше дела.</span></h1>
-        <p class="hero-lead">Создаём понятные цифровые инструменты для предпринимателей и небольших команд.</p>
-        <div class="hero-links">
-          <a class="hero-primary" href="#projects">Смотреть проекты <span class="arrow" aria-hidden="true"></span></a>
-          <a class="hero-secondary" href="#about">О компании</a>
-        </div>
-        <div class="hero-feature">
-          <span>Первый проект</span>
-          <a href="/projects/raschet/">«Расчёт» — учёт долгов и оплат <span class="arrow" aria-hidden="true"></span></a>
-        </div>
-      </div>
-    </section>
-    <section class="company-about content-width" id="about" aria-labelledby="about-title" tabindex="-1">
-      <p class="section-label">О Ventry</p>
-      <div class="company-about-copy">
-        <h2 id="about-title">Хороший инструмент не усложняет работу. Он делает её понятнее.</h2>
-        <p>Мы замечаем задачи, на которые у предпринимателей уходит слишком много времени: записи, поиск информации, сверка оплат. Для таких повседневных задач и создаём продукты Ventry.</p>
-      </div>
-    </section>
-    <section class="company-projects" id="projects" aria-labelledby="projects-title" tabindex="-1">
-      <div class="content-width">
-        <div class="projects-heading">
-          <p class="section-label">Наши продукты</p>
-          <h2 id="projects-title">Создаём то, чем удобно пользоваться каждый день.</h2>
-        </div>
-        <article class="featured-project" aria-labelledby="raschet-title">
-          <div class="featured-copy">
-            <p class="status-tag">В разработке</p>
-            <h3 id="raschet-title">Расчёт</h3>
-            <p class="featured-tagline">Долги и оплаты — в одном месте.</p>
-            <p class="featured-description">Цифровая долговая книга для небольших магазинов. Задумана для записи долгов, частичных возвратов и просмотра истории операций.</p>
-            <a class="featured-link" href="/projects/raschet/">Подробнее о «Расчёте» <span class="arrow" aria-hidden="true"></span></a>
+  <main id="main" tabindex="-1">
+    <section class="editorial-hero" aria-labelledby="company-title">
+      <div class="hero-grid content-width">
+        <div class="hero-statement">
+          <p class="editorial-eyebrow">Компания цифровых продуктов</p>
+          <h1 id="company-title">Ventry<span class="hero-period">.</span></h1>
+          <p class="hero-definition">Разрабатываем цифровые инструменты для малого бизнеса.</p>
+          <div class="hero-lower">
+            <p>Первый проект — «Расчёт», электронная книга для учёта долгов и оплат.</p>
+            <a href="#projects" class="editorial-link">Наши проекты <span aria-hidden="true">↗</span></a>
           </div>
-          <a class="featured-visual" href="/projects/raschet/" aria-label="Открыть страницу проекта «Расчёт»">
+        </div>
+        <div class="hero-graphic" aria-hidden="true">
+          <svg viewBox="0 0 64 64" class="identity-v" focusable="false">
+            <path d="M12 19h9a2 2 0 0 1 2 1l13 28 8-22-6 2 1-4 9-4a1 1 0 0 1 1 1l-3 14 3-3 3-14-6 2 1-4 10-5a1 1 0 0 1 1 1l-4 16-17 27a2 2 0 0 1-2 1h-7a2 2 0 0 1-2-1L12 20a1 1 0 0 1 0-1Z"/>
+            <path d="m31 39 2-10a3 3 0 0 1 2-2l7-2-4 18-2 6Z"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+    <section class="editorial-about content-width" id="about" tabindex="-1" aria-labelledby="about-title">
+      <p class="editorial-section-index">О компании</p>
+      <div class="editorial-about-main">
+        <h2 id="about-title">Делаем сложные процессы понятными.</h2>
+        <p>Ventry создаёт собственные цифровые сервисы для предпринимателей и небольших команд. Начинаем с задач, которые часто ведут вручную: записи, возвраты, поиск информации и сверка оплат.</p>
+      </div>
+    </section>
+    <section class="editorial-projects" id="projects" tabindex="-1" aria-labelledby="projects-title">
+      <div class="content-width">
+        <div class="editorial-projects-head"><span>Наши проекты</span><h2 id="projects-title">Продукты Ventry</h2></div>
+        <article class="project-feature" aria-labelledby="project-raschet-title">
+          <a href="/projects/raschet/" class="project-photo" aria-label="Подробнее о проекте «Расчёт»">
             <picture>
               <source media="(max-width: 640px)" srcset="/images/raschet-ledger-small.webp">
-              <img src="/images/raschet-ledger.webp" alt="Открытая записная книга и карандаш — образ привычного бумажного учёта" width="960" height="640" loading="lazy" decoding="async">
+              <img src="/images/raschet-ledger.webp" width="960" height="640" loading="lazy" decoding="async" alt="Открытая бумажная книга для учёта долгов — отправная точка проекта «Расчёт»">
             </picture>
-            <span class="featured-visual-caption">От бумажной книги — к цифровому учёту</span>
           </a>
+          <div class="project-info">
+            <p class="project-stage"><span aria-hidden="true" class="stage-dot"></span> В разработке</p>
+            <h3 id="project-raschet-title">Расчёт</h3>
+            <p class="project-short">Цифровая долговая книга для небольших магазинов.</p>
+            <p class="project-long">Записывать долги, учитывать частичные оплаты и видеть историю операций — без бумажных тетрадей.</p>
+            <a class="project-go" href="/projects/raschet/">О проекте <span aria-hidden="true">↗</span></a>
+          </div>
         </article>
       </div>
     </section>
-    <section class="company-contact" id="contact" aria-labelledby="contact-title" tabindex="-1">
-      <div class="content-width company-contact-inner">
-        <div>
-          <p class="section-label">Связаться с Ventry</p>
-          <h2 id="contact-title">Есть вопрос<br>или предложение?</h2>
-        </div>
-        <div class="contact-action">
-          <p>Напишите нам — обсудим ваш вопрос.</p>
-          <a href="mailto:ventrybusinesswork@gmail.com">ventrybusinesswork<wbr>@gmail.com <span class="arrow" aria-hidden="true"></span></a>
-        </div>
+    <section class="editorial-contact" id="contact" tabindex="-1" aria-labelledby="contact-title">
+      <div class="content-width contact-layout">
+        <div><p class="editorial-section-index">Контакт</p><h2 id="contact-title">Есть вопрос<br>или предложение?</h2></div>
+        <a href="mailto:ventrybusinesswork@gmail.com" class="contact-email"><span class="contact-email-text">ventrybusinesswork<wbr>@gmail.com</span><span aria-hidden="true" class="contact-email-arrow">↗</span></a>
       </div>
     </section>
   </main>
