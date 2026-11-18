@@ -1,0 +1,34 @@
+name: Ventry dependency security audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'compose.yaml'
+      - '.github/workflows/security-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'compose.yaml'
+      - '.github/workflows/security-audit.yml'
+  schedule:
+    - cron: '20 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan-caddy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Scan Caddy image for known HIGH and CRITICAL vulnerabilities
+        run: |
+          set -euo pipefail
+          # Read-only image vulnerability scan: no repository checkout, tokens, or secrets.
+          # Scanner image is pinned by version and digest due to supply-chain risk.
+          docker run --rm \
+            ghcr.io/aquasecurity/trivy:0.76.2@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c \
+            image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --no-progress --exit-code 0 --format table caddy:2.11.9-alpine
