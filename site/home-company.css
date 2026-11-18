@@ -53,24 +53,11 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .identity-orbit--one{height:850px;width:410px;top:-185px;right:-65px;background:linear-gradient(132deg,#0a1d12 1%,#21583b 26%,#113b29 46%,#06170e 70%);box-shadow:inset 0 3px 2px rgba(180,230,182,.2);border-color:#376b4d}
 .identity-orbit--two{height:700px;width:225px;top:-70px;right:80px;background:linear-gradient(132deg,#112f1d 0%,#2c714c 27%,#0c2919 59%,#06150b 80%);border-color:#598e61;opacity:.63}
 .identity-construction{position:absolute;width:240px;height:240px;right:18%;top:19%;fill:#b5d9ae;opacity:.68;transform:rotate(-7deg)}
-.chapter-strip{max-width:1240px;margin:-1px auto 0;padding:0 var(--gutter);display:flex;align-items:center;gap:0;border-bottom:1px solid var(--line);position:relative;z-index:2}
-.chapter-strip a{min-height:54px;flex:0 0 auto;padding:17px 24px 13px;border-bottom:2px solid transparent;color:#b5c6b9;font-size:13px;transition:color .2s}
-.chapter-strip a:first-child{padding-left:0}
-.chapter-strip a:hover,.chapter-strip a[aria-current="location"]{color:#f3f7ef;border-color:#92c3a2}
 .company,.method,.work,.reach{max-width:1240px;padding-inline:var(--gutter);margin-inline:auto}
 .company{padding-top:55px;padding-bottom:49px}
-.section-lead{display:flex;align-items:center;gap:21px;margin-bottom:22px}
-.section-index{font-size:11px;letter-spacing:.13em;color:#9daf9f;text-transform:uppercase;white-space:nowrap}
-.section-rule{height:1px;background:var(--line);flex:1}
-.company-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(270px,.7fr);gap:clamp(38px,6vw,95px)}
+.company-grid{max-width:760px}
 .company-main h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(37px,4.2vw,60px);font-weight:400;letter-spacing:-.035em;max-width:19ch}
 .company-main>p{margin-top:23px;color:#b7c5bb;font-size:16px;line-height:1.68;max-width:59ch}
-.company-side{border-left:1px solid #314439;padding-left:26px}
-.side-label{font-size:12px;color:#91ae97;margin-bottom:17px}
-.side-item{display:flex;gap:12px;padding:14px 0;border-top:1px solid #243a2e}
-.side-bullet{margin-top:8px;width:6px;height:6px;border:1px solid #82b48a;border-radius:2px;transform:rotate(45deg);flex:0 0 auto}
-.side-item strong{font-size:14px;font-weight:600}
-.side-item p{color:#a9bcb1;font-size:12px;line-height:1.55;margin-top:4px}
 .method{padding-top:23px;padding-bottom:42px}
 .method-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(38px,6vw,90px)}
 .method h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(31px,3.4vw,48px);font-weight:400;letter-spacing:-.03em}
@@ -101,7 +88,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .work-arrow{font-size:27px;justify-self:end;color:#b4d1b7}
 .reach{padding-top:32px;padding-bottom:14px}
 .contact-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:end;gap:30px;background:#112b1e;border:1px solid #2b5236;padding:30px 33px;border-radius:11px}
-.contact-kicker{font-size:11px;color:#b2c9b4;letter-spacing:.075em;text-transform:uppercase}
 .reach h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(37px,4vw,57px);letter-spacing:-.03em;font-weight:400;margin-top:10px}
 .contact-description{color:#b8cabd;font-size:14px;margin-top:11px}
 .reach-email-actions{display:flex;align-items:center;gap:12px;min-width:0}
@@ -125,8 +111,7 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .opening-content{width:68%}
  .opening h1{font-size:clamp(67px,11vw,105px)}
  .identity-object{width:45%}
- .company-grid{grid-template-columns:minmax(0,1.1fr) minmax(235px,.9fr);gap:24px}
- .company-side{padding-left:19px}
+.company-grid{max-width:760px}
 }
 @media(max-width:620px){
  :root{--gutter:21px}
@@ -142,20 +127,10 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .identity-orbit--one{width:300px;height:600px;right:-42px;top:-180px}
  .identity-orbit--two{width:160px;height:480px;top:-90px;right:85px}
  .identity-construction{width:120px;height:120px;top:42%;right:32%;opacity:.27}
- .chapter-strip{padding:0 12px;justify-content:space-between}
- .chapter-strip a{flex:1;text-align:center;min-height:46px;padding:12px 3px 11px;font-size:12px;white-space:nowrap}
- .chapter-strip a:first-child{padding-left:3px}
  .company{padding-top:28px;padding-bottom:24px}
- .section-lead{gap:12px;margin-bottom:16px}
- .section-index{font-size:12px;letter-spacing:.04em}
- .company-grid,.method-grid{display:block}
+ .method-grid{display:block}
  .company-main h2{font-size:clamp(31px,8.4vw,43px);max-width:22ch}
  .company-main>p{font-size:14px;line-height:1.59;margin-top:14px}
- .company-side{margin-top:23px;padding:0;border-left:0}
- .side-label{font-size:12px;margin-bottom:5px}
- .side-item{padding:11px 0}
- .side-item strong{font-size:13px}
- .side-item p{font-size:12px;line-height:1.42}
  .method{padding-top:20px;padding-bottom:26px}
  .method h2{font-size:clamp(30px,7.6vw,39px)}
  .method-description{font-size:13px;margin-top:8px}
@@ -172,7 +147,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .work-arrow{font-size:21px}
  .reach{padding-top:20px}
  .contact-panel{display:block;padding:23px 20px;border-radius:9px}
- .contact-kicker{font-size:10px}
  .reach h2{font-size:38px}
  .contact-description{font-size:13px;margin-top:8px}
  .reach-email-actions{margin-top:19px;gap:9px}
@@ -190,7 +164,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .opening-description{max-width:27ch}
  .identity-object{right:-29%;opacity:.59}
  .hero-secondary{padding-inline:12px}
- .chapter-strip a{font-size:11px}
  .company-main h2{font-size:29px}
  .reach-email{font-size:12px}
 }
@@ -199,8 +172,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 /* Compact homepage with indexed, accessible native dialog sections. */
 .frames>.site-footer{max-width:1240px;width:100%;margin-inline:auto;padding-inline:var(--gutter);border-top:1px solid #243a30}
 .frames{min-height:0}
-.chapter-strip{border-bottom:1px solid var(--line)}
-.chapter-strip a{cursor:pointer}
 .section-dialog{position:fixed;inset:0;box-sizing:border-box;width:min(950px,calc(100vw - 44px));max-width:none;max-height:min(780px,calc(100dvh - 44px));margin:auto;padding:0;background:#0b130e;color:#eef2e9;border:1px solid #385442;border-radius:14px;overflow:hidden;box-shadow:0 24px 100px rgba(0,0,0,.64);color-scheme:dark}
 .section-dialog:not([open]){display:none}
 .section-dialog::backdrop{background:rgba(0,0,0,.75);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
@@ -218,10 +189,9 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .dialog-scroll{overflow-y:auto;overscroll-behavior:contain;min-height:0;flex:1;scrollbar-color:#42644a #0b130e;scrollbar-width:thin}
 .dialog-section{max-width:none!important;margin:0!important;padding:32px 34px 40px!important;scroll-margin:0!important;overflow:visible}
 .dialog-section[hidden]{display:none!important}
-.dialog-section.company .company-grid{gap:38px;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+.dialog-section.company .company-grid{max-width:760px}
 .dialog-section.company .company-main h2{font-size:clamp(35px,4.2vw,52px)}
 .dialog-section.company .company-main>p{font-size:15px;margin-top:18px}
-.dialog-section.company .company-side{padding-left:22px}
 .dialog-section.method .method-grid{gap:32px}
 .dialog-section.method .method-entries{align-self:start}
 .dialog-section.work .work-item{margin-top:17px}
@@ -240,9 +210,8 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .dialog-tabs{padding:0 9px;gap:0;justify-content:space-between}
  .dialog-tabs a{flex:1;justify-content:center;padding:0 6px;min-height:45px;font-size:12px}
  .dialog-section{padding:24px 21px 30px!important}
- .dialog-section.company .company-grid,.dialog-section.method .method-grid{display:block}
+ .dialog-section.method .method-grid{display:block}
  .dialog-section.company .company-main h2{font-size:clamp(29px,7.5vw,42px)}
- .dialog-section.company .company-side{margin-top:22px;padding-left:0;border-left:0}
  .dialog-section.company .company-main>p{font-size:14px}
  .dialog-section.reach .contact-panel{padding:22px 17px}
  .dialog-section.reach .reach-email{font-size:clamp(12px,3.7vw,16px)}
@@ -255,7 +224,6 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .frames>.site-footer{margin-top:auto}
 @media(max-width:930px){.frames{min-height:calc(100svh - 65px)}}
 @media(max-width:620px){
- .chapter-strip a{min-height:48px}
  .dialog-section.company .company-main h2{font-size:clamp(29px,7vw,40px);line-height:1.13}
  .dialog-section.work .work-thumbnail{background:#172b31}
  .dialog-section.reach .contact-panel{background:#10281c}
@@ -270,6 +238,3 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .no-script-content a{text-decoration:underline;text-underline-offset:3px}
 
 /* Keep the chapter navigation aligned with the full-width mobile layout. */
-.chapter-strip{width:100%}
-@media(max-width:620px){.chapter-strip a{font-size:13px}}
-@media(max-width:360px){.chapter-strip a{font-size:12px}}
