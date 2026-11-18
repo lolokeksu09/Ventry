@@ -1,0 +1,121 @@
+name: Ventry homepage visual QA
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/index.html'
+      - 'site/home-company.css'
+      - '.github/workflows/homepage-visual.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare Chrome test
+        run: |
+          python3 -m pip install --quiet --break-system-packages selenium==4.38.0
+          command -v google-chrome
+          command -v chromedriver
+      - name: Render homepage and create portable HTML
+        run: |
+          set -eu
+          mkdir -p artifacts
+          python3 - <<'PY'
+          import base64
+          import re
+          from pathlib import Path
+          root = Path('site')
+          html = (root/'index.html').read_text(encoding='utf-8')
+          css = (root/'home-company.css').read_text(encoding='utf-8')
+          for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
+              encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
+              css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
+          for filename,mime in [('ventry-mark.webp','image/webp'),('raschet-ledger.webp','image/webp'),('raschet-ledger-small.webp','image/webp')]:
+              encoded = base64.b64encode((root/'images'/filename).read_bytes()).decode('ascii')
+              html = html.replace('/images/'+filename, 'data:'+mime+';base64,'+encoded)
+          html = re.sub(r'  <link rel="preload"[^>]+>\n','',html)
+          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=company-first-1">','<style>\n'+css+'\n</style>')
+          html = html.replace('<script defer src="/app.js?v=company-1"></script>', '')
+          html = html.replace('href="/"','href="#top"')
+          for path in ['/projects/raschet/','/legal/','/privacy/']:
+              html = html.replace('href="'+path+'"', 'href="https://135-106-227-179.sslip.io'+path+'"')
+          if '<style>' not in html or 'href="/home-company.css' in html:
+              raise SystemExit('Standalone export missing embedded CSS')
+          (Path('artifacts')/'Ventry-homepage-standalone.html').write_text(html,encoding='utf-8')
+          PY
+          python3 -m http.server 18765 --bind 127.0.0.1 --directory site > /tmp/ventry-preview-http.log 2>&1 &
+          python3 - <<'PY'
+          import base64,json,time
+          from pathlib import Path
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
+          opt=Options()
+          for arg in ('--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--window-size=1440,900'):
+              opt.add_argument(arg)
+          driver=webdriver.Chrome(options=opt)
+          details={}
+          try:
+              for tag,w,h in [('mobile-320',320,760),('mobile-390',390,844),('tablet-768',768,1000),('desktop-1440',1440,900)]:
+                  driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':w,'height':h,'deviceScaleFactor':1,'mobile':w<769})
+                  driver.get('http://127.0.0.1:18765/')
+                  driver.execute_async_script("const done=arguments[0];Promise.all([document.fonts.ready,document.querySelector('.project-row__image img').decode()]).then(()=>done('ready'),e=>done(String(e)))")
+                  driver.execute_script('window.scrollTo(0,0)')
+                  time.sleep(.25)
+                  info=driver.execute_script("""return {
+                    viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,
+                    headerHeight:Math.round(document.querySelector('.site-head__inner').getBoundingClientRect().height),
+                    h1Count:document.querySelectorAll('h1').length,
+                    h1Text:document.querySelector('h1').textContent,
+                    logoLoaded:(e=>e.complete&&e.naturalWidth>0)(document.querySelector('.wordmark img')),
+                    productLoaded:(e=>e.complete&&e.naturalWidth>0)(document.querySelector('.project-row__image img')),
+                    projectInHero:!!document.querySelector('.opening [href="/projects/raschet/"]'),
+                    heroBottom:Math.round(document.querySelector('.opening').getBoundingClientRect().bottom),
+                    headerOneRow: Math.abs(document.querySelector('.wordmark').getBoundingClientRect().top-document.querySelector('.site-nav').getBoundingClientRect().top)<16
+                  }""")
+                  print(tag,json.dumps(info,ensure_ascii=False),flush=True)
+                  assert info['viewport']==w,(tag,'viewport',info)
+                  assert info['documentWidth']<=w,(tag,'overflow',info)
+                  assert info['h1Count']==1,(tag,'headings',info)
+                  assert info['logoLoaded'] and info['productLoaded'],(tag,'images',info)
+                  assert info['headerOneRow'],(tag,'header',info)
+                  assert not info['projectInHero'],(tag,'projects should be secondary')
+                  bodyheight=min(6000,driver.execute_script('return Math.ceil(document.documentElement.scrollHeight)'))
+                  driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':w,'height':bodyheight,'deviceScaleFactor':1,'mobile':w<769})
+                  png=driver.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','fromSurface':True,'captureBeyondViewport':False})['data']
+                  (Path('artifacts')/(tag+'.png')).write_bytes(base64.b64decode(png))
+                  details[tag]=info
+                  driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':w,'height':h,'deviceScaleFactor':1,'mobile':w<769})
+                  driver.execute_script("document.querySelector('.site-nav .nav-contact').click()")
+                  assert driver.execute_script('return location.hash')=='#contact',(tag,'navigation contact')
+              driver.execute_cdp_cmd('Emulation.clearDeviceMetricsOverride',{})
+              driver.get(Path('artifacts/Ventry-homepage-standalone.html').resolve().as_uri())
+              standalone=driver.execute_script("""return {
+                header:document.querySelector('h1')?.textContent,
+                logo:(e=>e.complete&&e.naturalWidth>0)(document.querySelector('.wordmark img')),
+                stylesheet:document.styleSheets.length,
+                fonts:document.fonts.check('16px "Golos Text"')
+              }""")
+              assert standalone['logo'] and standalone['stylesheet']>=1,standalone
+              details['standalone']=standalone
+              Path('artifacts/QA.json').write_text(json.dumps(details,ensure_ascii=False,indent=2),encoding='utf-8')
+          finally:
+              driver.quit()
+          PY
+      - name: Upload rendered pages
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ventry-corporate-homepage-preview
+          path: artifacts/
+          retention-days: 7
+          if-no-files-found: warn
