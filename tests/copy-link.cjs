@@ -12,6 +12,8 @@ async function checkClipboard(clipboard) {
   const input = { focus() { this.focused = true; }, select() { this.selected = true; } };
   const fallback = { hidden: true, querySelector: () => input };
   const url = 'https://135-106-227-179.sslip.io/projects/raschet/';
+  const timers = new Map();
+  let nextTimer = 0;
   const elements = {
     '[data-copy-link]': button,
     '[data-copy-status]': status,
@@ -21,6 +23,8 @@ async function checkClipboard(clipboard) {
   vm.runInNewContext(fs.readFileSync('site/app.js', 'utf8'), {
     document: { documentElement: { classList: { add() {} } }, querySelector: selector => elements[selector] || null },
     navigator: { clipboard },
+    setTimeout: callback => { const id = ++nextTimer; timers.set(id, callback); return id; },
+    clearTimeout: id => { timers.delete(id); },
   });
   assert.equal(button.hidden, false);
   await click();
@@ -37,6 +41,8 @@ async function checkClipboard(clipboard) {
     assert.equal(fallback.hidden, true);
     assert.match(status.textContent, /Ссылка скопирована/);
     assert.equal(button.disabled, false);
+    for (const callback of timers.values()) callback();
+    assert.equal(status.textContent, '');
   }
 }
 (async () => {
