@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123027">
+  <meta name="theme-color" content="#050907">
   <title>Расчёт — цифровая долговая книга | Ventry</title>
   <meta name="description" content="Проект Ventry для учёта долгов, возвратов и истории операций. Приложение в разработке; дата запуска пока не объявлена.">
   <meta property="og:type" content="website">
@@ -19,7 +19,8 @@
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <script defer src="/app.js?v=20261118b"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=amoled-1">
+  <script defer src="/app.js?v=ui-audit-2"></script>
 </head>
 <body class="product-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -41,7 +42,7 @@
         <p class="status-tag">В разработке</p>
         <h1 id="product-title">Расчёт</h1>
         <p class="product-lead">Долговая книга для небольших магазинов</p>
-        <p class="product-description">Храните записи о долгах и оплатах в одном месте. После частичного возврата видно, сколько ещё должен клиент.</p>
+        <p class="product-description">Проектируем учёт долгов и оплат в одном месте. Для частичного возврата предусмотрен показ оставшейся суммы.</p>
         <div class="product-actions">
           <a class="primary-button" href="mailto:ventrybusinesswork@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BE%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B5%20%C2%AB%D0%A0%D0%B0%D1%81%D1%87%D1%91%D1%82%C2%BB">Задать вопрос <span class="arrow" aria-hidden="true"></span></a>
           <button class="quiet-button" type="button" data-copy-link hidden>Скопировать ссылку</button>
@@ -51,7 +52,7 @@
       </div>
       <figure class="ledger-stage" aria-labelledby="ledger-caption">
         <div class="ledger-sheet">
-          <figcaption id="ledger-caption">Пример учёта</figcaption>
+          <figcaption id="ledger-caption">Пример сценария учёта</figcaption>
           <dl>
             <div><dt>Записан долг</dt><dd>3 000 ₽</dd></div>
             <div><dt>Частичная оплата</dt><dd>−1 000 ₽</dd></div>
