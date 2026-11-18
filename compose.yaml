@@ -2,7 +2,7 @@ name: ventry
 
 services:
   web:
-    image: caddy:2-alpine
+    image: caddy:2.11.9-alpine
     restart: unless-stopped
     ports:
       - "80:80"
