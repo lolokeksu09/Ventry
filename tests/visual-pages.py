@@ -82,8 +82,7 @@ try:
         if width == 390:
             capture("ui-390-contact.png")
         js("""document.querySelector('[data-close-dialog]').click()""")
-        assert not js("return document.querySelector('#section-dialog').open")
-        assert not js("return location.hash")
+        wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
         page["homeHeight"] = home_height
 
         product = load("/projects/raschet/", width, height)
@@ -158,8 +157,10 @@ try:
 
     driver.get(BASE + "/#projects")
     assert js("""return document.querySelector('#section-dialog').open && !document.querySelector('[data-panel="projects"]').hidden""")
+    direct_history_length = js("return history.length")
     js("""document.querySelector('[data-close-dialog]').click()""")
     assert not js("return location.hash")
+    assert js("return history.length") == direct_history_length, "Direct hash close must not navigate Back"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print("PASS: 4 viewports, 4 public pages, dialog image, history, focus and mobile menus",flush=True)
