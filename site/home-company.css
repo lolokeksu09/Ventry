@@ -48,7 +48,7 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .hero-primary:hover{background:#d6e9ce}
 .hero-secondary{border:1px solid #557b65;color:#e6eee3}
 .hero-secondary:hover{background:#14271c}
-.identity-object{position:absolute;pointer-events:none;right:1%;top:5%;width:47%;height:100%;max-width:670px;overflow:hidden;z-index:0}
+.identity-object{position:absolute;pointer-events:none;right:1%;top:5%;width:47%;height:100%;max-width:670px;overflow:hidden;z-index:0;-webkit-mask-image:linear-gradient(to right,transparent,#000 32%);mask-image:linear-gradient(to right,transparent,#000 32%)}
 .identity-orbit{position:absolute;border-radius:50%;transform:rotate(-28deg);border:1px solid transparent;pointer-events:none}
 .identity-orbit--one{height:850px;width:410px;top:-185px;right:-65px;background:linear-gradient(132deg,#0a1d12 1%,#21583b 26%,#113b29 46%,#06170e 70%);box-shadow:inset 0 3px 2px rgba(180,230,182,.2);border-color:#376b4d}
 .identity-orbit--two{height:700px;width:225px;top:-70px;right:80px;background:linear-gradient(132deg,#112f1d 0%,#2c714c 27%,#0c2919 59%,#06150b 80%);border-color:#598e61;opacity:.63}
@@ -147,7 +147,7 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .chapter-strip a:first-child{padding-left:3px}
  .company{padding-top:28px;padding-bottom:24px}
  .section-lead{gap:12px;margin-bottom:16px}
- .section-index{font-size:10px;letter-spacing:.08em}
+ .section-index{font-size:12px;letter-spacing:.04em}
  .company-grid,.method-grid{display:block}
  .company-main h2{font-size:clamp(31px,8.4vw,43px);max-width:22ch}
  .company-main>p{font-size:14px;line-height:1.59;margin-top:14px}
@@ -166,7 +166,7 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .work h2{font-size:30px;margin-bottom:12px}
  .work-item{grid-template-columns:76px minmax(0,1fr) 17px;gap:12px;padding:11px 0}
  .work-thumbnail{height:82px}
- .work-type{font-size:10px}
+ .work-type{font-size:12px}
  .work-detail strong{font-size:26px}
  .work-detail p{font-size:12px}
  .work-arrow{font-size:21px}

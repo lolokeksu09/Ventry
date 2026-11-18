@@ -139,11 +139,11 @@ jobs:
                       browser.execute_script("document.querySelector('.mobile-nav summary').click()")
                       browser.execute_script("document.querySelector('.mobile-nav a[href=\"#contact\"]').click()")
                       time.sleep(1.3)
-                      smoothActive=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"],.mobile-nav nav a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
+                      smoothActive=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"],.mobile-nav nav a[aria-current="location"],.chapter-strip a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
                       assert smoothActive==['#contact','#contact','#contact'],(label,'smooth-scroll nav',smoothActive)
                   browser.execute_script("document.querySelector('#contact').scrollIntoView({behavior:'instant'})")
                   time.sleep(.35)
-                  active=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"], .mobile-nav nav a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
+                  active=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"], .mobile-nav nav a[aria-current="location"], .chapter-strip a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
                   assert active==['#contact','#contact','#contact'],(label,'active section visible',active)
                   record['contactCurrentInBothMenus']=True
                   browser.execute_script("document.querySelectorAll('.method-entries details')[1].querySelector('summary').click()")
