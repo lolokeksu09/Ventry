@@ -78,10 +78,10 @@ body.product-page,body.document-page{
 .document-page .legal-email:hover{color:#fff}
 .document-page .legal-body strong{color:#eff2e6}
 @media(max-width:800px){
- .product-page .js .menu-toggle,.document-page .js .menu-toggle{background:#101f16;border-color:#49664d;border-radius:7px}
+ .js .product-page .menu-toggle,.js .document-page .menu-toggle{background:#101f16;border-color:#49664d;border-radius:7px}
  .product-page .menu-toggle span,.document-page .menu-toggle span{background:#e2ede0}
- .product-page .js .site-nav,.document-page .js .site-nav{top:66px;background:#101e15;border:1px solid #45604a;border-radius:8px;box-shadow:0 20px 50px #0008;padding:10px 17px;z-index:32}
- .product-page .js .site-nav a,.document-page .js .site-nav a{font-size:15px;min-height:49px}
+ .js .product-page .site-nav,.js .document-page .site-nav{top:66px;background:#101e15;border:1px solid #45604a;border-radius:8px;box-shadow:0 20px 50px #0008;padding:10px 17px;z-index:32}
+ .js .product-page .site-nav a,.js .document-page .site-nav a{font-size:15px;min-height:49px}
  .product-page .product-hero{margin-top:20px}
  .product-page .scope-list{display:block}
  .product-page .scope-list>div{border-right:0;border-bottom:1px solid #2d4834;padding:19px 0}
