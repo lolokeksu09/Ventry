@@ -23,14 +23,19 @@ function setCurrentSection(id) {
 function openSection(id, trigger, updateAddress = true) {
   if (!Object.hasOwn(sectionNames, id)) return;
   if (mobileMenu) mobileMenu.open = false;
-  if (trigger && !sectionDialog.open) previousTrigger = trigger;
+  const wasOpen = sectionDialog.open;
+  if (trigger && !wasOpen) previousTrigger = trigger;
   for (const panel of modalPanels) panel.hidden = panel.dataset.panel !== id;
   modalLabel.textContent = sectionNames[id];
-  if (!sectionDialog.open) sectionDialog.showModal();
+  if (!sectionDialog.open) {
+    sectionDialog.showModal();
+    sectionDialog.querySelector('[data-close-dialog]').focus({ preventScroll: true });
+  }
   modalScroll.scrollTop = 0;
   setCurrentSection(id);
   if (updateAddress && window.location.hash !== '#' + id) {
-    history.pushState({ ventrySection: id }, '', '#' + id);
+    if (wasOpen) history.replaceState(history.state, '', '#' + id);
+    else history.pushState({ ventryModal: true }, '', '#' + id);
   }
 }
 
@@ -62,6 +67,10 @@ sectionLinks.forEach(link => {
 sectionDialog.querySelector('[data-close-dialog]').addEventListener('click', () => closeSection());
 sectionDialog.addEventListener('click', event => {
   if (event.target === sectionDialog) closeSection();
+});
+sectionDialog.addEventListener('cancel', event => {
+  event.preventDefault();
+  closeSection();
 });
 sectionDialog.addEventListener('close', () => {
   if (!openingFromLocation) resetAddressAfterClose();

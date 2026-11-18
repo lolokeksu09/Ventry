@@ -45,15 +45,20 @@ const copyStatus = document.querySelector('[data-copy-status]');
 const copyFallback = document.querySelector('.copy-fallback');
 if (copyButton && copyStatus && copyFallback) {
   copyButton.hidden = false;
+  let clearStatusTimer;
   copyButton.addEventListener('click', async () => {
+    clearTimeout(clearStatusTimer);
+    copyStatus.textContent = '';
     const url = document.querySelector('link[rel="canonical"]').href;
     copyButton.disabled = true;
     try {
       await navigator.clipboard.writeText(url);
       copyFallback.hidden = true;
-      copyStatus.textContent = 'Ссылка скопирована. Можно отправить её в сообщении.';
+      copyStatus.textContent = 'Ссылка скопирована';
+      clearStatusTimer = setTimeout(() => { copyStatus.textContent = ''; }, 3000);
     } catch {
       copyStatus.textContent = 'Не удалось скопировать автоматически. Используйте адрес ниже.';
+      clearStatusTimer = setTimeout(() => { copyStatus.textContent = ''; }, 6000);
       copyFallback.hidden = false;
       const input = copyFallback.querySelector('input');
       input.value = url;

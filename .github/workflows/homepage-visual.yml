@@ -7,6 +7,12 @@ on:
       - 'site/index.html'
       - 'site/home-company.css'
       - 'site/company-nav.js'
+      - 'site/inner-pages.css'
+      - 'site/app.js'
+      - 'site/projects/raschet/index.html'
+      - 'site/legal/index.html'
+      - 'site/privacy/index.html'
+      - 'tests/visual-pages.py'
       - '.github/workflows/homepage-visual.yml'
   workflow_dispatch:
 
@@ -51,17 +57,17 @@ jobs:
           for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
               encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
               css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
-          encoded = base64.b64encode((root/'images'/'raschet-ledger.webp').read_bytes()).decode('ascii')
-          html = html.replace('/images/raschet-ledger.webp','data:image/webp;base64,'+encoded)
-          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=dialog-tabs-1">','<style>\n'+css+'\n</style>')
+          encoded = base64.b64encode((root/'images'/'raschet-ledger-small.webp').read_bytes()).decode('ascii')
+          html = html.replace('/images/raschet-ledger-small.webp','data:image/webp;base64,'+encoded)
+          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=ui-audit-2">','<style>\n'+css+'\n</style>')
           js = (root/'company-nav.js').read_text(encoding='utf-8')
-          html = html.replace('<script defer src="/company-nav.js?v=dialog-tabs-1"></script>','')
+          html = html.replace('<script defer src="/company-nav.js?v=ui-audit-2"></script>','')
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           html = html.replace('href="/"','href="#start"')
           for route in ('/projects/raschet/','/legal/','/privacy/'):
               html = html.replace('href="'+route+'"','href="https://135-106-227-179.sslip.io'+route+'"')
           assert '<style>' in html and 'data:image/webp;base64,' in html
-          Path('artifacts/Ventry-modal-tabs.html').write_text(html,encoding='utf-8')
+          Path('artifacts/Ventry-ui-audit.html').write_text(html,encoding='utf-8')
           PY
           python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview.log 2>&1 &
           python3 - <<'PY'
@@ -147,7 +153,7 @@ jobs:
                   js("document.querySelector('[data-close-dialog]').click()")
                   results[label]=metrics
 
-              browser.get(Path('artifacts/Ventry-modal-tabs.html').resolve().as_uri())
+              browser.get(Path('artifacts/Ventry-ui-audit.html').resolve().as_uri())
               assert js("return document.querySelectorAll('style').length>0 && document.querySelector('#section-dialog')!==null")
               js("document.querySelector('.chapter-strip a[href=\"#about\"]').click()")
               assert js("return document.querySelector('#section-dialog').open"),'standalone modal'
@@ -156,6 +162,9 @@ jobs:
           finally:
               browser.quit()
           PY
+      - name: Test interior pages and modal edge cases
+        run: |
+          python3 tests/visual-pages.py
       - name: Upload previews
         if: always()
         uses: actions/upload-artifact@v4
