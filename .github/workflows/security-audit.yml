@@ -12,6 +12,8 @@ on:
     branches: [main]
     paths:
       - 'compose.yaml'
+      - 'deploy/Dockerfile'
+      - 'tools/build-patched-caddy.sh'
       - '.github/workflows/security-audit.yml'
   schedule:
     - cron: '20 3 * * 1'
@@ -42,7 +44,8 @@ jobs:
           set -euo pipefail
           # Scan the ACTUAL patched image; fail the job on any fixable HIGH/CRITICAL result.
           # Scanner image is pinned by version and digest due to supply-chain risk.
-          docker run --rm \
+          docker save ventry-caddy:patched-test --output "$RUNNER_TEMP/ventry-caddy.tar"
+          docker run --rm --volume "$RUNNER_TEMP:/scan:ro" \
             ghcr.io/aquasecurity/trivy:0.76.2@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c \
-            image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
-            --no-progress --exit-code 1 --format table ventry-caddy:patched-test
+            image --input /scan/ventry-caddy.tar --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --no-progress --exit-code 1 --format table
