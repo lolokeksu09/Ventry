@@ -17,11 +17,9 @@ if (mobileMenu) {
   });
 }
 
-const chapterLinks = [...document.querySelectorAll('.rail-links a[href^="#"]')];
-const chapters = chapterLinks.map(link => {
-  const id = link.getAttribute('href')?.slice(1);
-  return document.getElementById(id);
-}).filter(Boolean);
+const chapterLinks = [...document.querySelectorAll('.rail-links a[href^="#"], .mobile-nav nav a[href^="#"]')];
+const chapters = [...new Set(chapterLinks.map(link => link.getAttribute('href')?.slice(1)))]
+  .map(id => document.getElementById(id)).filter(Boolean);
 
 if ('IntersectionObserver' in window && chapterLinks.length && chapters.length) {
   const visible = new Map();
