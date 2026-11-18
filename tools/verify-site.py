@@ -28,7 +28,11 @@ class Page(HTMLParser):
                 self.refs.append(ref)
 
 
-pages = {p.resolve(): Page(p) for p in ROOT.rglob('*.html')}
+# Google Search Console verification files are plain-text responses with a .html suffix.
+# Check the exact token instead of treating them as normal HTML documents.
+verification = ROOT / 'google9048871eda96ab4a.html'
+assert verification.read_text().strip() == f'google-site-verification: {verification.name}'
+pages = {p.resolve(): Page(p) for p in ROOT.rglob('*.html') if p != verification}
 for path, page in pages.items():
     assert page.headings == 1, f'{path}: expected exactly one h1'
     route = '/' + path.parent.relative_to(ROOT).as_posix().strip('.')
