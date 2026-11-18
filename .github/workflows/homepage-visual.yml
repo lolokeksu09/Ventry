@@ -1,4 +1,4 @@
-name: Ventry homepage visual QA
+name: Ventry modal homepage visual QA
 
 on:
   pull_request:
@@ -21,164 +21,146 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Check homepage sources
+        run: |
+          node --check site/company-nav.js
+          python3 tools/verify-site.py
+          python3 - <<'PY'
+          from pathlib import Path
+          h = Path('site/index.html').read_text()
+          assert '<dialog class="section-dialog"' in h
+          assert 'data-panel="projects"' in h
+          assert '<style' not in h and '<script>' not in h
+          assert 'href="/legal/"' in h and 'href="/privacy/"' in h
+          PY
       - name: Prepare browser
         run: |
           python3 -m pip install --quiet --break-system-packages selenium==4.38.0
           command -v google-chrome
           command -v chromedriver
-      - name: Render actual site and package standalone HTML
+      - name: Test dialogs, capture viewport screenshots and export standalone HTML
         run: |
           set -eu
           mkdir -p artifacts
           python3 - <<'PY'
           from pathlib import Path
-          import base64, re
+          import base64, json
           root = Path('site')
           html = (root/'index.html').read_text(encoding='utf-8')
           css = (root/'home-company.css').read_text(encoding='utf-8')
-          for name in ('golos-cyrillic.woff2', 'golos-latin.woff2'):
+          for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
               encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
               css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
-          for name in ('raschet-ledger.webp',):
-              encoded = base64.b64encode((root/'images'/name).read_bytes()).decode('ascii')
-              html = html.replace('/images/'+name, 'data:image/webp;base64,'+encoded)
-          html = re.sub(r'  <link rel="preload"[^>]*>\n', '', html)
-          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=amoled-editorial-1">','<style>\n'+css+'\n</style>')
-          src = (root/'company-nav.js').read_text(encoding='utf-8')
-          html = html.replace('<script defer src="/company-nav.js?v=amoled-editorial-1"></script>', '')
-          html = html.replace('</body>', '<script>\n'+src+'\n</script>\n</body>')
+          encoded = base64.b64encode((root/'images'/'raschet-ledger.webp').read_bytes()).decode('ascii')
+          html = html.replace('/images/raschet-ledger.webp','data:image/webp;base64,'+encoded)
+          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=dialog-tabs-1">','<style>\n'+css+'\n</style>')
+          js = (root/'company-nav.js').read_text(encoding='utf-8')
+          html = html.replace('<script defer src="/company-nav.js?v=dialog-tabs-1"></script>','')
+          html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           html = html.replace('href="/"','href="#start"')
-          for path in ('/projects/raschet/','/legal/','/privacy/'):
-              html = html.replace('href="'+path+'"','href="https://135-106-227-179.sslip.io'+path+'"')
-          assert '<style>' in html and 'href="/home-company.css' not in html
-          assert 'data:image/webp;base64,' in html
-          (Path('artifacts')/'Ventry-amoled-editorial.html').write_text(html,encoding='utf-8')
+          for route in ('/projects/raschet/','/legal/','/privacy/'):
+              html = html.replace('href="'+route+'"','href="https://135-106-227-179.sslip.io'+route+'"')
+          assert '<style>' in html and 'data:image/webp;base64,' in html
+          Path('artifacts/Ventry-modal-tabs.html').write_text(html,encoding='utf-8')
           PY
-          python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview-http.log 2>&1 &
+          python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview.log 2>&1 &
           python3 - <<'PY'
           from pathlib import Path
           import base64, json, time
           from selenium import webdriver
           from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
           from selenium.webdriver.common.keys import Keys
+
           options = Options()
           for arg in ('--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--window-size=1440,900'):
               options.add_argument(arg)
           browser = webdriver.Chrome(options=options)
-          records={}
+          base = 'http://127.0.0.1:18765/'
+          results={}
+          def js(expr):
+              return browser.execute_script(expr)
+          def screenshot(label):
+              image = browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','fromSurface':True,'captureBeyondViewport':False})['data']
+              (Path('artifacts')/label).write_bytes(base64.b64decode(image))
           try:
               for label,width,height in (('mobile-320',320,760),('mobile-360',360,800),('mobile-390',390,844),('mobile-430',430,900),('tablet-768',768,1000),('desktop-1440',1440,900)):
                   browser.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':width,'height':height,'deviceScaleFactor':1,'mobile':width<=768})
-                  browser.get('http://127.0.0.1:18765/')
-                  browser.execute_script("const img=document.querySelector('.work-thumbnail img');img.loading='eager';img.scrollIntoView({block:'center'});")
-                  browser.execute_async_script("const done=arguments[0]; Promise.race([Promise.all([document.fonts.ready,document.querySelector('.work-thumbnail img').decode()]).then(()=>true).catch(()=>false),new Promise(r=>setTimeout(()=>r(false),6000))]).then(done)")
-                  browser.execute_script('window.scrollTo(0,0)')
-                  time.sleep(.35)
-                  record=browser.execute_script("""return {
-                    viewport:innerWidth, documentWidth:document.documentElement.scrollWidth,
-                    documentHeight:Math.ceil(document.documentElement.scrollHeight),
-                    heroHeight:Math.ceil(document.querySelector('.opening').getBoundingClientRect().height),
-                    companyHeight:Math.ceil(document.querySelector('.company').getBoundingClientRect().height),
-                    methodHeight:Math.ceil(document.querySelector('.method').getBoundingClientRect().height),
-                    workHeight:Math.ceil(document.querySelector('.work').getBoundingClientRect().height),
-                    contactHeight:Math.ceil(document.querySelector('.reach').getBoundingClientRect().height),
-                    heroTitlePx:getComputedStyle(document.querySelector('h1')).fontSize,
-                    h1:document.querySelector('h1')?.innerText,
-                    h1Count:document.querySelectorAll('h1').length,
-                    logoLoaded:document.querySelectorAll('.rail-brand svg.brand-logo use,.mobile-brand svg.brand-logo use').length===2,
-                    imageLoaded:(i=>i.complete&&i.naturalWidth>0)(document.querySelector('.work-thumbnail img')),
-                    projectOnlyInWork:!document.querySelector('#start a[href="/projects/raschet/"]'),
-                    mobileHeaderVisible:getComputedStyle(document.querySelector('.mobile-top')).display!=='none',
-                    railVisible:getComputedStyle(document.querySelector('.rail')).display!=='none',
-                    menuWidth:Math.round(document.querySelector('.mobile-top').getBoundingClientRect().width)
+                  browser.get(base)
+                  browser.execute_async_script('const done=arguments[0];document.fonts.ready.then(()=>done(true))')
+                  metrics=js("""return {
+                      viewport:innerWidth,
+                      width:document.documentElement.scrollWidth,
+                      height:Math.round(document.documentElement.scrollHeight),
+                      header:getComputedStyle(document.querySelector('.mobile-top')).display,
+                      modalOpen:document.querySelector('#section-dialog').open,
+                      inlineProjects:!!document.querySelector('main .work-item'),
+                      logoCount:document.querySelectorAll('.brand-logo use').length
                   }""")
-                  print(label,json.dumps(record,ensure_ascii=False),flush=True)
-                  assert record['viewport']==width,(label,'viewport',record)
-                  assert record['documentWidth']<=width,(label,'overflow',record)
-                  if width<=430:
-                      assert record['heroHeight']<=380,(label,'cover too tall',record)
-                      assert record['documentHeight']<=2600,(label,'page too long',record)
-                      assert record['heroHeight'] + 67 < height,(label,'company section not reached in first viewport',record)
-                  assert record['h1Count']==1,(label,'headings',record)
-                  assert record['logoLoaded'] and record['imageLoaded'],(label,'images',record)
-                  assert record['projectOnlyInWork'],(label,'project must be secondary')
-                  assert record['mobileHeaderVisible'] == (width<=930), (label,'header visibility')
-                  assert record['railVisible'] == (width>930),(label,'rail visibility')
-                  if width<=930: assert record['menuWidth']<=width,(label,'menu width')
-                  firstfold=browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False,'fromSurface':True})['data']
-                  (Path('artifacts')/(label+'-firstfold.png')).write_bytes(base64.b64decode(firstfold))
-                  # Capture the full document without changing the viewport: 100svh must stay at the actual device height.
-                  pageHeight=min(6500,browser.execute_script('return Math.ceil(document.documentElement.scrollHeight)'))
-                  png=browser.execute_cdp_cmd('Page.captureScreenshot',{
-                      'format':'png','captureBeyondViewport':True,'fromSurface':True,
-                      'clip':{'x':0,'y':0,'width':width,'height':pageHeight,'scale':1}
-                  })['data']
-                  (Path('artifacts')/(label+'.png')).write_bytes(base64.b64decode(png))
-                  browser.execute_script('window.scrollTo(0,0)')
-                  if width<=930:
-                      # The menu is a native <details> control: test keyboard open, Escape and link close.
-                      browser.execute_script("document.querySelector('.mobile-nav summary').focus()")
-                      browser.switch_to.active_element.send_keys(Keys.ENTER)
-                      assert browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'keyboard menu opens')
-                      if width==390:
-                          menuShot=browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False,'fromSurface':True})['data']
-                          (Path('artifacts')/'mobile-390-menu.png').write_bytes(base64.b64decode(menuShot))
-                      browser.switch_to.active_element.send_keys(Keys.ESCAPE)
-                      assert not browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'Escape closes menu')
-                      assert browser.execute_script("return document.activeElement===document.querySelector('.mobile-nav summary')"),(label,'Escape restores focus')
-                      browser.execute_script("document.querySelector('.mobile-nav summary').click()")
-                      browser.execute_script("document.querySelector('.mobile-nav a[href=\"#contact\"]').click()")
-                      assert browser.execute_script('return location.hash')=='#contact',(label,'mobile contact')
-                      assert not browser.execute_script("return document.querySelector('.mobile-nav').open"),(label,'menu closes')
-                  else:
-                      browser.execute_script("document.querySelector('.rail-links a[href=\"#contact\"]').click()")
-                      assert browser.execute_script('return location.hash')=='#contact',(label,'desktop contact')
+                  print(label,json.dumps(metrics,ensure_ascii=False),flush=True)
+                  assert metrics['viewport']==width and metrics['width']<=width,(label,'overflow',metrics)
+                  assert not metrics['modalOpen'] and not metrics['inlineProjects'],(label,'home stays compact',metrics)
+                  assert metrics['logoCount']>=3,(label,'brand svg')
+                  if width<=430: assert metrics['height']<1000,(label,'unexpected long home',metrics)
+                  if width<=930: assert metrics['header']!='none',(label,'mobile header')
+                  else: assert metrics['header']=='none',(label,'desktop header')
+                  screenshot(label+'-home.png')
+
+                  js("document.querySelector('.chapter-strip a[href=\"#about\"]').click()")
+                  assert js("return document.querySelector('#section-dialog').open"),(label,'about modal opens')
+                  assert js("return !document.querySelector('[data-panel=\"about\"]').hidden"),(label,'company visible')
+                  assert js("return location.hash")=='#about',(label,'deep URL')
+                  if width==390: screenshot(label+'-company.png')
+                  js("document.querySelector('.dialog-tabs a[href=\"#method\"]').click()")
+                  assert js("return !document.querySelector('[data-panel=\"method\"]').hidden"),(label,'method switch')
+                  js("document.querySelectorAll('.method-entries details')[1].querySelector('summary').click()")
+                  assert js("return document.querySelectorAll('.method-entries details')[1].open"),(label,'details expand')
+                  js("document.querySelector('.dialog-tabs a[href=\"#projects\"]').click()")
+                  assert js("return !document.querySelector('[data-panel=\"projects\"]').hidden"),(label,'projects switch')
+                  assert js("return !!document.querySelector('.dialog-section.work a[href=\"/projects/raschet/\"]')"),(label,'project route')
+                  if width==390: screenshot(label+'-projects.png')
+                  js("document.querySelector('.dialog-tabs a[href=\"#contact\"]').click()")
+                  assert js("return !document.querySelector('[data-panel=\"contact\"]').hidden"),(label,'contacts switch')
+                  assert js("return document.querySelectorAll('.chapter-strip a[aria-current=\"location\"]').length===1"),(label,'current tab')
                   if width==390:
-                      browser.execute_script("window.scrollTo({top:0,behavior:'instant'})")
-                      time.sleep(.1)
-                      browser.execute_script("document.querySelector('.mobile-nav summary').click()")
-                      browser.execute_script("document.querySelector('.mobile-nav a[href=\"#contact\"]').click()")
-                      time.sleep(1.3)
-                      smoothActive=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"],.mobile-nav nav a[aria-current="location"],.chapter-strip a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
-                      assert smoothActive==['#contact','#contact','#contact'],(label,'smooth-scroll nav',smoothActive)
-                  browser.execute_script("document.querySelector('#contact').scrollIntoView({behavior:'instant'})")
-                  time.sleep(.35)
-                  active=browser.execute_script("""return [...document.querySelectorAll('.rail-links a[aria-current="location"], .mobile-nav nav a[aria-current="location"], .chapter-strip a[aria-current="location"]')].map(a=>a.getAttribute('href'))""")
-                  assert active==['#contact','#contact','#contact'],(label,'active section visible',active)
-                  record['contactCurrentInBothMenus']=True
-                  browser.execute_script("document.querySelectorAll('.method-entries details')[1].querySelector('summary').click()")
-                  assert browser.execute_script("return document.querySelectorAll('.method-entries details')[1].open"),(label,'native accordion')
-                  if width==390:
-                      browser.execute_script("document.querySelector('[data-copy-email]').click()")
-                      time.sleep(.3)
-                      assert browser.execute_script("return document.querySelector('#copy-email-status').textContent")=='Адрес скопирован',(label,'copy status')
+                      screenshot(label+'-contact.png')
+                      browser.find_element(By.CSS_SELECTOR, '[data-copy-email]').click()
+                      time.sleep(.2)
+                      assert js("return document.querySelector('#copy-email-status').textContent")=='Адрес скопирован',(label,'copy')
                       time.sleep(3.2)
-                      assert not browser.execute_script("return document.querySelector('#copy-email-status').textContent"),(label,'copy status expiration')
-                  records[label]=record
-              browser.execute_cdp_cmd('Emulation.setEmulatedMedia',{'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
-              browser.get('http://127.0.0.1:18765/')
-              assert browser.execute_script("return getComputedStyle(document.querySelector('.identity-construction')).animationDuration") in ('0.01ms','1e-05s','0s'), 'reduced motion should disable hero animation'
-              records['reducedMotion']=True
-              browser.execute_cdp_cmd('Emulation.clearDeviceMetricsOverride',{})
-              browser.get(Path('artifacts/Ventry-amoled-editorial.html').resolve().as_uri())
-              stand=browser.execute_script("""return {
-                title:document.querySelector('h1')?.innerText,
-                logo:document.querySelector('.mobile-brand svg.brand-logo use')!==null,
-                cssLoaded:document.styleSheets.length>0,
-                hasLocalScript:typeof document.querySelector('.mobile-nav').open==='boolean'
-              }""")
-              print('standalone',json.dumps(stand,ensure_ascii=False),flush=True)
-              assert stand['logo'] and stand['cssLoaded'] and stand['hasLocalScript'],stand
-              records['standalone']=stand
-              Path('artifacts/QA.json').write_text(json.dumps(records,ensure_ascii=False,indent=2),encoding='utf-8')
+                      assert not js("return document.querySelector('#copy-email-status').textContent"),(label,'status clears')
+                  js("document.querySelector('[data-close-dialog]').click()")
+                  assert not js("return document.querySelector('#section-dialog').open"),(label,'close')
+                  assert js("return !location.hash"),(label,'close clears anchor')
+                  js("document.querySelector('.chapter-strip a[href=\"#projects\"]').click()")
+                  browser.switch_to.active_element.send_keys(Keys.ESCAPE)
+                  assert not js("return document.querySelector('#section-dialog').open"),(label,'Escape closes')
+                  if width<=930:
+                      js("document.querySelector('.mobile-nav summary').click()")
+                      assert js("return document.querySelector('.mobile-nav').open"),(label,'mobile menu')
+                      js("document.querySelector('.mobile-nav a[href=\"#method\"]').click()")
+                      assert js("return document.querySelector('#section-dialog').open"),(label,'mobile menu opens modal')
+                      assert not js("return document.querySelector('.mobile-nav').open"),(label,'menu closes')
+                      js("document.querySelector('[data-close-dialog]').click()")
+                  browser.get(base+'#projects')
+                  assert js("return document.querySelector('#section-dialog').open && !document.querySelector('[data-panel=\"projects\"]').hidden"),(label,'direct hash')
+                  js("document.querySelector('[data-close-dialog]').click()")
+                  results[label]=metrics
+
+              browser.get(Path('artifacts/Ventry-modal-tabs.html').resolve().as_uri())
+              assert js("return document.querySelectorAll('style').length>0 && document.querySelector('#section-dialog')!==null")
+              js("document.querySelector('.chapter-strip a[href=\"#about\"]').click()")
+              assert js("return document.querySelector('#section-dialog').open"),'standalone modal'
+              results['standalone']=True
+              Path('artifacts/QA.json').write_text(json.dumps(results,ensure_ascii=False,indent=2),encoding='utf-8')
           finally:
               browser.quit()
           PY
-      - name: Upload Chrome output
-        uses: actions/upload-artifact@v4
+      - name: Upload previews
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: ventry-corporate-homepage-preview
+          name: ventry-modal-homepage-preview
           path: artifacts/
           retention-days: 7
           if-no-files-found: warn
