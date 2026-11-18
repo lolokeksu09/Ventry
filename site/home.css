@@ -18,8 +18,8 @@
 .hero-lower p{max-width:39ch;font-size:16px;line-height:1.5;color:#53675c}
 .editorial-link{display:inline-flex;gap:14px;align-items:center;justify-content:space-between;white-space:nowrap;min-height:45px;border-bottom:1px solid #698275;font-weight:600;font-size:15px}
 .editorial-link:hover{border-color:var(--v-ink)}
-.hero-graphic{position:relative;overflow:hidden;display:grid;place-items:center;min-height:450px;background:var(--v-green);color:#f9efd8}
-.identity-v{display:block;width:88%;height:auto;transform:translate(4%,3%) rotate(-6deg);fill:#f2e9cf}
+.hero-graphic{position:relative;overflow:hidden;display:grid;place-items:center;min-height:450px;background:transparent;color:var(--v-green)}
+.identity-v{display:block;width:112%;height:auto;transform:translate(11%,-1%) rotate(-4deg);fill:#0d3025}
 .graphic-caption{position:absolute;bottom:24px;left:28px;color:#c9d6c4;font-size:13px;letter-spacing:.01em}
 .hero-foot{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:16px;border-top:1px solid var(--v-line);color:#52665a;font-size:13px}
 .hero-foot a{color:var(--v-ink);font-weight:600}
@@ -77,8 +77,8 @@
 .hero-lower{padding-top:28px}
 .hero-lower p{max-width:35ch;font-size:15px}
 .editorial-link{margin-top:16px;font-size:15px}
-.hero-graphic{min-height:0;height:245px;margin-top:34px}
-.identity-v{width:54%;height:auto;transform:rotate(-6deg) translateY(-4%)}
+.hero-graphic{min-height:0;height:188px;margin-top:8px}
+.identity-v{width:78%;height:auto;transform:translate(17%,-9%) rotate(-4deg)}
 .graphic-caption{font-size:11px;bottom:17px;left:18px}
 .hero-foot{padding-block:14px;font-size:11px}
 .hero-foot>span{max-width:22ch}
@@ -109,3 +109,8 @@
 .project-info h3{font-size:73px}
 }
 @media(prefers-reduced-motion:reduce){.company-page{scroll-behavior:auto}}
+
+/* Keep the contact arrow attached even when the address breaks at the @ sign. */
+.contact-email{flex-wrap:nowrap;align-items:flex-end}
+.contact-email-text{min-width:0;overflow-wrap:anywhere}
+.contact-email-arrow{flex:0 0 auto;white-space:nowrap}
