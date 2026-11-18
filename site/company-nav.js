@@ -13,7 +13,7 @@ let previousTrigger = null;
 let modalBackPending = false;
 
 function setCurrentSection(id) {
-  document.querySelectorAll('.rail-links a, .mobile-nav nav a, .chapter-strip a, .dialog-tabs a')
+  document.querySelectorAll('.rail-links a, .mobile-nav nav a, .dialog-tabs a')
     .forEach(link => {
       if (link.getAttribute('href') === '#' + id) link.setAttribute('aria-current', 'location');
       else link.removeAttribute('aria-current');
