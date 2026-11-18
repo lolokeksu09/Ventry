@@ -76,12 +76,26 @@ try:
         assert js(f"""return getComputedStyle(document.querySelector('{header_selector}')).display !== 'none'"""), (
             "Primary responsive header is hidden", width
         )
+        composition = js("""const hero = document.querySelector('.opening').getBoundingClientRect();
+          const footer = document.querySelector('.reach-footer').getBoundingClientRect();
+          return {
+            heroHeight: Math.round(hero.height),
+            gap: Math.round(footer.top - hero.bottom),
+            brandShape: document.querySelector('.identity-construction use')?.getAttribute('href'),
+            ctas: [...document.querySelectorAll('.opening-actions a')].map(a => Math.round(a.getBoundingClientRect().height))
+          }""")
+        assert abs(composition["gap"]) <= 2, ("Unused band between hero and footer", width, composition)
+        assert composition["brandShape"] == "#ventry-brand-shape", ("Original Ventry logo altered", width)
+        assert all(h >= 44 for h in composition["ctas"]), ("Hero CTA tap target too small", width, composition)
+        page["composition"] = composition
         home_height = js("return Math.ceil(document.documentElement.scrollHeight)")
         assert home_height < max(1100, height + 150), ("home page too tall", width, home_height)
         capture(f"ui-{label}-home.png")
 
         open_home_section("projects", width)
         wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
+        close_target = js("""return Math.round(document.querySelector('[data-close-dialog]').getBoundingClientRect().height)""")
+        assert close_target >= 44, ("Dialog close target too small", width, close_target)
         wait.until(lambda _: js("""return (i=>i.complete&&i.naturalWidth>0)(document.querySelector('[data-panel="projects"] img'))"""))
         assert js("return location.hash") == "#projects"
         if width in (390, 1440):
