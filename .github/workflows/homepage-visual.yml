@@ -43,16 +43,16 @@ jobs:
               encoded = base64.b64encode((root/'images'/name).read_bytes()).decode('ascii')
               html = html.replace('/images/'+name, 'data:image/webp;base64,'+encoded)
           html = re.sub(r'  <link rel="preload"[^>]*>\n', '', html)
-          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=company-film-2">','<style>\n'+css+'\n</style>')
+          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=company-compact-v3">','<style>\n'+css+'\n</style>')
           for name,ver in [('app.js','company-1'),('company-nav.js','company-film-2')]:
               src = (root/name).read_text(encoding='utf-8')
               html = html.replace('<script defer src="/'+name+'?v='+ver+'"></script>', '<script defer>\n'+src+'\n</script>')
           html = html.replace('href="/"','href="#start"')
           for path in ('/projects/raschet/','/legal/','/privacy/'):
               html = html.replace('href="'+path+'"','href="https://135-106-227-179.sslip.io'+path+'"')
-          assert '<style>' in html and 'company-film-2">' not in html
+          assert '<style>' in html and 'href="/home-company.css' not in html
           assert 'data:image/webp;base64,' in html
-          (Path('artifacts')/'Ventry-corporate-redesign.html').write_text(html,encoding='utf-8')
+          (Path('artifacts')/'Ventry-compact-v3.html').write_text(html,encoding='utf-8')
           PY
           python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview-http.log 2>&1 &
           python3 - <<'PY'
@@ -95,7 +95,10 @@ jobs:
                   print(label,json.dumps(record,ensure_ascii=False),flush=True)
                   assert record['viewport']==width,(label,'viewport',record)
                   assert record['documentWidth']<=width,(label,'overflow',record)
-                  if width<=430: assert record['documentHeight']<=3000,(label,'page too long',record)
+                  if width<=430:
+                      assert record['heroHeight']<=380,(label,'cover too tall',record)
+                      assert record['documentHeight']<=2600,(label,'page too long',record)
+                      assert record['heroHeight'] + 67 < height,(label,'company section not reached in first viewport',record)
                   assert record['h1Count']==1,(label,'headings',record)
                   assert record['logoLoaded'] and record['imageLoaded'],(label,'images',record)
                   assert record['projectOnlyInWork'],(label,'project must be secondary')
