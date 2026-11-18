@@ -67,7 +67,7 @@ jobs:
           browser = webdriver.Chrome(options=options)
           records={}
           try:
-              for label,width,height in (('mobile-320',320,760),('mobile-390',390,844),('tablet-768',768,1000),('desktop-1440',1440,900)):
+              for label,width,height in (('mobile-320',320,760),('mobile-360',360,800),('mobile-390',390,844),('mobile-430',430,900),('tablet-768',768,1000),('desktop-1440',1440,900)):
                   browser.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':width,'height':height,'deviceScaleFactor':1,'mobile':width<=768})
                   browser.get('http://127.0.0.1:18765/')
                   browser.execute_script("const img=document.querySelector('.work-thumbnail img');img.loading='eager';img.scrollIntoView({block:'center'});")
@@ -76,6 +76,13 @@ jobs:
                   time.sleep(.35)
                   record=browser.execute_script("""return {
                     viewport:innerWidth, documentWidth:document.documentElement.scrollWidth,
+                    documentHeight:Math.ceil(document.documentElement.scrollHeight),
+                    heroHeight:Math.ceil(document.querySelector('.opening').getBoundingClientRect().height),
+                    companyHeight:Math.ceil(document.querySelector('.company').getBoundingClientRect().height),
+                    methodHeight:Math.ceil(document.querySelector('.method').getBoundingClientRect().height),
+                    workHeight:Math.ceil(document.querySelector('.work').getBoundingClientRect().height),
+                    contactHeight:Math.ceil(document.querySelector('.reach').getBoundingClientRect().height),
+                    heroTitlePx:getComputedStyle(document.querySelector('h1')).fontSize,
                     h1:document.querySelector('h1')?.innerText,
                     h1Count:document.querySelectorAll('h1').length,
                     logoLoaded:[...document.querySelectorAll('.rail-brand img,.mobile-brand img')].every(i=>i.complete&&i.naturalWidth>0),
@@ -88,6 +95,7 @@ jobs:
                   print(label,json.dumps(record,ensure_ascii=False),flush=True)
                   assert record['viewport']==width,(label,'viewport',record)
                   assert record['documentWidth']<=width,(label,'overflow',record)
+                  if width<=430: assert record['documentHeight']<=3000,(label,'page too long',record)
                   assert record['h1Count']==1,(label,'headings',record)
                   assert record['logoLoaded'] and record['imageLoaded'],(label,'images',record)
                   assert record['projectOnlyInWork'],(label,'project must be secondary')
