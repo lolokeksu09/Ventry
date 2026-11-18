@@ -82,8 +82,7 @@ try:
         if width == 390:
             capture("ui-390-contact.png")
         js("""document.querySelector('[data-close-dialog]').click()""")
-        assert not js("return document.querySelector('#section-dialog').open")
-        assert not js("return location.hash")
+        wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
         page["homeHeight"] = home_height
 
         product = load("/projects/raschet/", width, height)
@@ -126,10 +125,42 @@ try:
     driver.back()
     wait.until(lambda _: not js("return document.querySelector('#section-dialog').open"))
     assert not js("return location.hash"), "Back must close the dialog"
+    # Closing a pushed dialog must go Back, rather than replacing its URL and
+    # leaving a duplicate base-page entry on every subsequent open.
+    stable_history_length = js("return history.length")
+    for cycle, close_action in enumerate(("button", "escape", "start", "button")):
+        js("""document.querySelector('.chapter-strip a[href="#projects"]').click()""")
+        wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
+        assert js("return history.length") == stable_history_length, (
+            "Repeated opening accumulated a browser-history entry", cycle
+        )
+        if cycle == 1:
+            js("""document.querySelector('.dialog-tabs a[href="#method"]').click()""")
+            assert js("return location.hash") == "#method"
+        if close_action == "button":
+            js("""document.querySelector('[data-close-dialog]').click()""")
+        elif close_action == "escape":
+            driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+        else:
+            js("""document.querySelector('.mobile-nav a[href="#start"]').click()""")
+        wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
+        assert js("return history.length") == stable_history_length, (
+            "Closing accumulated a browser-history entry", cycle
+        )
+
+    # Browser Forward should reopen the last modal; Back should close it.
+    driver.forward()
+    wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
+    assert js("return location.hash") == "#projects"
+    driver.back()
+    wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
+
     driver.get(BASE + "/#projects")
     assert js("""return document.querySelector('#section-dialog').open && !document.querySelector('[data-panel="projects"]').hidden""")
+    direct_history_length = js("return history.length")
     js("""document.querySelector('[data-close-dialog]').click()""")
     assert not js("return location.hash")
+    assert js("return history.length") == direct_history_length, "Direct hash close must not navigate Back"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print("PASS: 4 viewports, 4 public pages, dialog image, history, focus and mobile menus",flush=True)

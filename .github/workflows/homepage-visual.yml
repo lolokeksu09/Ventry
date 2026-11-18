@@ -61,7 +61,7 @@ jobs:
           html = html.replace('/images/raschet-ledger-small.webp','data:image/webp;base64,'+encoded)
           html = html.replace('<link rel="stylesheet" href="/home-company.css?v=ui-audit-2">','<style>\n'+css+'\n</style>')
           js = (root/'company-nav.js').read_text(encoding='utf-8')
-          html = html.replace('<script defer src="/company-nav.js?v=ui-audit-2"></script>','')
+          html = html.replace('<script defer src="/company-nav.js?v=modal-history-1"></script>','')
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           html = html.replace('href="/"','href="#start"')
           for route in ('/projects/raschet/','/legal/','/privacy/'):
@@ -77,6 +77,7 @@ jobs:
           from selenium.webdriver.chrome.options import Options
           from selenium.webdriver.common.by import By
           from selenium.webdriver.common.keys import Keys
+          from selenium.webdriver.support.ui import WebDriverWait
 
           options = Options()
           for arg in ('--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--window-size=1440,900'):
@@ -137,7 +138,7 @@ jobs:
                       assert not js("return document.querySelector('#copy-email-status').textContent"),(label,'status clears')
                   js("document.querySelector('[data-close-dialog]').click()")
                   assert not js("return document.querySelector('#section-dialog').open"),(label,'close')
-                  assert js("return !location.hash"),(label,'close clears anchor')
+                  WebDriverWait(browser, 5).until(lambda _: js("return !location.hash"))
                   js("document.querySelector('.chapter-strip a[href=\"#projects\"]').click()")
                   browser.switch_to.active_element.send_keys(Keys.ESCAPE)
                   assert not js("return document.querySelector('#section-dialog').open"),(label,'Escape closes')
