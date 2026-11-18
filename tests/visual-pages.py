@@ -56,6 +56,9 @@ try:
     for width, height in ((320, 760), (390, 844), (768, 1000), (1440, 900)):
         label = str(width)
         page = load("/", width, height)
+        if width <= 390:
+            strip_width = js("return Math.round(document.querySelector('.chapter-strip').getBoundingClientRect().width)")
+            assert strip_width >= width - 2, ("chapter strip is narrower than viewport", width, strip_width)
         home_height = js("return Math.ceil(document.documentElement.scrollHeight)")
         assert home_height < max(1100, height + 150), ("home page too tall", width, home_height)
         capture(f"ui-{label}-home.png")

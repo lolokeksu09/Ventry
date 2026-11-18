@@ -268,3 +268,8 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .no-script-content h2{font-family:Georgia,serif;font-size:28px;font-weight:400}
 .no-script-content p{margin-top:12px;color:#bdcdbf;max-width:68ch}
 .no-script-content a{text-decoration:underline;text-underline-offset:3px}
+
+/* Keep the chapter navigation aligned with the full-width mobile layout. */
+.chapter-strip{width:100%}
+@media(max-width:620px){.chapter-strip a{font-size:13px}}
+@media(max-width:360px){.chapter-strip a{font-size:12px}}
