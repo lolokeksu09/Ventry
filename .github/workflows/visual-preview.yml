@@ -49,7 +49,10 @@ jobs:
                       'width': width, 'height': height, 'deviceScaleFactor': 1, 'mobile': width < 641
                   })
                   driver.get('http://127.0.0.1:18765/')
-                  time.sleep(.4)
+                  driver.execute_script("document.querySelector('.project-photo img').scrollIntoView({block:'center'})")
+                  driver.execute_async_script("const done = arguments[0]; document.querySelector('.project-photo img').decode().then(() => done('ready'), error => done(String(error)))")
+                  driver.execute_script('window.scrollTo(0, 0)')
+                  time.sleep(.3)
                   metrics = driver.execute_script("""
                       const hero = document.querySelector('.editorial-hero');
                       const header = document.querySelector('.editorial-header-inner');
@@ -64,7 +67,7 @@ jobs:
                         projectLoaded: project.complete && project.naturalWidth > 0,
                         h1Text: document.querySelector('h1').textContent,
                         screenWidth: screen.width,
-                        overflowNodes: Array.from(document.querySelectorAll('body *')).filter(e => e.getBoundingClientRect().right > screen.width + 1).slice(0,12).map(e => ({tag:e.tagName,cls:e.className.baseVal || e.className, right:Math.round(e.getBoundingClientRect().right)}))
+                        overflowNodes: Array.from(document.querySelectorAll('body *')).filter(e => e.getBoundingClientRect().right > innerWidth + 1).slice(0,12).map(e => ({tag:e.tagName,cls:e.className.baseVal || e.className, right:Math.round(e.getBoundingClientRect().right)}))
                       }
                   """)
                   full_height = min(3300, driver.execute_script('return Math.ceil(document.documentElement.scrollHeight)'))
