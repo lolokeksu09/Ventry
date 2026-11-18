@@ -13,14 +13,14 @@ The owner rejected the deployed previous design as generic. Mobile screenshot at
 
 ## Known limits
 Static checks of linked routes, source content and CSS braces were performed; those do **not** establish appearance.
-Browser screenshot and interactive visual checks were attempted locally, but the environment returned `net::ERR_BLOCKED_BY_ADMINISTRATOR` for local file/localhost in Chromium. Visual QA on real phone and desktop remains necessary **before merging**.
+Local Chromium access was blocked (`net::ERR_BLOCKED_BY_ADMINISTRATOR`), so the separate `Ventry visual preview` GitHub Actions job renders the exact PR files in real Chrome. Run [44280347500](https://github.com/lolokeksu09/Ventry/actions/runs/44280347500) completed successfully with screenshots for 320px, 390px and 1440px. Browser metrics: mobile `scrollWidth === viewport` at both widths; header height 66px; hero heights 657px and 610px respectively; logo and product image decoded. Desktop at 1440px: `scrollWidth=1425`, both images decoded. Visual inspection confirmed the product photo renders on desktop after decoding the lazy asset. Real-device QA and owner approval remain necessary before merge.
 
 ## Acceptance
-- [ ] CI `verify-site`, security, Compose and Caddy tests pass.
-- [ ] Header stays one row at 320, 390 and 430 px.
-- [ ] No horizontal scroll, clipped text or overlap at 320, 390, 768, 1024 and 1440 px.
-- [ ] Product image loads and remains properly cropped in both layout modes.
-- [ ] Keyboard focus and all links remain functional; reduced motion respected.
+- [ ] Main CI `verify-site`, security, Compose and Caddy tests: final latest-commit status pending.
+- [x] Header stays one row at 320px and 390px in Chrome; 430px remains untested.
+- [x] No horizontal page scroll at 320px, 390px and 1440px in Chrome; 768px and 1024px remain untested.
+- [x] Product image decoded and visibly rendered at 390px and 1440px.
+- [ ] Keyboard focus, every link and reduced motion have not been checked interactively.
 - [ ] Confirm with owner before merging: this is a proposed alternative, not an approved production design.
 
 ## Invariants
