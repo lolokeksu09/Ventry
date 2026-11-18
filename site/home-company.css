@@ -74,9 +74,11 @@ a {text-decoration:none;color:inherit;}
 .company h2 span {color:#6c8272;}
 .company-bottom {display:grid;grid-template-columns:1fr 1.25fr;align-items:end;gap:30px;margin-top:clamp(70px,11vw,170px);}
 .company-bottom>p {max-width:48ch;color:#344c3c;font-size:clamp(18px,1.7vw,26px);line-height:1.58;letter-spacing:-.017em;}
-.company-seal {display:inline-flex;justify-content:flex-start;align-items:baseline;gap:12px;font-size:13px;color:#678373;width:max-content;}
-.company-seal>span:first-child {font-size:60px;line-height:.8;font-weight:600;letter-spacing:-.12em;}
-.company-seal>span:last-child {font-size:14px;line-height:.9;font-weight:600;}
+.company-follow {width:max-content;max-width:100%;display:flex;align-items:center;gap:15px;padding-bottom:12px;border-bottom:1px solid #a6b8a6;font-size:15px;font-weight:600;color:#214b34;}
+.company-follow img {width:42px;height:42px;border-radius:9px;}
+.company-follow>span {display:inline-flex;align-items:center;gap:22px;}
+.company-follow:hover {border-color:#2b6640;color:#2b6640;}
+.company-follow:focus-visible {outline-color:#256d46;}
 
 /* Stage 3: a compact native interactive index, not a three-card template */
 .method {background:#e0e6d9;color:#14281e;min-height:730px;display:grid;grid-template-columns:.95fr 1.05fr;padding:clamp(40px,5.6vw,94px) clamp(28px,6vw,110px);gap:clamp(35px,5vw,100px);}
@@ -176,7 +178,7 @@ details[open] .entry-toggle {transform:rotate(45deg);}
  .opening-index {font-size:12px;margin-bottom:23px;}
  .opening h1 {font-size:clamp(61px,11.5vw,86px);line-height:1.02;max-width:9.4ch;}
  .opening-subline {font-size:16px;line-height:1.5;max-width:32ch;margin-top:23px;}
- .identity-object {width:340px;height:360px;top:auto;bottom:-56px;right:-110px;opacity:.76;}
+ .identity-object {width:310px;height:360px;top:auto;bottom:-40px;right:-50px;opacity:.78;}
  .object-caption,.object-coordinate {display:none;}
  .opening-lower {margin-inline:22px;min-height:64px;font-size:11px;gap:12px;}
  .opening-lower>span {max-width:24ch;}
@@ -205,9 +207,9 @@ details[open] .entry-toggle {transform:rotate(45deg);}
  .work-item {display:grid;grid-template-columns:105px minmax(0,1fr) 18px;gap:15px;padding-block:20px;margin-top:45px;}
  .work-thumbnail {height:115px;}
  .work-detail {gap:5px;}
- .work-type {font-size:11px;}
- .work-detail strong {font-size:clamp(32px,6.5vw,48px);}
- .work-detail p {font-size:12px;line-height:1.35;}
+ .work-type {font-size:12px;line-height:1.45;}
+ .work-detail strong {font-size:clamp(34px,6.8vw,48px);}
+ .work-detail p {font-size:13px;line-height:1.5;}
  .work-arrow {font-size:23px;}
  .reach {min-height:680px;padding:60px 23px 30px;}
  .reach-message {padding-block:85px;}
@@ -221,11 +223,11 @@ details[open] .entry-toggle {transform:rotate(45deg);}
 @media(max-width:410px) {
  .opening h1 {font-size:clamp(51px,13vw,62px);}
  .opening-composition {min-height:500px;}
- .identity-object {width:270px;height:330px;right:-106px;bottom:-63px;}
+ .identity-object {width:260px;height:330px;right:-43px;bottom:-45px;}
  .opening-subline {max-width:27ch;}
  .company h2 {font-size:clamp(48px,12vw,60px);}
  .method h2 {font-size:clamp(62px,16vw,78px);}
- .work-detail p {font-size:11px;}
+ .work-detail p {font-size:12px;line-height:1.4;}
  .work-item {grid-template-columns:85px minmax(0,1fr) 18px;gap:12px;}
  .work-thumbnail {height:105px;}
  .reach h2 {font-size:clamp(65px,16vw,81px);}
@@ -235,4 +237,13 @@ details[open] .entry-toggle {transform:rotate(45deg);}
  html {scroll-behavior:auto;}
  .identity-construction {animation:none;}
  *,*::before,*::after {transition-duration:.01ms!important;animation-duration:.01ms!important;}
+}
+/* Visible active chapter for touch and keyboard navigation. */
+.mobile-nav nav a[aria-current="location"] {color:#0f5132;font-weight:600;}
+.mobile-nav nav a[aria-current="location"]::before {content:"";width:6px;height:6px;background:#397c50;border-radius:50%;margin-right:9px;}
+.method-entries summary:hover {color:#287041;}
+.method-entries summary:focus-visible {outline:3px solid #2b7951;outline-offset:-3px;}
+@media (max-width:410px) {
+  .work-item {padding-block:24px;}
+  .work-detail {gap:7px;}
 }
