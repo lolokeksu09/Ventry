@@ -134,6 +134,39 @@ jobs:
           grep -Fiq "content-security-policy: default-src 'none'; script-src 'self'; style-src 'self';" "$RUNNER_TEMP/ventry-headers"
           grep -iq '^x-content-type-options: nosniff' "$RUNNER_TEMP/ventry-headers"
           grep -iq '^x-frame-options: DENY' "$RUNNER_TEMP/ventry-headers"
+          grep -Eiq '^cache-control: no-cache[[:space:]]*
+
+          # Prove the exact release and all shipped assets, including the project page.
+          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-version.json" "$url/version.json"
+          cmp site/version.json "$RUNNER_TEMP/ventry-version.json"
+          while IFS= read -r file; do
+            path="${file#site/}"
+            curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-asset" "$url/$path"
+            cmp "$file" "$RUNNER_TEMP/ventry-asset"
+          done < <(find site -type f ! -name index.html ! -name version.json | sort)
+          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-project.html" "$url/projects/raschet/"
+          cmp site/projects/raschet/index.html "$RUNNER_TEMP/ventry-project.html"
+          test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$ip/")" = 308
+          test "$(curl --silent --show-error -o /dev/null -w '%{redirect_url}' "$ip/")" = "$url/"
+          test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$url/__ventry_not_found__")" = 404
+ "$RUNNER_TEMP/ventry-headers"
+          curl --fail --silent --show-error --head --max-time 15 "$url/index.html" > "$RUNNER_TEMP/ventry-index-headers"
+          grep -Eiq '^cache-control: no-cache[[:space:]]*
+
+          # Prove the exact release and all shipped assets, including the project page.
+          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-version.json" "$url/version.json"
+          cmp site/version.json "$RUNNER_TEMP/ventry-version.json"
+          while IFS= read -r file; do
+            path="${file#site/}"
+            curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-asset" "$url/$path"
+            cmp "$file" "$RUNNER_TEMP/ventry-asset"
+          done < <(find site -type f ! -name index.html ! -name version.json | sort)
+          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-project.html" "$url/projects/raschet/"
+          cmp site/projects/raschet/index.html "$RUNNER_TEMP/ventry-project.html"
+          test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$ip/")" = 308
+          test "$(curl --silent --show-error -o /dev/null -w '%{redirect_url}' "$ip/")" = "$url/"
+          test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$url/__ventry_not_found__")" = 404
+ "$RUNNER_TEMP/ventry-index-headers"
 
           # Prove the exact release and all shipped assets, including the project page.
           curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-version.json" "$url/version.json"

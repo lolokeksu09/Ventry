@@ -21,6 +21,10 @@
         Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
     }
 
+    # Revalidate HTML so a new deployment cannot reuse an old document with new assets.
+    @pages path / */ *.html
+    header @pages Cache-Control "no-cache"
+
     @assets path *.css *.js *.svg
     header @assets Cache-Control "public, max-age=0, must-revalidate"
 
