@@ -1,4 +1,4 @@
-name: Ventry modal homepage visual QA
+name: Ventry homepage visual QA
 
 on:
   pull_request:
@@ -34,8 +34,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           h = Path('site/index.html').read_text()
-          assert '<dialog class="section-dialog"' in h
-          assert 'data-panel="projects"' in h
+          assert '<dialog' not in h
+          for section in ("about", "method", "projects", "contact"):
+              assert f'id="{section}"' in h
           assert '<style' not in h and '<script>' not in h
           assert 'href="/legal/"' in h and 'href="/privacy/"' in h
           PY
@@ -44,13 +45,13 @@ jobs:
           python3 -m pip install --quiet --break-system-packages selenium==4.38.0
           command -v google-chrome
           command -v chromedriver
-      - name: Test dialogs, capture viewport screenshots and export standalone HTML
+      - name: Test sections, capture viewport screenshots and export standalone HTML
         run: |
           set -eu
           mkdir -p artifacts
           python3 - <<'PY'
           from pathlib import Path
-          import base64, json
+          import base64, re
           root = Path('site')
           html = (root/'index.html').read_text(encoding='utf-8')
           css = (root/'home-company.css').read_text(encoding='utf-8')
@@ -59,122 +60,25 @@ jobs:
               css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
           encoded = base64.b64encode((root/'images'/'raschet-ledger-small.webp').read_bytes()).decode('ascii')
           html = html.replace('/images/raschet-ledger-small.webp','data:image/webp;base64,'+encoded)
-          html = html.replace('<link rel="stylesheet" href="/home-company.css?v=composition-1">','<style>\n'+css+'\n</style>')
+          favicon = base64.b64encode((root/'favicon.svg').read_bytes()).decode('ascii')
+          html = html.replace('href="/favicon.svg"', 'href="data:image/svg+xml;base64,'+favicon+'"')
+          html, css_count = re.subn(r'<link rel="stylesheet" href="/home-company\.css(?:\?[^"]*)?">', lambda _: '<style>\n'+css+'\n</style>', html)
           js = (root/'company-nav.js').read_text(encoding='utf-8')
-          html = html.replace('<script defer src="/company-nav.js?v=dedup-1"></script>','')
+          html, js_count = re.subn(r'<script defer src="/company-nav\.js(?:\?[^"]*)?"></script>', '', html)
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           html = html.replace('href="/"','href="#start"')
           for route in ('/projects/raschet/','/legal/','/privacy/'):
               html = html.replace('href="'+route+'"','href="https://135-106-227-179.sslip.io'+route+'"')
-          assert '<style>' in html and 'data:image/webp;base64,' in html
+          assert css_count == js_count == 1 and 'data:image/webp;base64,' in html
           Path('artifacts/Ventry-ui-audit.html').write_text(html,encoding='utf-8')
           PY
           python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview.log 2>&1 &
-          python3 - <<'PY'
-          from pathlib import Path
-          import base64, json, time
-          from selenium import webdriver
-          from selenium.webdriver.chrome.options import Options
-          from selenium.webdriver.common.by import By
-          from selenium.webdriver.common.keys import Keys
-          from selenium.webdriver.support.ui import WebDriverWait
-
-          options = Options()
-          for arg in ('--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--window-size=1440,900'):
-              options.add_argument(arg)
-          browser = webdriver.Chrome(options=options)
-          base = 'http://127.0.0.1:18765/'
-          results={}
-          def js(expr):
-              return browser.execute_script(expr)
-          def screenshot(label):
-              image = browser.execute_cdp_cmd('Page.captureScreenshot',{'format':'png','fromSurface':True,'captureBeyondViewport':False})['data']
-              (Path('artifacts')/label).write_bytes(base64.b64decode(image))
-          try:
-              for label,width,height in (('mobile-320',320,760),('mobile-360',360,800),('mobile-390',390,844),('mobile-430',430,900),('tablet-768',768,1000),('desktop-1440',1440,900)):
-                  browser.execute_cdp_cmd('Emulation.setDeviceMetricsOverride',{'width':width,'height':height,'deviceScaleFactor':1,'mobile':width<=768})
-                  browser.get(base)
-                  browser.execute_async_script('const done=arguments[0];document.fonts.ready.then(()=>done(true))')
-                  metrics=js("""return {
-                      viewport:innerWidth,
-                      width:document.documentElement.scrollWidth,
-                      height:Math.round(document.documentElement.scrollHeight),
-                      header:getComputedStyle(document.querySelector('.mobile-top')).display,
-                      modalOpen:document.querySelector('#section-dialog').open,
-                      inlineProjects:!!document.querySelector('main .work-item'),
-                      logoCount:document.querySelectorAll('.brand-logo use').length
-                  }""")
-                  print(label,json.dumps(metrics,ensure_ascii=False),flush=True)
-                  assert metrics['viewport']==width and metrics['width']<=width,(label,'overflow',metrics)
-                  assert not metrics['modalOpen'] and not metrics['inlineProjects'],(label,'home stays compact',metrics)
-                  assert metrics['logoCount']>=3,(label,'brand svg')
-                  if width<=430: assert metrics['height']<1000,(label,'unexpected long home',metrics)
-                  if width<=930: assert metrics['header']!='none',(label,'mobile header')
-                  else: assert metrics['header']=='none',(label,'desktop header')
-                  screenshot(label+'-home.png')
-
-                  js("document.querySelector('.opening-actions a[href=\"#about\"]').click()")
-                  assert js("return document.querySelector('#section-dialog').open"),(label,'about modal opens')
-                  assert js("return !document.querySelector('[data-panel=\"about\"]').hidden"),(label,'company visible')
-                  assert js("return location.hash")=='#about',(label,'deep URL')
-                  if width==390: screenshot(label+'-company.png')
-                  js("document.querySelector('.dialog-tabs a[href=\"#method\"]').click()")
-                  assert js("return !document.querySelector('[data-panel=\"method\"]').hidden"),(label,'method switch')
-                  js("document.querySelectorAll('.method-entries details')[1].querySelector('summary').click()")
-                  assert js("return document.querySelectorAll('.method-entries details')[1].open"),(label,'details expand')
-                  js("document.querySelector('.dialog-tabs a[href=\"#projects\"]').click()")
-                  assert js("return !document.querySelector('[data-panel=\"projects\"]').hidden"),(label,'projects switch')
-                  assert js("return !!document.querySelector('.dialog-section.work a[href=\"/projects/raschet/\"]')"),(label,'project route')
-                  if width==390: screenshot(label+'-projects.png')
-                  js("document.querySelector('.dialog-tabs a[href=\"#contact\"]').click()")
-                  assert js("return !document.querySelector('[data-panel=\"contact\"]').hidden"),(label,'contacts switch')
-                  assert js("return document.querySelectorAll('.dialog-tabs a[aria-current=\"location\"]').length===1"),(label,'current tab')
-                  if width==390:
-                      screenshot(label+'-contact.png')
-                      browser.find_element(By.CSS_SELECTOR, '[data-copy-email]').click()
-                      time.sleep(.2)
-                      assert js("return document.querySelector('#copy-email-status').textContent")=='Адрес скопирован',(label,'copy')
-                      time.sleep(3.2)
-                      assert not js("return document.querySelector('#copy-email-status').textContent"),(label,'status clears')
-                  js("document.querySelector('[data-close-dialog]').click()")
-                  assert not js("return document.querySelector('#section-dialog').open"),(label,'close')
-                  WebDriverWait(browser, 5).until(lambda _: js("return !location.hash"))
-                  if width<=930:
-                      js("document.querySelector('.mobile-nav summary').click()")
-                      js("document.querySelector('.mobile-nav nav a[href=\"#projects\"]').click()")
-                  else:
-                      js("document.querySelector('.rail-links a[href=\"#projects\"]').click()")
-                  browser.switch_to.active_element.send_keys(Keys.ESCAPE)
-                  assert not js("return document.querySelector('#section-dialog').open"),(label,'Escape closes')
-                  if width<=930:
-                      js("document.querySelector('.mobile-nav summary').click()")
-                      assert js("return document.querySelector('.mobile-nav').open"),(label,'mobile menu')
-                      js("document.querySelector('.mobile-nav a[href=\"#method\"]').click()")
-                      assert js("return document.querySelector('#section-dialog').open"),(label,'mobile menu opens modal')
-                      assert not js("return document.querySelector('.mobile-nav').open"),(label,'menu closes')
-                      js("document.querySelector('[data-close-dialog]').click()")
-                  browser.get(base+'#projects')
-                  assert js("return document.querySelector('#section-dialog').open && !document.querySelector('[data-panel=\"projects\"]').hidden"),(label,'direct hash')
-                  js("document.querySelector('[data-close-dialog]').click()")
-                  results[label]=metrics
-
-              browser.get(Path('artifacts/Ventry-ui-audit.html').resolve().as_uri())
-              assert js("return document.querySelectorAll('style').length>0 && document.querySelector('#section-dialog')!==null")
-              js("document.querySelector('.opening-actions a[href=\"#about\"]').click()")
-              assert js("return document.querySelector('#section-dialog').open"),'standalone modal'
-              results['standalone']=True
-              Path('artifacts/QA.json').write_text(json.dumps(results,ensure_ascii=False,indent=2),encoding='utf-8')
-          finally:
-              browser.quit()
-          PY
-      - name: Test interior pages and modal edge cases
-        run: |
           python3 tests/visual-pages.py
       - name: Upload previews
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ventry-modal-homepage-preview
+          name: ventry-homepage-preview
           path: artifacts/
           retention-days: 7
           if-no-files-found: warn

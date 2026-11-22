@@ -1,150 +1,62 @@
 'use strict';
 
 const mobileMenu = document.querySelector('.mobile-nav');
-const sectionDialog = document.querySelector('#section-dialog');
-const modalScroll = document.querySelector('#dialog-scroll');
-const modalLabel = document.querySelector('#dialog-section-name');
-const sectionNames = { about: 'Компания', method: 'Подход', projects: 'Проекты', contact: 'Контакты' };
-const modalPanels = [...sectionDialog.querySelectorAll('[data-panel]')];
-const sectionLinks = [...document.querySelectorAll('a[href^="#"]')].filter(link =>
-  Object.hasOwn(sectionNames, link.getAttribute('href').slice(1)) || link.getAttribute('href') === '#start'
-);
-let previousTrigger = null;
-let modalBackPending = false;
-
-function setCurrentSection(id) {
-  document.querySelectorAll('.rail-links a, .mobile-nav nav a, .dialog-tabs a')
-    .forEach(link => {
-      if (link.getAttribute('href') === '#' + id) link.setAttribute('aria-current', 'location');
-      else link.removeAttribute('aria-current');
-    });
-}
-
-function openSection(id, trigger, updateAddress = true) {
-  if (!Object.hasOwn(sectionNames, id)) return;
-  if (mobileMenu) mobileMenu.open = false;
-  const wasOpen = sectionDialog.open;
-  if (trigger && !wasOpen) previousTrigger = trigger;
-  for (const panel of modalPanels) panel.hidden = panel.dataset.panel !== id;
-  modalLabel.textContent = sectionNames[id];
-  if (!sectionDialog.open) {
-    sectionDialog.showModal();
-    sectionDialog.querySelector('[data-close-dialog]').focus({ preventScroll: true });
-  }
-  modalScroll.scrollTop = 0;
-  setCurrentSection(id);
-  if (updateAddress && window.location.hash !== '#' + id) {
-    if (wasOpen) history.replaceState(history.state, '', '#' + id);
-    else history.pushState({ ventryModal: true }, '', '#' + id);
-  }
-}
-
-function resetAddressAfterClose() {
-  if (!Object.hasOwn(sectionNames, window.location.hash.slice(1))) return;
-  history.replaceState(null, '', window.location.pathname + window.location.search);
-}
-
-function closeSection(clearAddress = true) {
-  if (sectionDialog.open) sectionDialog.close();
-  if (clearAddress && Object.hasOwn(sectionNames, window.location.hash.slice(1))) {
-    if (history.state?.ventryModal === true) {
-      // Restore the original entry instead of accumulating duplicate base URLs.
-      if (!modalBackPending) {
-        modalBackPending = true;
-        history.back();
-      }
-    } else {
-      // A directly opened /#section has no modal entry to travel back from.
-      resetAddressAfterClose();
-    }
-  }
-  setCurrentSection('start');
-}
-
-sectionLinks.forEach(link => {
-  link.addEventListener('click', event => {
-    const id = link.getAttribute('href').slice(1);
-    event.preventDefault();
-    if (id === 'start') {
-      closeSection();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      return;
-    }
-    openSection(id, link);
-  });
-});
-
-sectionDialog.querySelector('[data-close-dialog]').addEventListener('click', () => closeSection());
-sectionDialog.addEventListener('click', event => {
-  if (event.target === sectionDialog) closeSection();
-});
-sectionDialog.addEventListener('cancel', event => {
-  event.preventDefault();
-  closeSection();
-});
-sectionDialog.addEventListener('close', () => {
-  setCurrentSection('start');
-  if (previousTrigger?.isConnected) previousTrigger.focus({ preventScroll: true });
-  previousTrigger = null;
-});
+const sectionLinks = document.querySelectorAll('.rail-links a, .mobile-nav nav a');
+const year = document.querySelector('#year');
 
 function syncLocation() {
-  modalBackPending = false;
-  const id = window.location.hash.slice(1);
-  if (Object.hasOwn(sectionNames, id)) openSection(id, null, false);
-  else closeSection(false);
+  const fragment = window.location.hash || '#start';
+  for (const link of sectionLinks) {
+    if (link.getAttribute('href') === fragment) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  }
 }
-window.addEventListener('popstate', syncLocation);
+
 window.addEventListener('hashchange', syncLocation);
 syncLocation();
+year.textContent = String(new Date().getFullYear());
 
-if (mobileMenu) {
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && mobileMenu.open) {
-      mobileMenu.open = false;
-      mobileMenu.querySelector('summary')?.focus();
-    }
-  });
-  document.addEventListener('click', event => {
-    if (mobileMenu.open && !mobileMenu.contains(event.target)) mobileMenu.open = false;
-  });
-}
-
-const year = document.querySelector('#year');
-if (year) year.textContent = String(new Date().getFullYear());
+mobileMenu.querySelector('nav').addEventListener('click', event => {
+  if (event.target.closest('a') && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+    mobileMenu.open = false;
+  }
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && mobileMenu.open) {
+    mobileMenu.open = false;
+    mobileMenu.querySelector('summary').focus();
+  }
+});
+document.addEventListener('click', event => {
+  if (mobileMenu.open && !mobileMenu.contains(event.target)) mobileMenu.open = false;
+});
 
 const copyEmailButton = document.querySelector('[data-copy-email]');
 const copyEmailStatus = document.querySelector('#copy-email-status');
-const email = 'ventrybusinesswork@gmail.com';
-if (copyEmailButton && copyEmailStatus) {
-  let statusTimer;
-  copyEmailButton.addEventListener('click', async () => {
-    clearTimeout(statusTimer);
-    copyEmailStatus.textContent = '';
-    copyEmailButton.disabled = true;
-    try {
-      let copied = false;
-      if (navigator.clipboard?.writeText && window.isSecureContext) {
-        try { await navigator.clipboard.writeText(email); copied = true; } catch {}
-      }
-      if (!copied) {
-        const temporary = document.createElement('textarea');
-        temporary.value = email;
-        temporary.setAttribute('readonly', '');
-        temporary.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
-        sectionDialog.appendChild(temporary);
-        temporary.focus();
-        temporary.select();
-        try { copied = document.execCommand('copy'); } finally { temporary.remove(); }
-      }
-      if (!copied) throw new Error('Clipboard unavailable');
-      copyEmailStatus.textContent = 'Адрес скопирован';
-      statusTimer = setTimeout(() => { copyEmailStatus.textContent = ''; }, 3000);
-    } catch {
-      copyEmailStatus.textContent = 'Не удалось скопировать. Выделите адрес и скопируйте вручную.';
-      statusTimer = setTimeout(() => { copyEmailStatus.textContent = ''; }, 6000);
-    } finally {
-      copyEmailButton.disabled = false;
-    }
-  });
-}
+const emailLink = document.querySelector('.reach-email');
+const email = emailLink.getAttribute('href').slice('mailto:'.length);
+let statusTimer;
+let copying = false;
+
+copyEmailButton.hidden = false;
+copyEmailButton.addEventListener('click', async () => {
+  if (copying) return;
+  copying = true;
+  clearTimeout(statusTimer);
+  copyEmailStatus.textContent = '';
+  try {
+    await navigator.clipboard.writeText(email);
+    copyEmailStatus.textContent = 'Адрес скопирован';
+    statusTimer = setTimeout(() => { copyEmailStatus.textContent = ''; }, 3000);
+  } catch {
+    emailLink.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.selectNodeContents(emailLink.firstElementChild);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    copyEmailStatus.textContent = 'Адрес выделен. Скопируйте его вручную.';
+  } finally {
+    copying = false;
+  }
+});
