@@ -1,7 +1,6 @@
-"""Browser regression checks for every public Ventry page and homepage dialog."""
+"""Browser regression checks for every public Ventry page and homepage sections."""
 import base64
 import json
-import time
 from pathlib import Path
 
 from selenium import webdriver
@@ -17,6 +16,7 @@ browser_options = Options()
 for argument in ("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1440,900"):
     browser_options.add_argument(argument)
 driver = webdriver.Chrome(options=browser_options)
+driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
 wait = WebDriverWait(driver, 8)
 report = {}
 
@@ -34,13 +34,18 @@ def capture(name):
 
 def open_home_section(section, width):
     """Use the responsive header instead of a redundant secondary menu."""
+    scope = ".rail-links"
     if width <= 930:
-        js("""document.querySelector('.mobile-nav summary').click()""")
+        driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
         assert js("return document.querySelector('.mobile-nav').open")
-        js(f"""document.querySelector('.mobile-nav nav a[href="#{section}"]').click()""")
+        scope = ".mobile-nav nav"
+    driver.find_element(By.CSS_SELECTOR, f'{scope} a[href="#{section}"]').click()
+    wait.until(lambda _: js("return location.hash") == "#" + section)
+    if width <= 930:
         assert not js("return document.querySelector('.mobile-nav').open")
-    else:
-        js(f"""document.querySelector('.rail-links a[href="#{section}"]').click()""")
+    assert js(f"""const top = document.querySelector('#{section} h2').getBoundingClientRect().top;
+      return top >= document.querySelector('{'.mobile-top' if width <= 930 else '.rail'}').offsetHeight
+        && top < innerHeight;"""), (section, width, "section heading is covered or outside the viewport")
 
 
 def load(route, width, height):
@@ -64,57 +69,41 @@ def load(route, width, height):
 
 
 try:
-    for width, height in ((320, 760), (390, 844), (768, 1000), (1440, 900)):
+    for width, height in ((320, 760), (360, 800), (390, 844), (430, 900), (768, 1000), (1440, 900)):
         label = str(width)
         page = load("/", width, height)
-        # The header provides navigation at every width. A second page-level
-        # menu beneath the hero must not duplicate those same four links.
-        assert not js("return !!document.querySelector('.chapter-strip')"), "Duplicate section navigation under hero"
-        # Company content should not restate the three principles in Approach.
-        assert not js("return !!document.querySelector('[data-panel=about] .company-side')"), "Company duplicates Approach principles"
         header_selector = ".mobile-top" if width <= 930 else ".rail"
-        assert js(f"""return getComputedStyle(document.querySelector('{header_selector}')).display !== 'none'"""), (
-            "Primary responsive header is hidden", width
-        )
+        assert driver.find_element(By.CSS_SELECTOR, header_selector).is_displayed()
+        assert js("""return [...document.querySelectorAll('main > section')].map(s => s.id)""") == [
+            "start", "about", "method", "projects", "contact"
+        ]
+        assert not js("return !!document.querySelector('dialog, .chapter-strip')")
         composition = js("""const hero = document.querySelector('.opening').getBoundingClientRect();
-          const footer = document.querySelector('.reach-footer').getBoundingClientRect();
           return {
             heroHeight: Math.round(hero.height),
-            gap: Math.round(footer.top - hero.bottom),
-            brandShape: document.querySelector('.identity-construction use')?.getAttribute('href'),
+            gapAfterActions: Math.round(hero.bottom - document.querySelector('.opening-actions').getBoundingClientRect().bottom),
+            aboutTop: Math.round(document.querySelector('#about').getBoundingClientRect().top),
+            brandShape: document.querySelector('.identity-construction use').getAttribute('href'),
             ctas: [...document.querySelectorAll('.opening-actions a')].map(a => Math.round(a.getBoundingClientRect().height))
           }""")
-        assert abs(composition["gap"]) <= 2, ("Unused band between hero and footer", width, composition)
-        assert composition["brandShape"] == "#ventry-brand-shape", ("Original Ventry logo altered", width)
-        assert all(h >= 44 for h in composition["ctas"]), ("Hero CTA tap target too small", width, composition)
+        assert composition["gapAfterActions"] <= 110, (width, composition)
+        assert composition["aboutTop"] < height, (width, composition)
+        assert composition["brandShape"] == "#ventry-brand-shape", (width, composition)
+        assert all(h >= 44 for h in composition["ctas"]), (width, composition)
         page["composition"] = composition
-        home_height = js("return Math.ceil(document.documentElement.scrollHeight)")
-        assert home_height < max(1100, height + 150), ("home page too tall", width, home_height)
         capture(f"ui-{label}-home.png")
 
-        open_home_section("projects", width)
-        wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
-        close_target = js("""return Math.round(document.querySelector('[data-close-dialog]').getBoundingClientRect().height)""")
-        assert close_target >= 44, ("Dialog close target too small", width, close_target)
-        wait.until(lambda _: js("""return (i=>i.complete&&i.naturalWidth>0)(document.querySelector('[data-panel="projects"] img'))"""))
-        assert js("return location.hash") == "#projects"
-        if width in (390, 1440):
-            capture(f"ui-{label}-projects.png")
-        js("""document.querySelector('.dialog-tabs a[href="#about"]').click()""")
-        assert not js("""return document.querySelector('[data-panel="about"]').hidden""")
-        assert js("return location.hash") == "#about"
-        if width == 390:
-            capture("ui-390-company.png")
-        js("""document.querySelector('.dialog-tabs a[href="#method"]').click()""")
-        assert not js("""return document.querySelector('[data-panel="method"]').hidden""")
-        js("""document.querySelector('.method-entries details:nth-of-type(2) summary').click()""")
-        assert js("""return document.querySelector('.method-entries details:nth-of-type(2)').open""")
-        js("""document.querySelector('.dialog-tabs a[href="#contact"]').click()""")
-        if width == 390:
-            capture("ui-390-contact.png")
-        js("""document.querySelector('[data-close-dialog]').click()""")
-        wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
-        page["homeHeight"] = home_height
+        for section in ("about", "method", "projects", "contact"):
+            open_home_section(section, width)
+            if section == "method":
+                summary = driver.find_element(By.CSS_SELECTOR, ".method-entries details:nth-of-type(2) summary")
+                summary.click()
+                assert js("return document.querySelector('.method-entries details:nth-of-type(2)').open")
+            if section == "projects":
+                wait.until(lambda _: js("""return document.querySelector('#projects img').naturalWidth > 0"""))
+                assert js("""return document.querySelector('#projects .work-item').pathname""") == "/projects/raschet/"
+            if width in (390, 1440):
+                capture(f"ui-{label}-{section}.png")
 
         product = load("/projects/raschet/", width, height)
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
@@ -148,53 +137,43 @@ try:
         report[label] = {"home": page, "product": product}
 
     load("/", 390, 844)
-    initial_length = js("return history.length")
+    menu = driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary")
+    menu.click()
+    menu.send_keys(Keys.ESCAPE)
+    assert js("return !document.querySelector('.mobile-nav').open && document.activeElement === document.querySelector('.mobile-nav summary')")
     open_home_section("about", 390)
-    assert js("return history.length") == initial_length + 1
-    for part in ("method", "projects", "contact"):
-        js(f"""document.querySelector('.dialog-tabs a[href="#{part}"]').click()""")
-        assert js("return history.length") == initial_length + 1, ("history grows on tab switches", part)
+    assert js("return document.activeElement.id") == "about"
+    open_home_section("projects", 390)
     driver.back()
-    wait.until(lambda _: not js("return document.querySelector('#section-dialog').open"))
-    assert not js("return location.hash"), "Back must close the dialog"
-    # Closing a pushed dialog must go Back, rather than replacing its URL and
-    # leaving a duplicate base-page entry on every subsequent open.
-    stable_history_length = js("return history.length")
-    for cycle, close_action in enumerate(("button", "escape", "start", "button")):
-        open_home_section("projects", 390)
-        wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
-        assert js("return history.length") == stable_history_length, (
-            "Repeated opening accumulated a browser-history entry", cycle
-        )
-        if cycle == 1:
-            js("""document.querySelector('.dialog-tabs a[href="#method"]').click()""")
-            assert js("return location.hash") == "#method"
-        if close_action == "button":
-            js("""document.querySelector('[data-close-dialog]').click()""")
-        elif close_action == "escape":
-            driver.switch_to.active_element.send_keys(Keys.ESCAPE)
-        else:
-            js("""document.querySelector('.mobile-nav a[href="#start"]').click()""")
-        wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
-        assert js("return history.length") == stable_history_length, (
-            "Closing accumulated a browser-history entry", cycle
-        )
-
-    # Browser Forward should reopen the last modal; Back should close it.
+    wait.until(lambda _: js("return location.hash") == "#about")
     driver.forward()
-    wait.until(lambda _: js("return document.querySelector('#section-dialog').open"))
-    assert js("return location.hash") == "#projects"
-    driver.back()
-    wait.until(lambda _: not js("return document.querySelector('#section-dialog').open") and not js("return location.hash"))
+    wait.until(lambda _: js("return location.hash") == "#projects")
+    wait.until(lambda _: js("""return document.querySelector('.mobile-nav a[aria-current="location"]')?.hash""") == "#projects")
 
-    driver.get(BASE + "/#projects")
-    assert js("""return document.querySelector('#section-dialog').open && !document.querySelector('[data-panel="projects"]').hidden""")
-    direct_history_length = js("return history.length")
-    js("""document.querySelector('[data-close-dialog]').click()""")
-    assert not js("return location.hash")
-    assert js("return history.length") == direct_history_length, "Direct hash close must not navigate Back"
+    driver.get(BASE + "/?direct=1#about")
+    wait.until(lambda _: js("""const top = document.querySelector('#about h2').getBoundingClientRect().top;
+      return top >= 65 && top < innerHeight;"""))
+    open_home_section("contact", 390)
+    driver.execute_cdp_cmd("Browser.grantPermissions", {"origin": BASE, "permissions": ["clipboardSanitizedWrite"]})
+    copy = driver.find_element(By.CSS_SELECTOR, "[data-copy-email]")
+    copy.click()
+    wait.until(lambda _: js("return document.querySelector('#copy-email-status').textContent") == "Адрес скопирован")
+    js("Object.defineProperty(navigator, 'clipboard', {value: undefined})")
+    copy.click()
+    wait.until(lambda _: "вручную" in js("return document.querySelector('#copy-email-status').textContent"))
+    assert js("return window.getSelection().toString()") == "ventrybusinesswork@gmail.com"
+
+    driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+    driver.get(BASE + "/?no-js=1#projects")
+    assert driver.find_element(By.CSS_SELECTOR, "#projects .work-item").is_displayed()
+    assert not driver.find_element(By.CSS_SELECTOR, "[data-copy-email]").is_displayed()
+    driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": False})
+
+    driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
+    driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
+    assert js("return location.hash") == "#about"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("PASS: 4 viewports, 4 public pages, dialog image, history, focus and mobile menus",flush=True)
+    print("PASS: 6 viewports, 4 public pages, section links, history, focus, clipboard and no-JS",flush=True)
 finally:
     driver.quit()
