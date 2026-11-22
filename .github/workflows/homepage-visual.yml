@@ -10,6 +10,10 @@ on:
       - 'site/inner-pages.css'
       - 'site/app.js'
       - 'site/projects/raschet/index.html'
+      - 'site/about/index.html'
+      - 'site/approach/index.html'
+      - 'site/projects/index.html'
+      - 'site/contact/index.html'
       - 'site/legal/index.html'
       - 'site/privacy/index.html'
       - 'tests/visual-pages.py'
@@ -66,7 +70,8 @@ jobs:
           js = (root/'company-nav.js').read_text(encoding='utf-8')
           html, js_count = re.subn(r'<script defer src="/company-nav\.js(?:\?[^"]*)?"></script>', '', html)
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
-          html = html.replace('href="/"','href="#start"')
+          for route, anchor in {'/':'#start','/about/':'#about','/approach/':'#method','/projects/':'#projects','/contact/':'#contact'}.items():
+              html = html.replace('href="'+route+'"','href="'+anchor+'"')
           for route in ('/projects/raschet/','/legal/','/privacy/'):
               html = html.replace('href="'+route+'"','href="https://135-106-227-179.sslip.io'+route+'"')
           assert css_count == js_count == 1 and 'data:image/webp;base64,' in html
