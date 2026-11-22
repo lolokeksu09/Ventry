@@ -2,6 +2,15 @@
 
 Ventry — сайт цифровых проектов. Первый представленный проект — «Расчёт» (в разработке).
 
+## Стандарт работы с проектом
+
+В репозиторий интегрирован [Project Workflow Standard v1.0](docs/workflow/README.md). Перед работой прочитай [AGENTS.md](AGENTS.md), [PROJECT.md](PROJECT.md) и [TESTING-LEVELS.md](TESTING-LEVELS.md). Режимы Light/Full описывают объём документации, проверки определяются отдельно по риску и обязательным CI-gates.
+
+- [PLAN](docs/workflow/PLAN.md) — для сложных изменений; [CONTINUATION](docs/workflow/CONTINUATION.md) — для передачи работы.
+- [AUDIT](docs/workflow/AUDIT.md) — шаблон аудита (актуальный аудит ведётся в [docs/AUDIT.md](docs/AUDIT.md)).
+- [VERIFICATION](docs/workflow/VERIFICATION.md) — отдельный отчёт проверки; [RELEASE](docs/workflow/RELEASE.md) — подготовка разрешённой поставки.
+- Изменение документации в ветке не развёртывает сайт. **Merge в `main` автоматически запускает production-деплой**, поэтому требуется отдельное разрешение.
+
 ## Публичный сайт
 
 **HTTPS (временный адрес):** https://135-106-227-179.sslip.io/
