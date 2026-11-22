@@ -32,20 +32,23 @@ def capture(name):
     (OUTPUT / name).write_bytes(base64.b64decode(data))
 
 
+SECTION_ROUTES = {"about": "/about/", "method": "/approach/", "projects": "/projects/", "contact": "/contact/"}
+
+
 def open_home_section(section, width):
-    """Use the responsive header instead of a redundant secondary menu."""
+    route = SECTION_ROUTES[section]
     scope = ".rail-links"
     if width <= 930:
         driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
         assert js("return document.querySelector('.mobile-nav').open")
         scope = ".mobile-nav nav"
-    driver.find_element(By.CSS_SELECTOR, f'{scope} a[href="#{section}"]').click()
-    wait.until(lambda _: js("return location.hash") == "#" + section)
+    driver.find_element(By.CSS_SELECTOR, f'{scope} a[href="{route}"]').click()
+    wait.until(lambda _: js("return location.pathname") == route)
+    assert driver.find_element(By.CSS_SELECTOR, f'{scope} a[aria-current="page"]').get_attribute("href") == BASE + route
+    assert driver.find_element(By.CSS_SELECTOR, "main h1").is_displayed()
+    assert js("return document.documentElement.scrollWidth <= innerWidth")
     if width <= 930:
         assert not js("return document.querySelector('.mobile-nav').open")
-    assert js(f"""const top = document.querySelector('#{section} h2').getBoundingClientRect().top;
-      return top >= document.querySelector('{'.mobile-top' if width <= 930 else '.rail'}').offsetHeight
-        && top < innerHeight;"""), (section, width, "section heading is covered or outside the viewport")
 
 
 def load(route, width, height):
@@ -142,13 +145,11 @@ try:
     menu.send_keys(Keys.ESCAPE)
     assert js("return !document.querySelector('.mobile-nav').open && document.activeElement === document.querySelector('.mobile-nav summary')")
     open_home_section("about", 390)
-    assert js("return document.activeElement.id") == "about"
     open_home_section("projects", 390)
     driver.back()
-    wait.until(lambda _: js("return location.hash") == "#about")
+    wait.until(lambda _: js("return location.pathname") == "/about/")
     driver.forward()
-    wait.until(lambda _: js("return location.hash") == "#projects")
-    wait.until(lambda _: js("""return document.querySelector('.mobile-nav a[aria-current="location"]')?.hash""") == "#projects")
+    wait.until(lambda _: js("return location.pathname") == "/projects/")
 
     driver.get(BASE + "/?direct=1#about")
     wait.until(lambda _: js("""const top = document.querySelector('#about h2').getBoundingClientRect().top;
@@ -164,8 +165,12 @@ try:
     assert js("return window.getSelection().toString()") == "ventrybusinesswork@gmail.com"
 
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": True})
-    driver.get(BASE + "/?no-js=1#projects")
+    driver.get(BASE + "/?no-js=1")
+    driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
+    driver.find_element(By.CSS_SELECTOR, '.mobile-nav nav a[href="/projects/"]').click()
+    assert driver.current_url == BASE + "/projects/"
     assert driver.find_element(By.CSS_SELECTOR, "#projects .work-item").is_displayed()
+    driver.get(BASE + "/contact/")
     assert not driver.find_element(By.CSS_SELECTOR, "[data-copy-email]").is_displayed()
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": False})
 
@@ -174,6 +179,6 @@ try:
     assert js("return location.hash") == "#about"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("PASS: 6 viewports, 4 public pages, section links, history, focus, clipboard and no-JS",flush=True)
+    print("PASS: 6 viewports, 8 public pages, section links, history, focus, clipboard and no-JS",flush=True)
 finally:
     driver.quit()

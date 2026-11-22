@@ -45,6 +45,7 @@ jobs:
         run: |
           set -eu
           node --check site/app.js
+          node --check site/company-nav.js
           node tests/copy-link.cjs
           python3 tools/verify-site.py
           python3 tools/verify-security.py
@@ -146,8 +147,10 @@ jobs:
             curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-asset" "$url/$path"
             cmp "$file" "$RUNNER_TEMP/ventry-asset"
           done < <(find site -type f ! -name index.html ! -name version.json | sort)
-          curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-project.html" "$url/projects/raschet/"
-          cmp site/projects/raschet/index.html "$RUNNER_TEMP/ventry-project.html"
+          for page in about approach projects contact projects/raschet legal privacy; do
+            curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-page.html" "$url/$page/"
+            cmp "site/$page/index.html" "$RUNNER_TEMP/ventry-page.html"
+          done
           test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$ip/")" = 308
           test "$(curl --silent --show-error -o /dev/null -w '%{redirect_url}' "$ip/")" = "$url/"
           test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$url/__ventry_not_found__")" = 404
