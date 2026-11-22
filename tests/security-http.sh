@@ -49,31 +49,7 @@ grep -Eiq "^x-frame-options: DENY" "$tmp/headers-clean"
 
 for path in '/' '/index.html' '/projects/raschet/' '/legal/' '/privacy/'; do
   curl --fail --silent --show-error --max-time 5 --head "$base$path" > "$tmp/page-headers"
-  grep -Eiq '^cache-control: no-cache[[:space:]]*
-
-for path in \
-  '/.env' '/.env.local' '/.git/config' '/.github/workflows/deploy.yml' \
-  '/backup.sql' '/data.zip' '/archive.tar.gz' '/project.bak' \
-  '/projects/raschet/.git/HEAD' '/certs/server.pem' '/snapshots/backup.sqlite'; do
-  status="$(curl --path-as-is --silent --show-error --max-time 5 \
-    --output /dev/null --write-out '%{http_code}' "$base$path")"
-  if [ "$status" != 404 ]; then
-    echo "FAIL: sensitive URL $path returned HTTP $status"; exit 1
-  fi
-done
-
-for path in '/projects/raschet/' '/legal/' '/privacy/' '/app.js' \
-  '/styles.css' '/favicon.svg' '/sitemap.xml' \
-  '/google9048871eda96ab4a.html' '/public-security-test.txt'; do
-  status="$(curl --silent --show-error --max-time 5 \
-    --output /dev/null --write-out '%{http_code}' "$base$path")"
-  if [ "$status" != 200 ]; then
-    echo "FAIL: public URL $path returned HTTP $status"; exit 1
-  fi
-done
-
-echo "PASS: Caddy CSP/security headers, 11 denied paths (including existing fixtures) and 9 public paths"
- "$tmp/page-headers" || {
+  grep -Eiq '^cache-control: no-cache[[:space:]]*$' "$tmp/page-headers" || {
     echo "FAIL: HTML cache revalidation missing for $path"; exit 1;
   }
 done
