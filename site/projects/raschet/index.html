@@ -15,7 +15,7 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <link rel="canonical" href="https://135-106-227-179.sslip.io/projects/raschet/">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/images/raschet-icon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/golos-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
@@ -41,12 +41,15 @@
       <div class="product-copy">
         <nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="/projects/">Проекты</a><span aria-hidden="true">/</span><span aria-current="page">Расчёт</span></nav>
         <p class="status-tag">Тестовая версия</p>
-        <h1 id="product-title">Расчёт</h1>
+        <div class="product-identity">
+          <img src="/images/raschet-icon.svg" width="72" height="72" decoding="async" alt="">
+          <h1 id="product-title">Расчёт</h1>
+        </div>
         <p class="product-lead">Долговая книга для небольших магазинов</p>
         <p class="product-description">Записывайте долги и оплаты, следите за сроками и остатком после частичной оплаты. Записи хранятся в этом браузере.</p>
         <div class="product-actions">
           <a class="primary-button" href="/raschet/">Открыть свою книгу <span class="arrow" aria-hidden="true"></span></a>
-          <a class="quiet-button" href="/raschet/?demo=1">Попробовать на примере</a>
+          <a class="quiet-button" href="/raschet/?demo=1">Открыть демо</a>
           <a class="quiet-button" href="mailto:ventrybusinesswork@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BE%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B5%20%C2%AB%D0%A0%D0%B0%D1%81%D1%87%D1%91%D1%82%C2%BB">Задать вопрос <span class="arrow" aria-hidden="true"></span></a>
           <button class="quiet-button" type="button" data-copy-link hidden>Скопировать ссылку</button>
         </div>
@@ -57,11 +60,11 @@
         <div class="ledger-sheet">
           <figcaption id="ledger-caption">Пример сценария учёта</figcaption>
           <dl>
-            <div><dt>Записан долг</dt><dd>3 000 ₽</dd></div>
+            <div><dt>Остаток до оплаты</dt><dd>3 350 ₽</dd></div>
             <div><dt>Частичная оплата</dt><dd>−1 000 ₽</dd></div>
-            <div class="ledger-balance"><dt>Остаток долга</dt><dd>2 000 ₽</dd></div>
+            <div class="ledger-balance"><dt>Остаток долга</dt><dd>2 350 ₽</dd></div>
           </dl>
-          <p>В истории сохраняются обе операции.</p>
+          <p>В демо эта оплата появится в истории.</p>
         </div>
       </figure>
     </section>
@@ -77,7 +80,7 @@
     <section class="product-faq content-width" aria-labelledby="faq-title">
       <h2 id="faq-title">Вопросы о «Расчёте»</h2>
       <div class="faq-list">
-        <details><summary>Можно уже пользоваться «Расчётом»?</summary><p>Да, тестовая версия уже доступна. В ней можно вести свою книгу или посмотреть пример с вымышленными записями.</p></details>
+        <details><summary>Можно уже пользоваться «Расчётом»?</summary><p>Да, тестовая версия уже доступна. В ней можно вести свою книгу или открыть демо и попробовать частичную оплату на вымышленных записях.</p></details>
         <details><summary>На каких устройствах работает приложение?</summary><p>В браузере телефона, планшета или компьютера. Для планшета есть крупный режим.</p></details>
         <details><summary>Как перенести записи на другое устройство?</summary><p>Откройте «Данные и копии», скачайте копию с паролем и откройте её в «Расчёте» на другом устройстве.</p></details>
       </div>
