@@ -52,6 +52,7 @@ jobs:
           node --test tests/raschet-history.mjs
           node --test tests/raschet-backups.mjs
           node --test tests/raschet-backup-encryption.mjs
+          node --test tests/raschet-deadlines.mjs
           python3 tools/verify-site.py
           python3 tools/verify-security.py
           test -s site/index.html

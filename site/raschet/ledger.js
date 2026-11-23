@@ -9,11 +9,44 @@ export function moneyToCents(value) {
 }
 export function activeEntries(book){const reversed=new Set(book.entries.filter(e=>e.type==='reversal').map(e=>e.reverses));return book.entries.filter(e=>e.type!=='reversal'&&!reversed.has(e.id));}
 export const balance=(book,id)=>activeEntries(book).filter(e=>e.clientId===id).reduce((n,e)=>n+(e.type==='debt'?e.amount:-e.amount),0);
-export function overdue(book,id,date=today()) {
-  const es=activeEntries(book).filter(e=>e.clientId===id);
-  let payment=es.filter(e=>e.type==='payment').reduce((n,e)=>n+e.amount,0),sum=0;
-  for(const e of es.filter(e=>e.type==='debt')) { const paid=Math.min(payment,e.amount);payment-=paid;if(e.due&&e.due<date)sum+=e.amount-paid; }
-  return sum;
+function upcomingCutoff(date) {
+  const last = new Date(date + 'T12:00:00Z');
+  last.setUTCDate(last.getUTCDate() + 6);
+  return last.toISOString().slice(0, 10);
+}
+
+export function debtOverview(book, date = today()) {
+  const lastDay = upcomingCutoff(date);
+  const groups = new Map(book.clients.map(client => [client.id, { debts: [], paid: 0 }]));
+  for (const entry of activeEntries(book)) {
+    const group = groups.get(entry.clientId);
+    if (entry.type === 'payment') group.paid += entry.amount;
+    else group.debts.push(entry);
+  }
+  const summary = new Map();
+  for (const [id, { debts, paid }] of groups) {
+    const result = { balance: 0, overdue: 0, soon: 0, nextDue: '', soonDate: '' };
+    let unallocated = paid;
+    for (const entry of debts) {
+      const allocated = Math.min(unallocated, entry.amount);
+      unallocated -= allocated;
+      const remaining = entry.amount - allocated;
+      result.balance += remaining;
+      if (!remaining || !entry.due) continue;
+      if (!result.nextDue || entry.due < result.nextDue) result.nextDue = entry.due;
+      if (entry.due < date) result.overdue += remaining;
+      else if (entry.due <= lastDay) {
+        result.soon += remaining;
+        if (!result.soonDate || entry.due < result.soonDate) result.soonDate = entry.due;
+      }
+    }
+    summary.set(id, result);
+  }
+  return summary;
+}
+
+export function overdue(book, id, date = today()) {
+  return debtOverview(book, date).get(id)?.overdue ?? 0;
 }
 export function validateBook(book) {
   if(!book||![1,2].includes(book.version)||!Array.isArray(book.clients)||!Array.isArray(book.entries)||book.clients.length>10000||book.entries.length>100000)throw Error('Неверный формат книги. Нужна JSON-копия из этого приложения.');
