@@ -75,9 +75,8 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .entry-body{padding:0 38px 17px 0;color:#afc2b5;font-size:14px;line-height:1.56}
 .work{padding-block:clamp(27px,4.8vw,64px)}
 .work h2{font-family:var(--ventry-display);font-size:clamp(28px,3vw,42px);font-weight:400;margin:-3px 0 16px}
-.work-item{display:grid;grid-template-columns:136px minmax(0,1fr);align-items:center;gap:23px;padding:15px 2px;border-top:1px solid #35463a;border-bottom:1px solid #35463a}
-.work-thumbnail{height:90px;overflow:hidden;background:#283c49}
-.work-thumbnail img{width:100%;height:100%;object-fit:cover}
+.work-item{display:grid;grid-template-columns:80px minmax(0,1fr);align-items:center;gap:23px;padding:15px 2px;border-top:1px solid #35463a;border-bottom:1px solid #35463a}
+.work-mark{width:72px;height:72px;align-self:start}
 .work-detail{min-width:0}
 .work-type{display:block;margin-top:4px;font-size:13px;color:#9ab9a5;line-height:1.4}
 .work-detail strong{display:block;font-family:var(--ventry-display);font-size:32px;letter-spacing:-.025em;font-weight:400;line-height:1.17;margin-top:2px}
@@ -134,8 +133,8 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
  .method-entries summary{min-height:49px}
  .method-entries strong{font-size:14px}
  .work h2{font-size:30px;margin-bottom:12px}
- .work-item{grid-template-columns:76px minmax(0,1fr);gap:12px;padding:11px 0}
- .work-thumbnail{height:82px}
+ .work-item{grid-template-columns:56px minmax(0,1fr);gap:12px;padding:11px 0}
+ .work-mark{width:56px;height:56px}
  .work-type{font-size:12px}
  .work-detail strong{font-size:26px}
  .work-detail p{font-size:14px}

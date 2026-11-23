@@ -116,10 +116,42 @@ historyExport.addEventListener('click', () => {
   if (!loadBlocked && entries.length) exportHistoryCsv([...entries].reverse(), true);
 });
 
+const demoGuide = $('#demo-guide');
+const demoPayment = $('#demo-payment');
+let demoCustomer;
+
+function renderDemoGuide(clients) {
+  demoGuide.hidden = mode !== 'demo';
+  if (demoGuide.hidden) return;
+  demoCustomer = clients.find(client => client.id === 'demo-0' && client.balance > 1)
+    ?? clients.find(client => client.balance > 1);
+  const copy = $('#demo-guide-description');
+  if (loadBlocked) {
+    copy.textContent = 'Не удалось открыть пример. Начните его заново, чтобы продолжить.';
+  } else if (demoCustomer) {
+    copy.textContent = `У клиента ${demoCustomer.name} остаток ${rub(demoCustomer.balance)}. Отметьте частичную оплату и посмотрите, сколько останется.`;
+  } else {
+    copy.textContent = 'В этой книге больше нет долга, который можно погасить частично. Начните пример заново, чтобы повторить.';
+  }
+  demoPayment.disabled = loadBlocked || !demoCustomer;
+}
+
+demoPayment.onclick = () => {
+  if (mode !== 'demo' || loadBlocked || !demoCustomer) return;
+  const amount = Math.min(100_000, Math.floor(demoCustomer.balance / 2));
+  openEntry(demoCustomer.id, 'payment');
+  entryAmount.value = (amount / 100).toFixed(2).replace('.', ',');
+  updateEntryBalance();
+};
+$('#demo-restart').onclick = () => {
+  if (mode === 'demo') confirmReplacement(demoBook(), { restartDemo: true });
+};
+
 function render(){
   $('#mode-label').textContent=mode==='demo'?'ДЕМО · ВЫМЫШЛЕННЫЕ ДАННЫЕ':'МОЯ КНИГА';$('#mode-label').classList.toggle('demo',mode==='demo');$('#switch-mode').textContent=mode==='demo'?'Вернуться в мою книгу':'Посмотреть пример';
   const summary = debtOverview(book);
   const items = book.clients.map(client => ({ ...client, ...summary.get(client.id) }));
+  renderDemoGuide(items);
   const total = field => rub(items.reduce((sum, client) => sum + client[field], 0));
   $('#total').textContent = total('balance');
   $('#overdue').textContent = total('overdue');
@@ -399,8 +431,10 @@ function recordBackup(bookKey, raw, currentBook) {
   });
 }
 
-function confirmReplacement(next) {
-  pending = { next, bookKey: key(), raw: localStorage.getItem(key()) };
+function confirmReplacement(next, { restartDemo = false } = {}) {
+  pending = { next, bookKey: key(), raw: localStorage.getItem(key()), restartDemo };
+  $('#confirm-title').textContent = restartDemo ? 'Начать пример заново?' : 'Заменить текущую книгу?';
+  applyBackup.textContent = restartDemo ? 'Начать заново' : 'Заменить книгу';
   const description = `Клиенты: ${book.clients.length} → ${next.clients.length}. Операции: ${book.entries.length} → ${next.entries.length}.`;
   const protection = pending.raw === null ? '' : ' Текущая версия сохранится в автоматических копиях.';
   $('#confirm-text').textContent = `${mode === 'demo' ? 'Будет заменена книга примера.' : 'Будет заменена ваша книга.'} ${description}${protection}`;
@@ -506,7 +540,7 @@ confirmBackup.addEventListener('cancel', event => {
 });
 applyBackup.onclick = async () => {
   if (!pending || applyBackup.disabled) return;
-  const { next, bookKey, raw } = pending;
+  const { next, bookKey, raw, restartDemo } = pending;
   applyBackup.disabled = cancelBackup.disabled = true;
   confirmBackup.querySelector('.dialog-error').hidden = true;
   try {
@@ -530,7 +564,7 @@ applyBackup.onclick = async () => {
       throw error;
     }
     confirmBackup.close();
-    toast('Книга восстановлена.');
+    toast(restartDemo ? 'Пример начат заново.' : 'Книга восстановлена.');
   } catch (error) {
     toast(error.message);
   } finally {
