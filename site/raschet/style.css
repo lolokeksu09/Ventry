@@ -164,3 +164,80 @@
     --amber: #7c4b24;
   }
 }
+
+#history-filters {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.history-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.history-fields label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.history-fields select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+}
+.history-fields input,
+.history-fields select {
+  min-width: 0;
+  min-height: 46px;
+}
+.history-fields select:focus-visible {
+  outline: 2px solid var(--ventry-focus);
+  outline-offset: 1px;
+}
+.history-fields input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+.history-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.history-tools p {
+  flex: 1 0 110px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.history-tools button {
+  padding-inline: 12px;
+  font-size: 13px;
+}
+@media (max-width: 850px) {
+  .history-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  #history-filters {
+    padding: 16px;
+  }
+  .history-fields .history-query,
+  .history-fields label:has(select) {
+    grid-column: 1 / -1;
+  }
+  .history-fields input,
+  .history-fields select {
+    padding-inline: 8px;
+    font-size: 16px;
+  }
+  .history-tools p {
+    flex-basis: 100%;
+  }
+}

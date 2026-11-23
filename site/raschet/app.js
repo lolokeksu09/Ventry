@@ -1,4 +1,6 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,overdue,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
+import { filterHistory } from './history.js';
+
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
 let mode='own',book=blank(),filter='all',entryClient='',entryType='debt',detailId='',pending=null,loadBlocked=false,editClientId='',reverseEntryId='';
@@ -14,18 +16,57 @@ function switchView(view){if(!['book','history','settings'].includes(view))view=
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
-$('#switch-mode').onclick=()=>{mode=mode==='own'?'demo':'own';filter='all';$('#search').value='';load();toast(mode==='demo'?'Это вымышленные данные. Ваша книга хранится отдельно.':'Открыта ваша книга.');};
+$('#switch-mode').onclick=()=>{mode=mode==='own'?'demo':'own';filter='all';$('#search').value='';historyForm.reset();load();toast(mode==='demo'?'Это вымышленные данные. Ваша книга хранится отдельно.':'Открыта ваша книга.');};
 $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render();});
 $('#search').oninput=render;
 function historyRows(entries){
   if(!entries.length)return '<div class="empty"><p>Операций пока нет.</p></div>';
   const reversed=new Set(book.entries.filter(e=>e.type==='reversal').map(e=>e.reverses));
-  return [...entries].reverse().map(e=>{const c=book.clients.find(c=>c.id===e.clientId),cancelled=reversed.has(e.id),original=e.type==='reversal'?book.entries.find(x=>x.id===e.reverses):null;
+  const clients = new Map(book.clients.map(client => [client.id, client]));
+  const originals = new Map(book.entries.map(entry => [entry.id, entry]));
+  return [...entries].reverse().map(e=>{const c=clients.get(e.clientId),cancelled=reversed.has(e.id),original=e.type==='reversal'?originals.get(e.reverses):null;
     const label=original?`Отмена ${original.type==='debt'?'долга':'оплаты'}`:e.type==='payment'?'Принята оплата':'Записан долг';
     const sign=original?(original.type==='debt'?'−':'+'):e.type==='payment'?'−':'+';
     return `<div class="history-row ${cancelled?'cancelled':''}"><div><strong>${esc(c.name)}</strong><small>${label} · ${dateText(e.date)}${cancelled?' · Отменено':''}</small>${e.note?`<small>${esc(e.note)}</small>`:''}${e.due?`<small>Вернуть до ${dateText(e.due)}</small>`:''}</div><div class="history-amount ${e.type}"><strong>${sign}${rub(e.amount)}</strong></div></div>`;
   }).join('');
 }
+const historyForm = $('#history-filters');
+const historyControls = historyForm.elements;
+const historyExport = $('#history-export');
+
+function historySelection() {
+  const { query, kind, from, to } = historyControls;
+  const rangeError = Boolean(from.value && to.value && from.value > to.value);
+  return {
+    rangeError,
+    entries: rangeError ? [] : filterHistory(book, {
+      query: query.value, kind: kind.value, from: from.value, to: to.value,
+    }),
+  };
+}
+
+function renderHistory() {
+  const { rangeError, entries } = historySelection();
+  $('#history-error').hidden = !rangeError;
+  historyControls.to.setAttribute('aria-invalid', String(rangeError));
+  $('#history-count').textContent = rangeError ? '' : `Найдено: ${entries.length} из ${book.entries.length}`;
+  historyExport.disabled = loadBlocked || !entries.length;
+  $('#history').innerHTML = rangeError ? '' : entries.length || !book.entries.length
+    ? historyRows(entries)
+    : '<div class="empty"><p>По этим фильтрам ничего не найдено.</p></div>';
+}
+
+historyForm.addEventListener('submit', event => event.preventDefault());
+historyForm.addEventListener('input', renderHistory);
+$('#history-reset').addEventListener('click', () => {
+  historyForm.reset();
+  renderHistory();
+});
+historyExport.addEventListener('click', () => {
+  const { entries } = historySelection();
+  if (!loadBlocked && entries.length) exportHistoryCsv([...entries].reverse(), true);
+});
+
 function render(){
   $('#mode-label').textContent=mode==='demo'?'ДЕМО · ВЫМЫШЛЕННЫЕ ДАННЫЕ':'МОЯ КНИГА';$('#mode-label').classList.toggle('demo',mode==='demo');$('#switch-mode').textContent=mode==='demo'?'Вернуться в мою книгу':'Посмотреть пример';
   const items=book.clients.map(c=>({...c,b:balance(book,c.id),o:overdue(book,c.id)}));
@@ -35,7 +76,7 @@ function render(){
   const q=$('#search').value.trim().toLowerCase(),shown=items.filter(c=>(`${c.name} ${c.phone}`.toLowerCase().includes(q))&&(filter==='all'||filter==='debt'&&c.b>0||filter==='overdue'&&c.o>0||filter==='closed'&&c.b===0)).sort((a,b)=>b.o-a.o||b.b-a.b||a.name.localeCompare(b.name,'ru'));
   $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.b)}<small>${c.b?'остаток долга':'всё оплачено'}</small></div><div class="status ${c.o?'late':''}">${c.o?'◷ Срок прошёл':c.b?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.b?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
-  $('#history').innerHTML=historyRows(book.entries);$('#book-note').textContent=loadBlocked?'Ошибка чтения: исходные записи сохранены в браузере, изменения заблокированы.':mode==='demo'?'Режим примера: все имена, суммы и операции вымышлены. Ваша книга хранится отдельно.':'Записи сохраняются только в этом браузере. Синхронизация между устройствами пока не подключена.';
+  renderHistory();$('#book-note').textContent=loadBlocked?'Ошибка чтения: исходные записи сохранены в браузере, изменения заблокированы.':mode==='demo'?'Режим примера: все имена, суммы и операции вымышлены. Ваша книга хранится отдельно.':'Записи сохраняются только в этом браузере. Синхронизация между устройствами пока не подключена.';
   try{const last=localStorage.getItem(key()+'-backup');$('#backup-status').textContent=last?'Последняя выгрузка: '+dateText(last):'Резервная копия ещё не выгружалась.';}catch{}
 }
 function openClient(clientId=''){
@@ -178,7 +219,31 @@ $('#reverse-form').onsubmit=e=>{e.preventDefault();try{
 $('#print-statement').onclick=()=>window.print();$$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('#export-json').onclick=()=>{try{const raw=loadBlocked?localStorage.getItem(key()):JSON.stringify(book,null,2);if(!raw)throw Error('Нет данных для выгрузки.');download(`dolgbook-${mode}-${today()}.json`,raw,'application/json');localStorage.setItem(key()+'-backup',new Date().toISOString());render();toast('Файл передан браузеру для скачивания.');}catch(e){toast(e.message);}};
-$('#export-csv').onclick=()=>{if(loadBlocked)return toast('Сначала выгрузите исходную JSON-копию.');const cell=v=>'"'+String(/^[=+\-@\t\r]/.test(String(v))?"'"+v:v).replace(/"/g,'""')+'"';const rows=[['Клиент','Телефон','Дата','Тип','Сумма, ₽','Вернуть до','Комментарий','ID операции','Отменяет ID'],...book.entries.map(e=>{const c=book.clients.find(c=>c.id===e.clientId);return[c.name,c.phone,e.date,e.type==='debt'?'Долг':e.type==='payment'?'Оплата':'Отмена',(e.amount/100).toFixed(2).replace('.',','),e.due,e.note,e.id,e.reverses||''];})];download(`dolgbook-${mode}-${today()}.csv`,'\ufeff'+rows.map(r=>r.map(cell).join(';')).join('\r\n'),'text/csv;charset=utf-8');toast('CSV передан браузеру для скачивания.');};
+function exportHistoryCsv(entries, filtered = false) {
+  const cell = value => {
+    const text = String(value);
+    const escaped = /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
+    return '"' + escaped.replace(/"/g, '""') + '"';
+  };
+  const clients = new Map(book.clients.map(client => [client.id, client]));
+  const cancelled = new Set(book.entries.filter(entry => entry.type === 'reversal').map(entry => entry.reverses));
+  const columns = ['Клиент', 'Телефон', 'Дата', 'Тип', 'Сумма, ₽', 'Вернуть до', 'Комментарий', 'ID операции', 'Отменяет ID'];
+  if (filtered) columns.push('Статус');
+  const rows = entries.map(entry => {
+    const client = clients.get(entry.clientId);
+    const kind = { debt: 'Долг', payment: 'Оплата', reversal: 'Отмена' }[entry.type];
+    const row = [client.name, client.phone, entry.date, kind, (entry.amount / 100).toFixed(2).replace('.', ','), entry.due, entry.note, entry.id, entry.reverses || ''];
+    if (filtered) row.push(cancelled.has(entry.id) ? 'Отменено' : '');
+    return row;
+  });
+  const csv = '\ufeff' + [columns, ...rows].map(row => row.map(cell).join(';')).join('\r\n');
+  download(`dolgbook-${mode}${filtered ? '-history' : ''}-${today()}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('CSV передан браузеру для скачивания.');
+}
+$('#export-csv').onclick = () => {
+  if (loadBlocked) return toast('Сначала выгрузите исходную JSON-копию.');
+  exportHistoryCsv(book.entries);
+};
 $('#import-json').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>5*1024*1024)throw Error('Файл больше 5 МБ.');pending=validateBook(JSON.parse(await file.text()));$('#confirm-text').textContent=`Будет заменена ${mode==='demo'?'книга примера':'ваша книга'}: ${book.clients.length} клиентов, ${book.entries.length} операций. В файле: ${pending.clients.length} клиентов, ${pending.entries.length} операций. Текущие записи будут заменены. Сначала сохраните резервную копию.`;$('#confirm-dialog').showModal();}catch(err){pending=null;toast(err instanceof SyntaxError?'Файл не является корректным JSON.':err.message);}};
 $('#confirm-cancel').onclick=()=>{pending=null;$('#confirm-dialog').close();};$('#confirm-dialog').addEventListener('cancel',()=>pending=null);
 $('#confirm-import').onclick=()=>{if(!pending)return;try{const wasBlocked=loadBlocked;loadBlocked=false;try{save(pending);}catch(e){loadBlocked=wasBlocked;throw e;}pending=null;$('#confirm-dialog').close();toast('Книга восстановлена.');}catch(err){toast(err.message);}};
