@@ -349,3 +349,10 @@
   outline-offset: -3px;
   background: var(--ventry-forest);
 }
+
+.demo-result {
+  margin: 16px;
+}
+.demo-result h3 {
+  margin: 0 0 6px;
+}
