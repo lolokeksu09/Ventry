@@ -1,11 +1,12 @@
-import {MAX_AMOUNT,today,moneyToCents,balance,overdue,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
+import {MAX_AMOUNT,today,moneyToCents,balance,debtOverview,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
 import { filterHistory } from './history.js';
 import { MAX_BACKUP_BYTES, listBackups, storeBackup } from './backups.js';
 import { decryptBackup, encryptBackup, isEncryptedBackup, MAX_ENCRYPTED_BYTES } from './backup-encryption.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
-let mode='own',book=blank(),filter='all',entryClient='',entryType='debt',detailId='',pending=null,loadBlocked=false,editClientId='',reverseEntryId='';
+let mode=new URLSearchParams(location.search).get('demo') === '1' ? 'demo' : 'own';
+let book=blank(),filter='all',entryClient='',entryType='debt',detailId='',pending=null,loadBlocked=false,editClientId='',reverseEntryId='';
 const key=()=>`dolgbook-v1-${mode}`;
 const rub=n=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:n%100?2:0}).format(n/100);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -44,9 +45,29 @@ function switchView(view){if(!['book','history','settings'].includes(view))view=
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
-$('#switch-mode').onclick=()=>{mode=mode==='own'?'demo':'own';filter='all';$('#search').value='';historyForm.reset();load();toast(mode==='demo'?'Это вымышленные данные. Ваша книга хранится отдельно.':'Открыта ваша книга.');};
+$('#switch-mode').onclick=()=>{mode=mode==='own'?'demo':'own';
+  const url = new URL(location.href);
+  if (mode === 'demo') url.searchParams.set('demo', '1');
+  else url.searchParams.delete('demo');
+  history.replaceState(null, '', url);
+  filter='all';$('#search').value='';historyForm.reset();load();toast(mode==='demo'?'Это вымышленные данные. Ваша книга хранится отдельно.':'Открыта ваша книга.');};
 $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render();});
 $('#search').oninput=render;
+$$('[data-open-filter]').forEach(button => button.onclick = () => {
+  filter = button.dataset.openFilter;
+  $('#search').value = '';
+  render();
+  $('#client-panel').focus();
+});
+
+function deadlineNote(client) {
+  if (filter === 'soon' && client.soonDate) {
+    return `<small class="deadline-note">До ${dateText(client.soonDate)} · ${rub(client.soon)} за 7 дней</small>`;
+  }
+  if (client.overdue) return `<small class="deadline-note deadline-late">Просрочено ${rub(client.overdue)}</small>`;
+  if (client.nextDue) return `<small class="deadline-note">Ближайший срок: ${dateText(client.nextDue)}</small>`;
+  return '';
+}
 function historyRows(entries){
   if(!entries.length)return '<div class="empty"><p>Операций пока нет.</p></div>';
   const reversed=new Set(book.entries.filter(e=>e.type==='reversal').map(e=>e.reverses));
@@ -97,12 +118,32 @@ historyExport.addEventListener('click', () => {
 
 function render(){
   $('#mode-label').textContent=mode==='demo'?'ДЕМО · ВЫМЫШЛЕННЫЕ ДАННЫЕ':'МОЯ КНИГА';$('#mode-label').classList.toggle('demo',mode==='demo');$('#switch-mode').textContent=mode==='demo'?'Вернуться в мою книгу':'Посмотреть пример';
-  const items=book.clients.map(c=>({...c,b:balance(book,c.id),o:overdue(book,c.id)}));
-  $('#total').textContent=rub(items.reduce((n,c)=>n+c.b,0));const active=items.filter(c=>c.b>0).length;$('#active-count').textContent=`Клиентов с долгом: ${active}`;$('#overdue').textContent=rub(items.reduce((n,c)=>n+c.o,0));
+  const summary = debtOverview(book);
+  const items = book.clients.map(client => ({ ...client, ...summary.get(client.id) }));
+  const total = field => rub(items.reduce((sum, client) => sum + client[field], 0));
+  $('#total').textContent = total('balance');
+  $('#overdue').textContent = total('overdue');
+  $('#due-soon').textContent = total('soon');
+  $('#active-count').textContent = `Клиентов с долгом: ${items.filter(client => client.balance > 0).length}`;
   $('#paid-month').textContent=rub(activeEntries(book).filter(e=>{const d=new Date(e.date),n=new Date();return e.type==='payment'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((n,e)=>n+e.amount,0));
-  $('#client-count').textContent=book.clients.length;$$('[data-filter]').forEach(b=>b.classList.toggle('selected',filter===b.dataset.filter));
-  const q=$('#search').value.trim().toLowerCase(),shown=items.filter(c=>(`${c.name} ${c.phone}`.toLowerCase().includes(q))&&(filter==='all'||filter==='debt'&&c.b>0||filter==='overdue'&&c.o>0||filter==='closed'&&c.b===0)).sort((a,b)=>b.o-a.o||b.b-a.b||a.name.localeCompare(b.name,'ru'));
-  $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.b)}<small>${c.b?'остаток долга':'всё оплачено'}</small></div><div class="status ${c.o?'late':''}">${c.o?'◷ Срок прошёл':c.b?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.b?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
+  $('#client-count').textContent = book.clients.length;
+  $$('[data-filter]').forEach(button => {
+    const selected = filter === button.dataset.filter;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  const q = $('#search').value.trim().toLowerCase();
+  const matches = {
+    all: () => true,
+    debt: c => c.balance > 0,
+    overdue: c => c.overdue > 0,
+    soon: c => c.soon > 0,
+    closed: c => c.balance === 0,
+  };
+  const shown = items.filter(c => `${c.name} ${c.phone}`.toLowerCase().includes(q) && matches[filter](c))
+    .sort((a, b) => (filter === 'soon' ? a.soonDate.localeCompare(b.soonDate) : b.overdue - a.overdue)
+      || b.balance - a.balance || a.name.localeCompare(b.name, 'ru'));
+  $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.balance)}<small>${c.balance?'остаток долга':'всё оплачено'}</small>${deadlineNote(c)}</div><div class="status ${c.overdue?'late':''}">${c.overdue?'◷ Срок прошёл':c.balance?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.balance?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
   $('#export-encrypted').disabled = loadBlocked;
   renderHistory();$('#book-note').textContent=loadBlocked?'Ошибка чтения: исходные записи сохранены в браузере, изменения заблокированы.':mode==='demo'?'Режим примера: все имена, суммы и операции вымышлены. Ваша книга хранится отдельно.':'Записи сохраняются только в этом браузере. Синхронизация между устройствами пока не подключена.';
