@@ -1,7 +1,7 @@
 /* Ventry — consistent AMOLED design for the project and document pages. */
 body.product-page,body.document-page{
- --paper:#050907;--surface:#0d1912;--ink:#eef2e9;--muted:#b6c7b9;--line:#2b4133;
- --forest:#0c2a1c;--cream:#f2efdf;--blue:#a2cea9;--radius:12px;
+ --paper:var(--ventry-background);--surface:var(--ventry-surface);--ink:var(--ventry-text);--muted:#b6c7b9;--line:#2b4133;
+ --forest:var(--ventry-forest);--cream:#f2efdf;--blue:#a2cea9;--radius:12px;
  color-scheme:dark;background:var(--paper);color:var(--ink);min-height:100svh;
  display:flex;flex-direction:column
 }
@@ -26,17 +26,17 @@ body.product-page,body.document-page{
 .product-page .footer-links a,.document-page .footer-links a{min-height:43px;text-decoration:none;border-bottom:1px solid transparent}
 .product-page .footer-links a:hover,.document-page .footer-links a:hover,
 .product-page .footer-links a[aria-current],.document-page .footer-links a[aria-current]{border-color:#a4c6a6;color:#f3f5eb}
-.product-page .skip-link,.document-page .skip-link{background:#f0f0e5;color:#143323;border-radius:5px}
+.product-page .skip-link,.document-page .skip-link{background:var(--ventry-primary);color:var(--ventry-on-primary);border-radius:5px}
 .product-page .product-hero{margin-top:42px;background:#0c1610;border:1px solid var(--line);border-radius:11px}
 .product-page .product-copy{padding:clamp(24px,4vw,58px)}
 .product-page .breadcrumbs{font-size:13px;color:#afc2b2;margin-bottom:19px}
 .product-page .breadcrumbs a:hover{color:#fff}
 .product-page .status-tag{color:#b8d7b8;font-size:13px}
-.product-page .product-copy h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(57px,6.7vw,94px);letter-spacing:-.035em;line-height:1.04;margin-top:12px}
+.product-page .product-copy h1{font-family:var(--ventry-display);font-weight:400;font-size:clamp(57px,6.7vw,94px);letter-spacing:-.035em;line-height:1.04;margin-top:12px}
 .product-page .product-lead{font-size:clamp(21px,2.2vw,31px);font-weight:500;letter-spacing:-.025em}
 .product-page .product-description{font-size:15px;line-height:1.65;color:#c0cec1;max-width:44ch}
-.product-page .primary-button{background:#f0f0e5;color:#143323;border-radius:5px;min-height:47px}
-.product-page .primary-button:hover{background:#cee5cc;color:#143323}
+.product-page .primary-button{background:var(--ventry-primary);color:var(--ventry-on-primary);border-radius:5px;min-height:47px}
+.product-page .primary-button:hover{background:var(--ventry-primary-hover);color:var(--ventry-on-primary)}
 .product-page .quiet-button{color:#d7e7d8;min-height:44px}
 .product-page .quiet-button:hover{color:#fff}
 .product-page .share-status{color:#c4d7c3}
@@ -48,7 +48,7 @@ body.product-page,body.document-page{
 .product-page .ledger-sheet p{color:#456454}
 .product-page .ledger-sheet .ledger-balance{background:#193e2e;color:#f6f3e8;border-radius:5px}
 .product-page .product-scope,.product-page .product-faq{margin-top:clamp(38px,5vw,70px)}
-.product-page .product-scope h2,.product-page .product-faq h2{font-family:Georgia,"Times New Roman",serif;font-size:clamp(31px,3.4vw,48px);font-weight:400;letter-spacing:-.035em}
+.product-page .product-scope h2,.product-page .product-faq h2{font-family:var(--ventry-display);font-size:clamp(31px,3.4vw,48px);font-weight:400;letter-spacing:-.035em}
 .product-page .scope-list{border:0;border-top:1px solid #3a5944;border-bottom:1px solid #3a5944;background:transparent;border-radius:0;gap:0;margin-top:22px}
 .product-page .scope-list>div{background:transparent;padding:22px 24px;border-right:1px solid #2d4834}
 .product-page .scope-list>div:first-child{padding-left:0}
@@ -63,7 +63,7 @@ body.product-page,body.document-page{
 .document-page .legal-main{width:100%}
 .document-page .legal-intro{padding-block:clamp(32px,5vw,70px) 24px}
 .document-page .legal-kicker{font-size:12px;letter-spacing:.08em;color:#a6bca9}
-.document-page .legal-intro h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(38px,5.1vw,68px);font-weight:400;letter-spacing:-.033em;max-width:19ch;line-height:1.12}
+.document-page .legal-intro h1{font-family:var(--ventry-display);font-size:clamp(38px,5.1vw,68px);font-weight:400;letter-spacing:-.033em;max-width:19ch;line-height:1.12}
 .document-page .legal-lead{font-size:clamp(16px,1.7vw,20px);line-height:1.55;max-width:65ch;margin-top:17px}
 .document-page .legal-update{font-size:13px;color:#adc2af}
 .document-page .document-toc{display:flex;flex-wrap:wrap;gap:8px;padding:0 0 28px}
