@@ -110,7 +110,7 @@ try:
 
         product = load("/projects/raschet/", width, height)
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
-        assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 000 ₽"
+        assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 350 ₽"
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
