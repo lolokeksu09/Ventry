@@ -1,5 +1,6 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,overdue,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
 import { filterHistory } from './history.js';
+import { MAX_BACKUP_BYTES, listBackups, storeBackup } from './backups.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
@@ -10,9 +11,35 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const dateText=s=>new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',year:'numeric'}).format(new Date(s.length===10?s+'T12:00:00':s));
 const id=()=>crypto.randomUUID();
 function toast(message){const error=$('dialog[open] .dialog-error');if(error){error.textContent=message;error.hidden=false;}$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('show'),5500);}
-function load(){loadBlocked=false;try{const raw=localStorage.getItem(key());book=raw?validateBook(JSON.parse(raw)):(mode==='demo'?demoBook():blank());}catch(e){book=blank();loadBlocked=true;toast('Не удалось прочитать записи. Изменения заблокированы. Сохраните исходную копию в разделе «Данные и копии».');}render();}
-function save(next){if(loadBlocked)throw Error('Сначала сохраните исходную копию и восстановите книгу из корректного файла.');const clean=validateBook(next);try{localStorage.setItem(key(),JSON.stringify(clean));}catch(e){throw Error('Браузер не сохранил запись. Проверьте свободное место и разрешение на хранение данных.');}book=clean;render();}
-function switchView(view){if(!['book','history','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;}
+function load() {
+  loadBlocked = false;
+  let raw;
+  try {
+    raw = localStorage.getItem(key());
+    book = raw ? validateBook(JSON.parse(raw)) : (mode === 'demo' ? demoBook() : blank());
+  } catch {
+    book = blank();
+    loadBlocked = true;
+    toast('Не удалось прочитать записи. Восстановите книгу в разделе «Данные и копии».');
+  }
+  render();
+  if (raw && !loadBlocked) recordBackup(key(), raw, book);
+  else refreshBackups();
+}
+function save(next) {
+  if (loadBlocked) throw Error('Восстановите книгу в разделе «Данные и копии».');
+  const clean = validateBook(next);
+  const raw = JSON.stringify(clean);
+  try {
+    localStorage.setItem(key(), raw);
+  } catch {
+    throw Error('Браузер не сохранил запись. Проверьте свободное место и разрешение на хранение данных.');
+  }
+  book = clean;
+  render();
+  recordBackup(key(), raw, clean);
+}
+function switchView(view){if(!['book','history','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshBackups();}
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
@@ -244,9 +271,138 @@ $('#export-csv').onclick = () => {
   if (loadBlocked) return toast('Сначала выгрузите исходную JSON-копию.');
   exportHistoryCsv(book.entries);
 };
-$('#import-json').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>5*1024*1024)throw Error('Файл больше 5 МБ.');pending=validateBook(JSON.parse(await file.text()));$('#confirm-text').textContent=`Будет заменена ${mode==='demo'?'книга примера':'ваша книга'}: ${book.clients.length} клиентов, ${book.entries.length} операций. В файле: ${pending.clients.length} клиентов, ${pending.entries.length} операций. Текущие записи будут заменены. Сначала сохраните резервную копию.`;$('#confirm-dialog').showModal();}catch(err){pending=null;toast(err instanceof SyntaxError?'Файл не является корректным JSON.':err.message);}};
-$('#confirm-cancel').onclick=()=>{pending=null;$('#confirm-dialog').close();};$('#confirm-dialog').addEventListener('cancel',()=>pending=null);
-$('#confirm-import').onclick=()=>{if(!pending)return;try{const wasBlocked=loadBlocked;loadBlocked=false;try{save(pending);}catch(e){loadBlocked=wasBlocked;throw e;}pending=null;$('#confirm-dialog').close();toast('Книга восстановлена.');}catch(err){toast(err.message);}};
+const backupList = $('#local-backups');
+const backupStatus = $('#local-backup-status');
+const confirmBackup = $('#confirm-dialog');
+const applyBackup = $('#confirm-import');
+const cancelBackup = $('#confirm-cancel');
+let backupViewRequest = 0;
+let importRequest = 0;
+
+function refreshBackups() {
+  const bookKey = key();
+  const request = ++backupViewRequest;
+  backupList.replaceChildren();
+  backupStatus.textContent = 'Загрузка копий…';
+  listBackups(bookKey).then(snapshots => {
+    if (request !== backupViewRequest) return;
+    backupStatus.textContent = snapshots.length ? '' : 'Автоматических копий пока нет.';
+    for (const snapshot of snapshots) {
+      const item = document.createElement('li');
+      const title = document.createElement('span');
+      const time = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'medium' });
+      title.textContent = time.format(new Date(snapshot.date)) + (snapshot.summary
+        ? ` · Клиенты: ${snapshot.summary.clients}, операции: ${snapshot.summary.entries}`
+        : ' · Исходные данные до восстановления');
+      const actions = document.createElement('div');
+      const restore = document.createElement('button');
+      restore.type = 'button';
+      restore.className = 'secondary';
+      restore.textContent = 'Восстановить';
+      restore.onclick = () => {
+        try {
+          confirmReplacement(validateBook(JSON.parse(snapshot.raw)));
+        } catch {
+          toast('Эта копия повреждена. Её можно скачать для проверки.');
+        }
+      };
+      const exportButton = document.createElement('button');
+      exportButton.type = 'button';
+      exportButton.className = 'secondary';
+      exportButton.textContent = 'Скачать JSON';
+      exportButton.onclick = () => download(
+        `dolgbook-${mode}-${snapshot.date.replaceAll(':', '-')}.json`,
+        snapshot.raw, 'application/json',
+      );
+      if (snapshot.summary) actions.append(restore);
+      actions.append(exportButton);
+      item.append(title, actions);
+      backupList.append(item);
+    }
+  }).catch(() => {
+    if (request === backupViewRequest) backupStatus.textContent = 'Локальные копии недоступны. Скачайте JSON вручную.';
+  });
+}
+
+function recordBackup(bookKey, raw, currentBook) {
+  const summary = currentBook
+    ? { clients: currentBook.clients.length, entries: currentBook.entries.length }
+    : null;
+  storeBackup(bookKey, raw, summary).then(() => {
+    if (bookKey === key()) refreshBackups();
+  }).catch(() => {
+    if (bookKey !== key()) return;
+    ++backupViewRequest;
+    backupStatus.textContent = 'Не удалось сохранить автоматическую копию. Скачайте JSON вручную.';
+  });
+}
+
+function confirmReplacement(next) {
+  pending = { next, bookKey: key(), raw: localStorage.getItem(key()) };
+  const description = `Клиенты: ${book.clients.length} → ${next.clients.length}. Операции: ${book.entries.length} → ${next.entries.length}.`;
+  const protection = pending.raw === null ? '' : ' Текущая версия сохранится в автоматических копиях.';
+  $('#confirm-text').textContent = `${mode === 'demo' ? 'Будет заменена книга примера.' : 'Будет заменена ваша книга.'} ${description}${protection}`;
+  confirmBackup.querySelector('.dialog-error').hidden = true;
+  confirmBackup.showModal();
+}
+
+const backupFileInput = $('#import-json');
+$('#choose-backup-file').onclick = () => backupFileInput.click();
+backupFileInput.onchange = async event => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const request = ++importRequest;
+  const bookKey = key();
+  try {
+    if (file.size > MAX_BACKUP_BYTES) throw Error('Файл больше 16 МБ.');
+    const next = validateBook(JSON.parse(await file.text()));
+    if (request === importRequest && bookKey === key()) confirmReplacement(next);
+  } catch (error) {
+    if (request === importRequest && bookKey === key()) {
+      toast(error instanceof SyntaxError ? 'Файл не является корректным JSON.' : error.message);
+    }
+  }
+};
+
+cancelBackup.onclick = () => confirmBackup.close();
+confirmBackup.addEventListener('close', () => { pending = null; });
+confirmBackup.addEventListener('cancel', event => {
+  if (applyBackup.disabled) event.preventDefault();
+});
+applyBackup.onclick = async () => {
+  if (!pending || applyBackup.disabled) return;
+  const { next, bookKey, raw } = pending;
+  applyBackup.disabled = cancelBackup.disabled = true;
+  confirmBackup.querySelector('.dialog-error').hidden = true;
+  try {
+    if (raw !== null) {
+      const summary = loadBlocked ? null : { clients: book.clients.length, entries: book.entries.length };
+      try {
+        await storeBackup(bookKey, raw, summary);
+      } catch {
+        throw Error('Не удалось сохранить текущую книгу в автоматических копиях. Восстановление остановлено.');
+      }
+    }
+    if (bookKey !== key() || localStorage.getItem(bookKey) !== raw) {
+      throw Error('Книга изменилась в другой вкладке. Закройте окно и выберите копию заново.');
+    }
+    const wasBlocked = loadBlocked;
+    loadBlocked = false;
+    try {
+      save(next);
+    } catch (error) {
+      loadBlocked = wasBlocked;
+      throw error;
+    }
+    confirmBackup.close();
+    toast('Книга восстановлена.');
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    applyBackup.disabled = cancelBackup.disabled = false;
+  }
+};
 window.addEventListener('storage', e => {
   if (e.key !== key()) return;
   load();
