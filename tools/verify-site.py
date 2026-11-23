@@ -5,6 +5,7 @@ from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1] / 'site'
+SITE_ORIGIN = 'https://ventrylab.top'
 
 
 class Page(HTMLParser):
@@ -12,6 +13,7 @@ class Page(HTMLParser):
         super().__init__()
         self.path, self.ids, self.refs, self.headings = path, set(), [], 0
         self.canonical = []
+        self.og_urls, self.og_images = [], []
         self.feed(path.read_text())
 
     def handle_starttag(self, tag, attrs):
@@ -19,6 +21,10 @@ class Page(HTMLParser):
         if 'id' in attrs:
             assert attrs['id'] not in self.ids, f'{self.path}: duplicate ID {attrs["id"]}'
             self.ids.add(attrs['id'])
+        if tag == 'meta' and attrs.get('property') == 'og:url':
+            self.og_urls.append(attrs.get('content'))
+        if tag == 'meta' and attrs.get('property') == 'og:image':
+            self.og_images.append(attrs.get('content'))
         if tag == 'h1':
             self.headings += 1
         if tag == 'link' and attrs.get('rel') == 'canonical':
@@ -38,7 +44,9 @@ for path, page in pages.items():
     assert page.headings == 1, f'{path}: expected exactly one h1'
     route = '/' + path.parent.relative_to(ROOT).as_posix().strip('.')
     route = route.rstrip('/') + '/'
-    assert page.canonical == ['https://135-106-227-179.sslip.io' + route], f'{path}: wrong canonical'
+    assert page.canonical == [SITE_ORIGIN + route], f'{path}: wrong canonical'
+    assert not page.og_urls or page.og_urls == page.canonical, f'{path}: wrong og:url'
+    assert all(url and url.startswith(SITE_ORIGIN + '/') for url in page.og_images), f'{path}: wrong og:image origin'
     for ref in page.refs:
         parsed = urlsplit(ref)
         if parsed.scheme or parsed.netloc:
@@ -58,6 +66,8 @@ sitemap_urls = [item.text for item in ElementTree.parse(ROOT / 'sitemap.xml')
 expected_urls = {page.canonical[0] for page in pages.values()}
 assert len(sitemap_urls) == len(set(sitemap_urls)), 'Sitemap includes duplicate URLs'
 assert set(sitemap_urls) == expected_urls, f'Sitemap differs from public pages: {set(sitemap_urls) ^ expected_urls}'
+
+assert f'Sitemap: {SITE_ORIGIN}/sitemap.xml' in (ROOT / 'robots.txt').read_text().splitlines(), 'Robots.txt has a stale sitemap address'
 
 public_email = 'ventrybusinesswork@gmail.com'
 for route in ('index.html', 'projects/raschet/index.html', 'legal/index.html', 'privacy/index.html'):

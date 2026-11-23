@@ -10,8 +10,6 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-    environment:
-      VENTRY_SITE_ADDRESS: ${VENTRY_SITE_ADDRESS:-135-106-227-179.sslip.io}
     volumes:
       - ./site:/srv:ro
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro

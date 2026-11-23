@@ -21,11 +21,16 @@ for fixture in '.env' '.git/config' 'backup.sql' 'data.zip' 'project.bak' \
 done
 printf '%s\n' 'public test fixture' > "$tmp/site/public-security-test.txt"
 
+# For HTTP-only security tests, replace just the production site-address line.
+# The full production Caddyfile is validated separately with both HTTPS names.
+grep -Fxq 'ventrylab.top, 135-106-227-179.sslip.io {' "$PWD/deploy/Caddyfile"
+sed 's/^ventrylab[.]top, 135-106-227-179[.]sslip[.]io {$/:18080 {/' "$PWD/deploy/Caddyfile" > "$tmp/Caddyfile"
+grep -Fxq ':18080 {' "$tmp/Caddyfile"
+
 docker run --detach --rm --name "$name" \
   --publish 127.0.0.1:18080:18080 \
-  --env VENTRY_SITE_ADDRESS=:18080 \
   --volume "$tmp/site:/srv:ro" \
-  --volume "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+  --volume "$tmp/Caddyfile:/etc/caddy/Caddyfile:ro" \
   "${VENTRY_CADDY_IMAGE:-ventry-caddy:patched-test}" > /dev/null
 
 ready=0

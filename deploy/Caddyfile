@@ -1,4 +1,6 @@
-{$VENTRY_SITE_ADDRESS} {
+# Pin both the primary brand domain and the existing temporary host.
+# Do not depend on /opt/ventry/.env: deployment deliberately leaves it untouched.
+ventrylab.top, 135-106-227-179.sslip.io {
     root * /srv
     encode zstd gzip
 
@@ -34,7 +36,7 @@
     file_server
 }
 
-# Preserve the original IP link, but redirect visitors to the TLS hostname.
+# Preserve the original IP redirect target and existing legacy URLs.
 http://135.106.227.179 {
-    redir https://{$VENTRY_SITE_ADDRESS}{uri} 308
+    redir https://135-106-227-179.sslip.io{uri} 308
 }
