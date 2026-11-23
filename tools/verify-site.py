@@ -44,9 +44,9 @@ for path, page in pages.items():
     assert page.headings == 1, f'{path}: expected exactly one h1'
     route = '/' + path.parent.relative_to(ROOT).as_posix().strip('.')
     route = route.rstrip('/') + '/'
-    assert page.canonical == [SITE_ORIGIN + route]
+    assert page.canonical == [SITE_ORIGIN + route], f'{path}: wrong canonical'
     assert not page.og_urls or page.og_urls == page.canonical, f'{path}: wrong og:url'
-    assert all(url and url.startswith(SITE_ORIGIN + '/') for url in page.og_images), f'{path}: wrong og:image origin', f'{path}: wrong canonical'
+    assert all(url and url.startswith(SITE_ORIGIN + '/') for url in page.og_images), f'{path}: wrong og:image origin'
     for ref in page.refs:
         parsed = urlsplit(ref)
         if parsed.scheme or parsed.netloc:
