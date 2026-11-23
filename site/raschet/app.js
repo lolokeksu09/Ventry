@@ -45,13 +45,20 @@ function switchView(view){if(!['book','history','settings'].includes(view))view=
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
-$('#switch-mode').onclick=()=>{mode=mode==='own'?'demo':'own';
+function switchBook(nextMode) {
+  mode = nextMode;
   const url = new URL(location.href);
   if (mode === 'demo') url.searchParams.set('demo', '1');
   else url.searchParams.delete('demo');
   history.replaceState(null, '', url);
-  demoOperationId = '';
-  filter='all';$('#search').value='';historyForm.reset();load();toast(mode==='demo'?'Это вымышленные данные. Ваша книга хранится отдельно.':'Открыта ваша книга.');};
+  lastDemoPayment = null;
+  filter = 'all';
+  $('#search').value = '';
+  historyForm.reset();
+  load();
+  toast(mode === 'demo' ? 'Это вымышленные данные. Ваша книга хранится отдельно.' : 'Открыта ваша книга.');
+}
+$('#switch-mode').onclick = () => switchBook(mode === 'own' ? 'demo' : 'own');
 $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render();});
 $('#search').oninput=render;
 $$('[data-open-filter]').forEach(button => button.onclick = () => {
@@ -122,23 +129,39 @@ const demoPayment = $('#demo-payment');
 const demoOperation = $('#demo-operation');
 let demoCustomer;
 let demoEntry = false;
-let demoOperationId = '';
+let lastDemoPayment = null;
 
 function renderDemoOperation() {
-  demoOperation.hidden = loadBlocked || mode !== 'demo' || !demoOperationId ||
-    !book.entries.some(entry => entry.id === demoOperationId);
+  const payment = !loadBlocked && mode === 'demo' && lastDemoPayment
+    ? book.entries.find(entry => entry.id === lastDemoPayment.id)
+    : null;
+  demoOperation.hidden = !payment;
+  $('#demo-result').hidden = !payment;
+  if (payment) {
+    $('#demo-result-summary').textContent = `Записано ${rub(payment.amount)}. Остаток после оплаты — ${rub(lastDemoPayment.remaining)}.`;
+  }
 }
 
 demoOperation.onclick = () => {
   historyForm.reset();
   switchView('history');
   renderHistory();
-  const row = $$('#history [data-operation-id]').find(item => item.dataset.operationId === demoOperationId);
+  const row = $$('#history [data-operation-id]').find(item => item.dataset.operationId === lastDemoPayment?.id);
   if (row) {
     row.tabIndex = -1;
     row.focus({ preventScroll: true });
     row.scrollIntoView({ block: 'center' });
   }
+};
+
+$('#demo-return').onclick = () => {
+  switchView('book');
+  demoOperation.focus();
+};
+$('#demo-open-own').onclick = () => {
+  switchView('book');
+  switchBook('own');
+  $('#book-title').focus();
 };
 
 function renderDemoGuide(clients) {
@@ -316,7 +339,7 @@ entryForm.onsubmit = event => {
     save(addEntry(book, operation));
     entryDialog.close();
     if (demoEntry && mode === 'demo') {
-      demoOperationId = operation.id;
+      lastDemoPayment = { id: operation.id, remaining: balance(book, operation.clientId) };
       renderDemoOperation();
       demoOperation.focus();
     }
@@ -589,7 +612,7 @@ applyBackup.onclick = async () => {
     try {
       save(next);
       if (mode === 'demo') {
-        demoOperationId = '';
+        lastDemoPayment = null;
         renderDemoOperation();
       }
     } catch (error) {
