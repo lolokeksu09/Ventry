@@ -343,3 +343,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.history-row:focus {
+  outline: 2px solid var(--ventry-focus);
+  outline-offset: -3px;
+  background: var(--ventry-forest);
+}
