@@ -24,7 +24,8 @@ printf '%s\n' 'public test fixture' > "$tmp/site/public-security-test.txt"
 # For HTTP-only security tests, replace just the production site-address line.
 # The full production Caddyfile is validated separately with both HTTPS names.
 grep -Fxq 'ventrylab.top, 135-106-227-179.sslip.io {' "$PWD/deploy/Caddyfile"
-{ printf ':18080 {\n'; tail -n +2 "$PWD/deploy/Caddyfile"; } > "$tmp/Caddyfile"
+sed 's/^ventrylab[.]top, 135-106-227-179[.]sslip[.]io {$/:18080 {/' "$PWD/deploy/Caddyfile" > "$tmp/Caddyfile"
+grep -Fxq ':18080 {' "$tmp/Caddyfile"
 
 docker run --detach --rm --name "$name" \
   --publish 127.0.0.1:18080:18080 \
