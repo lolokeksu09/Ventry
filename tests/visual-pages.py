@@ -104,7 +104,7 @@ try:
                 assert js("return document.querySelector('.method-entries details:nth-of-type(2)').open")
             if section == "projects":
                 wait.until(lambda _: js("""return document.querySelector('#projects img').naturalWidth > 0"""))
-                assert js("""return document.querySelector('#projects .work-item').pathname""") == "/projects/raschet/"
+                assert js("""return document.querySelector('#projects .work-item a[href="/projects/raschet/"]').pathname""") == "/projects/raschet/"
             if width in (390, 1440):
                 capture(f"ui-{label}-{section}.png")
 
