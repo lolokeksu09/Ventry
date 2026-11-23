@@ -50,6 +50,7 @@ $('#switch-mode').onclick=()=>{mode=mode==='own'?'demo':'own';
   if (mode === 'demo') url.searchParams.set('demo', '1');
   else url.searchParams.delete('demo');
   history.replaceState(null, '', url);
+  demoOperationId = '';
   filter='all';$('#search').value='';historyForm.reset();load();toast(mode==='demo'?'Это вымышленные данные. Ваша книга хранится отдельно.':'Открыта ваша книга.');};
 $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render();});
 $('#search').oninput=render;
@@ -76,7 +77,7 @@ function historyRows(entries){
   return [...entries].reverse().map(e=>{const c=clients.get(e.clientId),cancelled=reversed.has(e.id),original=e.type==='reversal'?originals.get(e.reverses):null;
     const label=original?`Отмена ${original.type==='debt'?'долга':'оплаты'}`:e.type==='payment'?'Принята оплата':'Записан долг';
     const sign=original?(original.type==='debt'?'−':'+'):e.type==='payment'?'−':'+';
-    return `<div class="history-row ${cancelled?'cancelled':''}"><div><strong>${esc(c.name)}</strong><small>${label} · ${dateText(e.date)}${cancelled?' · Отменено':''}</small>${e.note?`<small>${esc(e.note)}</small>`:''}${e.due?`<small>Вернуть до ${dateText(e.due)}</small>`:''}</div><div class="history-amount ${e.type}"><strong>${sign}${rub(e.amount)}</strong></div></div>`;
+    return `<div data-operation-id="${esc(e.id)}" class="history-row ${cancelled?'cancelled':''}"><div><strong>${esc(c.name)}</strong><small>${label} · ${dateText(e.date)}${cancelled?' · Отменено':''}</small>${e.note?`<small>${esc(e.note)}</small>`:''}${e.due?`<small>Вернуть до ${dateText(e.due)}</small>`:''}</div><div class="history-amount ${e.type}"><strong>${sign}${rub(e.amount)}</strong></div></div>`;
   }).join('');
 }
 const historyForm = $('#history-filters');
@@ -118,7 +119,27 @@ historyExport.addEventListener('click', () => {
 
 const demoGuide = $('#demo-guide');
 const demoPayment = $('#demo-payment');
+const demoOperation = $('#demo-operation');
 let demoCustomer;
+let demoEntry = false;
+let demoOperationId = '';
+
+function renderDemoOperation() {
+  demoOperation.hidden = loadBlocked || mode !== 'demo' || !demoOperationId ||
+    !book.entries.some(entry => entry.id === demoOperationId);
+}
+
+demoOperation.onclick = () => {
+  historyForm.reset();
+  switchView('history');
+  renderHistory();
+  const row = $$('#history [data-operation-id]').find(item => item.dataset.operationId === demoOperationId);
+  if (row) {
+    row.tabIndex = -1;
+    row.focus({ preventScroll: true });
+    row.scrollIntoView({ block: 'center' });
+  }
+};
 
 function renderDemoGuide(clients) {
   demoGuide.hidden = mode !== 'demo';
@@ -139,7 +160,7 @@ function renderDemoGuide(clients) {
 demoPayment.onclick = () => {
   if (mode !== 'demo' || loadBlocked || !demoCustomer) return;
   const amount = Math.min(100_000, Math.floor(demoCustomer.balance / 2));
-  openEntry(demoCustomer.id, 'payment');
+  openEntry(demoCustomer.id, 'payment', { fromDemoGuide: true });
   entryAmount.value = (amount / 100).toFixed(2).replace('.', ',');
   updateEntryBalance();
 };
@@ -152,6 +173,7 @@ function render(){
   const summary = debtOverview(book);
   const items = book.clients.map(client => ({ ...client, ...summary.get(client.id) }));
   renderDemoGuide(items);
+  renderDemoOperation();
   const total = field => rub(items.reduce((sum, client) => sum + client[field], 0));
   $('#total').textContent = total('balance');
   $('#overdue').textContent = total('overdue');
@@ -233,7 +255,8 @@ function updateEntryBalance() {
   }
 }
 
-function openEntry(clientId, type) {
+function openEntry(clientId, type, { fromDemoGuide = false } = {}) {
+  demoEntry = fromDemoGuide;
   entryClient = clientId;
   entryType = type;
   const client = book.clients.find(item => item.id === clientId);
@@ -285,12 +308,18 @@ entryForm.onsubmit = event => {
 
   entrySubmit.disabled = true;
   try {
-    save(addEntry(book, {
+    const operation = {
       id: id(), clientId: entryClient, type: entryType, amount,
       date: new Date().toISOString(), due: entryType === 'debt' ? fields.get('due') : '',
       note: fields.get('note').trim(),
-    }));
+    };
+    save(addEntry(book, operation));
     entryDialog.close();
+    if (demoEntry && mode === 'demo') {
+      demoOperationId = operation.id;
+      renderDemoOperation();
+      demoOperation.focus();
+    }
     toast(entryType === 'debt' ? 'Долг записан.' : 'Оплата сохранена. Остаток пересчитан.');
   } catch (error) {
     entryError.textContent = error.message;
@@ -559,6 +588,10 @@ applyBackup.onclick = async () => {
     loadBlocked = false;
     try {
       save(next);
+      if (mode === 'demo') {
+        demoOperationId = '';
+        renderDemoOperation();
+      }
     } catch (error) {
       loadBlocked = wasBlocked;
       throw error;
