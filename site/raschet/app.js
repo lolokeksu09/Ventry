@@ -1,6 +1,7 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,overdue,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
 import { filterHistory } from './history.js';
 import { MAX_BACKUP_BYTES, listBackups, storeBackup } from './backups.js';
+import { decryptBackup, encryptBackup, isEncryptedBackup, MAX_ENCRYPTED_BYTES } from './backup-encryption.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
@@ -103,6 +104,7 @@ function render(){
   const q=$('#search').value.trim().toLowerCase(),shown=items.filter(c=>(`${c.name} ${c.phone}`.toLowerCase().includes(q))&&(filter==='all'||filter==='debt'&&c.b>0||filter==='overdue'&&c.o>0||filter==='closed'&&c.b===0)).sort((a,b)=>b.o-a.o||b.b-a.b||a.name.localeCompare(b.name,'ru'));
   $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.b)}<small>${c.b?'остаток долга':'всё оплачено'}</small></div><div class="status ${c.o?'late':''}">${c.o?'◷ Срок прошёл':c.b?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.b?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
+  $('#export-encrypted').disabled = loadBlocked;
   renderHistory();$('#book-note').textContent=loadBlocked?'Ошибка чтения: исходные записи сохранены в браузере, изменения заблокированы.':mode==='demo'?'Режим примера: все имена, суммы и операции вымышлены. Ваша книга хранится отдельно.':'Записи сохраняются только в этом браузере. Синхронизация между устройствами пока не подключена.';
   try{const last=localStorage.getItem(key()+'-backup');$('#backup-status').textContent=last?'Последняя выгрузка: '+dateText(last):'Резервная копия ещё не выгружалась.';}catch{}
 }
@@ -245,7 +247,26 @@ $('#reverse-form').onsubmit=e=>{e.preventDefault();try{
 }catch(err){toast(err.message);}};
 $('#print-statement').onclick=()=>window.print();$$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('#export-json').onclick=()=>{try{const raw=loadBlocked?localStorage.getItem(key()):JSON.stringify(book,null,2);if(!raw)throw Error('Нет данных для выгрузки.');download(`dolgbook-${mode}-${today()}.json`,raw,'application/json');localStorage.setItem(key()+'-backup',new Date().toISOString());render();toast('Файл передан браузеру для скачивания.');}catch(e){toast(e.message);}};
+function downloadBackup(raw, encrypted = false) {
+  const suffix = encrypted ? '-protected' : '';
+  download(`dolgbook-${mode}-${today()}${suffix}.json`, raw, 'application/json');
+  try {
+    localStorage.setItem(key() + '-backup', new Date().toISOString());
+    render();
+  } catch {
+    // The file was already offered for download.
+  }
+  toast('Файл передан браузеру для скачивания.');
+}
+$('#export-json').onclick = () => {
+  try {
+    const raw = loadBlocked ? localStorage.getItem(key()) : JSON.stringify(book);
+    if (!raw) throw Error('Нет данных для выгрузки.');
+    downloadBackup(raw);
+  } catch (error) {
+    toast(error.message);
+  }
+};
 function exportHistoryCsv(entries, filtered = false) {
   const cell = value => {
     const text = String(value);
@@ -346,6 +367,72 @@ function confirmReplacement(next) {
   confirmBackup.showModal();
 }
 
+const passwordDialog = $('#backup-password-dialog');
+const passwordForm = $('#backup-password-form');
+const passwordInput = $('#backup-password');
+const repeatInput = $('#backup-password-repeat');
+const passwordSubmit = $('#backup-password-submit');
+const passwordClose = $('#backup-password-close');
+let passwordTask;
+
+function openPasswordDialog(task) {
+  passwordTask = task;
+  const exporting = task.kind === 'export';
+  passwordForm.reset();
+  passwordInput.minLength = exporting ? 12 : 0;
+  passwordInput.autocomplete = exporting ? 'new-password' : 'off';
+  repeatInput.required = exporting;
+  $('#backup-password-repeat-label').hidden = !exporting;
+  $('#backup-password-title').textContent = exporting ? 'Копия с паролем' : 'Открыть защищённую копию';
+  $('#backup-password-help').textContent = exporting
+    ? 'Придумайте пароль из 12–128 символов и сохраните его отдельно. Без него книгу из этого файла восстановить нельзя.'
+    : 'Введите пароль, с которым сохранили файл.';
+  passwordSubmit.textContent = exporting ? 'Создать копию' : 'Проверить пароль';
+  passwordDialog.querySelector('.dialog-error').hidden = true;
+  passwordDialog.showModal();
+  passwordInput.focus();
+}
+
+$('#export-encrypted').onclick = () => {
+  if (!loadBlocked) openPasswordDialog({ kind: 'export', raw: JSON.stringify(book) });
+};
+passwordDialog.addEventListener('cancel', event => {
+  if (passwordSubmit.disabled) event.preventDefault();
+});
+passwordDialog.addEventListener('close', () => {
+  if (passwordDialog.open) return;
+  passwordTask = undefined;
+  passwordForm.reset();
+});
+passwordForm.onsubmit = async event => {
+  event.preventDefault();
+  if (!passwordTask || passwordSubmit.disabled) return;
+  const task = passwordTask;
+  const password = passwordInput.value;
+  if (task.kind === 'export' && password !== repeatInput.value) {
+    toast('Пароли не совпадают.');
+    return;
+  }
+  passwordSubmit.disabled = passwordClose.disabled = true;
+  passwordDialog.querySelector('.dialog-error').hidden = true;
+  try {
+    if (task.kind === 'export') {
+      const payload = await encryptBackup(task.raw, password);
+      passwordDialog.close();
+      downloadBackup(payload, true);
+    } else {
+      const raw = await decryptBackup(task.envelope, password);
+      const next = validateBook(JSON.parse(raw));
+      passwordDialog.close();
+      confirmReplacement(next);
+    }
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    passwordSubmit.disabled = passwordClose.disabled = false;
+  }
+};
+
 const backupFileInput = $('#import-json');
 $('#choose-backup-file').onclick = () => backupFileInput.click();
 backupFileInput.onchange = async event => {
@@ -355,9 +442,15 @@ backupFileInput.onchange = async event => {
   const request = ++importRequest;
   const bookKey = key();
   try {
-    if (file.size > MAX_BACKUP_BYTES) throw Error('Файл больше 16 МБ.');
-    const next = validateBook(JSON.parse(await file.text()));
-    if (request === importRequest && bookKey === key()) confirmReplacement(next);
+    if (file.size > MAX_ENCRYPTED_BYTES) throw Error('Файл слишком большой.');
+    const envelope = JSON.parse(await file.text());
+    if (request !== importRequest || bookKey !== key()) return;
+    if (isEncryptedBackup(envelope)) {
+      openPasswordDialog({ kind: 'import', envelope });
+    } else {
+      if (file.size > MAX_BACKUP_BYTES) throw Error('Обычная копия больше 16 МБ.');
+      confirmReplacement(validateBook(envelope));
+    }
   } catch (error) {
     if (request === importRequest && bookKey === key()) {
       toast(error instanceof SyntaxError ? 'Файл не является корректным JSON.' : error.message);
