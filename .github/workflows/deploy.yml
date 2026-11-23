@@ -50,6 +50,7 @@ jobs:
           node --check site/raschet/ledger.js
           node tests/copy-link.cjs
           node --test tests/raschet-history.mjs
+          node --test tests/raschet-backups.mjs
           python3 tools/verify-site.py
           python3 tools/verify-security.py
           test -s site/index.html
