@@ -4,7 +4,7 @@
   <link rel="stylesheet" href="/raschet/style.css"></head>
 <body>
 <aside class="sidebar"><a class="brand" href="/projects/raschet/" aria-label="О проекте «Расчёт»"><img class="logo" src="/images/raschet-icon.svg" width="42" height="42" alt=""><span>Расчёт<small>Ventry</small></span></a><div class="workspace"><span class="eyebrow">РАБОЧЕЕ МЕСТО</span><strong id="shop-title">Мой магазин</strong><small>Тестовая версия</small></div><nav aria-label="Главное меню"><button data-view="book" class="active" aria-label="Книга клиентов"><span class="nav-full">Книга клиентов</span><span class="nav-short" aria-hidden="true">Клиенты</span></button><button data-view="history" aria-label="История операций"><span class="nav-full">История операций</span><span class="nav-short" aria-hidden="true">История</span></button><button data-view="settings" aria-label="Данные и копии"><span class="nav-full">Данные и копии</span><span class="nav-short" aria-hidden="true">Данные</span></button></nav><div class="side-bottom"><span class="dot"></span> Записи в этом браузере<small>Сохраняйте резервную копию</small></div></aside>
-<main><header><span id="today"></span><div class="header-actions"><button id="tablet-mode" class="text-button" aria-pressed="false">Крупный режим</button><span class="pill" id="mode-label">МОЯ КНИГА</span><button class="text-button" id="switch-mode">Посмотреть пример</button></div></header>
+<main><header><span id="today"></span><div class="header-actions"><a class="text-button" href="https://raschet.135-106-227-179.sslip.io/book/">Общая книга</a><button id="tablet-mode" class="text-button" aria-pressed="false">Крупный режим</button><span class="pill" id="mode-label">МОЯ КНИГА</span><button class="text-button" id="switch-mode">Посмотреть пример</button></div></header>
 <section id="view-book" class="view"><div class="title-row"><div><h1 id="book-title" tabindex="-1">Долговая книга</h1><p class="subtitle">Долги клиентов, оплаты и остатки.</p></div><button class="primary" id="add-client">＋ Новый клиент</button></div>
 <section id="demo-guide" class="demo-guide" aria-labelledby="demo-guide-title" hidden>
   <div>
@@ -48,7 +48,7 @@
         <p id="demo-result-summary"></p>
       </div>
       <div class="demo-guide-actions">
-        <button type="button" id="demo-open-own" class="primary">Открыть свою книгу</button>
+        <button type="button" id="demo-open-own" class="primary">Открыть локальную книгу</button>
         <button type="button" id="demo-return" class="secondary">Вернуться в демо</button>
       </div>
     </section>
