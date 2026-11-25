@@ -21,3 +21,13 @@ export function filterHistory(book, { query, kind, from, to }) {
       .some(text => text.toLocaleLowerCase('ru').includes(search));
   });
 }
+
+// Keep chronological order inside a page: historyRows renders it newest first.
+export const HISTORY_PAGE_SIZE = 100;
+export function historyPage(entries, requestedPage = 0) {
+  const pages = Math.max(1, Math.ceil(entries.length / HISTORY_PAGE_SIZE));
+  const page = Math.max(0, Math.min(pages - 1, Number.isInteger(requestedPage) ? requestedPage : 0));
+  const end = Math.max(0, entries.length - page * HISTORY_PAGE_SIZE);
+  const start = Math.max(0, end - HISTORY_PAGE_SIZE);
+  return { page, pages, entries: entries.slice(start, end) };
+}
