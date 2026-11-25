@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050907">
   <title>Расчёт — цифровая долговая книга | Ventry</title>
-  <meta name="description" content="Проект Ventry для учёта долгов, возвратов и истории операций. Доступна тестовая веб-версия с хранением записей в браузере.">
+  <meta name="description" content="Android-приложение Ventry для учёта долгов и оплат. Попробуйте интерактивное демо с вымышленными данными.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Расчёт — цифровая долговая книга | Ventry">
-  <meta property="og:description" content="Проект Ventry для учёта долгов, возвратов и истории операций. Доступна тестовая веб-версия с хранением записей в браузере.">
+  <meta property="og:description" content="Android-приложение Ventry для учёта долгов и оплат. Попробуйте интерактивное демо с вымышленными данными.">
   <meta property="og:url" content="https://ventrylab.top/projects/raschet/">
   <meta property="og:image" content="https://ventrylab.top/raschet-cover.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -20,7 +20,7 @@
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=amoled-1">
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-2-product">
   <script defer src="/app.js?v=ui-audit-2"></script>
 </head>
 <body class="product-page">
@@ -40,19 +40,19 @@
     <section class="product-hero content-width" aria-labelledby="product-title">
       <div class="product-copy">
         <nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="/projects/">Проекты</a><span aria-hidden="true">/</span><span aria-current="page">Расчёт</span></nav>
-        <p class="status-tag">Тестовая версия</p>
+        <p class="status-tag">Android · интерактивное демо</p>
         <div class="product-identity">
           <img src="/images/raschet-icon.svg" width="72" height="72" decoding="async" alt="">
           <h1 id="product-title">Расчёт</h1>
         </div>
-        <p class="product-lead">Долговая книга для небольших магазинов</p>
-        <p class="product-description">Записывайте долги и оплаты, следите за сроками и остатком после частичной оплаты. Записи хранятся в этом браузере.</p>
+        <p class="product-lead">Каждый долг и каждая оплата — в одной книге.</p>
+        <p class="product-description">«Расчёт» — отдельное Android-приложение для долгового учёта. На сайте можно попробовать базовые сценарии без установки.</p>
         <div class="product-actions">
-          <a class="primary-button" href="/raschet/?demo=1">Открыть демо <span class="arrow" aria-hidden="true"></span></a>
-          <a class="quiet-button" href="/raschet/">Открыть свою книгу</a>
-          <a class="quiet-button" href="mailto:ventrybusinesswork@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BE%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B5%20%C2%AB%D0%A0%D0%B0%D1%81%D1%87%D1%91%D1%82%C2%BB">Задать вопрос <span class="arrow" aria-hidden="true"></span></a>
+          <a class="primary-button" href="/raschet/?demo=1">Попробовать демо <span class="arrow" aria-hidden="true"></span></a>
+          <a class="quiet-button" href="mailto:ventrybusinesswork@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BE%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B5%20%C2%AB%D0%A0%D0%B0%D1%81%D1%87%D1%91%D1%82%C2%BB">Узнать об Android-приложении <span class="arrow" aria-hidden="true"></span></a>
           <button class="quiet-button" type="button" data-copy-link hidden>Скопировать ссылку</button>
         </div>
+        <p class="preview-note">Без установки и регистрации. Вымышленные данные, сброс при перезагрузке.</p>
         <p class="share-status" role="status" aria-live="polite" data-copy-status></p>
         <div class="copy-fallback" hidden><label for="project-url">Скопируйте адрес вручную</label><input id="project-url" type="url" readonly value="https://ventrylab.top/projects/raschet/"></div>
       </div>
@@ -68,8 +68,26 @@
         </div>
       </figure>
     </section>
+    <section class="android-features content-width" aria-labelledby="android-features-title">
+      <div class="feature-intro"><p class="section-kicker">В Android-приложении</p><h2 id="android-features-title">Не только остаток. Вся история долга.</h2><p>Для магазина, где покупатели возвращают деньги частями, а записи нужно быстро находить и сверять.</p></div>
+      <dl class="android-feature-list">
+        <div><dt>Книга клиентов</dt><dd>Карточки, долги и оплаты, история клиента и текущий остаток.</dd></div>
+        <div><dt>Статистика магазина</dt><dd>Общий долг, должники, просрочки, суммы и количество операций за выбранный период.</dd></div>
+        <div><dt>Статистика клиента</dt><dd>Динамика остатка, суммы долгов и оплат, сравнение периодов.</dd></div>
+        <div><dt>Отчёты</dt><dd>Общая и персональная аналитика с экспортом в CSV и PDF.</dd></div>
+      </dl>
+      <p class="feature-source">Функции по исходникам Android-проекта. Доступность готовой сборки уточняйте у Ventry.</p>
+    </section>
+    <section class="android-gallery content-width" aria-labelledby="gallery-title">
+      <div class="gallery-intro"><p class="section-kicker">Интерфейс Android</p><h2 id="gallery-title">Настоящие экраны «Расчёта»</h2><p>Снимки тестовой Android-сборки от 25 ноября 2026 года. Все суммы и имена на экранах — тестовые, а не данные покупателей.</p></div>
+      <div class="android-gallery-grid">
+        <figure><a href="/images/raschet/android-book.webp" aria-label="Увеличить снимок долговой книги"><img src="/images/raschet/android-book.webp" width="540" height="1200" alt="Долговая книга на Android: текущий остаток, действия и календарь" loading="lazy" decoding="async"></a><figcaption><strong>Долговая книга</strong><span>Общий остаток, быстрые действия и календарь записей.</span></figcaption></figure>
+        <figure><a href="/images/raschet/android-statistics.webp" aria-label="Увеличить снимок статистики магазина"><img src="/images/raschet/android-statistics.webp" width="540" height="1200" alt="Статистика магазина на Android: периоды, долг, должники и операции" loading="lazy" decoding="async"></a><figcaption><strong>Статистика магазина</strong><span>Должники, просрочки, суммы и операции за период.</span></figcaption></figure>
+        <figure><a href="/images/raschet/android-client-statistics.webp" aria-label="Увеличить снимок статистики клиента"><img src="/images/raschet/android-client-statistics.webp" width="540" height="1200" alt="Персональная статистика клиента на Android: остаток, долги и оплаты" loading="lazy" decoding="async"></a><figcaption><strong>Статистика клиента</strong><span>Динамика задолженности и персональная история.</span></figcaption></figure>
+      </div>
+    </section>
     <section class="product-scope content-width" id="possibilities" aria-labelledby="possibilities-title">
-      <h2 id="possibilities-title">Что можно делать</h2>
+      <p class="section-kicker">Интерактивный пример</p><h2 id="possibilities-title">Попробуйте четыре базовых сценария</h2>
       <dl class="scope-list">
         <div><dt>Записать долг</dt><dd>Добавить сумму покупки в карточку клиента.</dd></div>
         <div><dt>Отметить оплату</dt><dd>Увидеть остаток после частичной или полной оплаты.</dd></div>
@@ -77,12 +95,16 @@
         <div><dt>Найти операцию</dt><dd>Отфильтровать историю по клиенту, дате или типу операции.</dd></div>
       </dl>
     </section>
+    <section class="product-next content-width" aria-labelledby="next-title">
+      <div><p class="section-kicker">Расчёт для Android</p><h2 id="next-title">Подходит вашему магазину?</h2><p>Сначала попробуйте демо. Если хотите узнать о доступности приложения и условиях получения, напишите нам.</p></div>
+      <div class="product-next-actions"><a class="primary-button" href="/raschet/?demo=1">Открыть демо</a><a class="quiet-button" href="/contact/">Связаться с Ventry</a></div>
+    </section>
     <section class="product-faq content-width" aria-labelledby="faq-title">
       <h2 id="faq-title">Вопросы о «Расчёте»</h2>
       <div class="faq-list">
-        <details><summary>Можно уже пользоваться «Расчётом»?</summary><p>Да, тестовая версия уже доступна. В ней можно вести свою книгу или открыть демо и попробовать частичную оплату на вымышленных записях.</p></details>
-        <details><summary>На каких устройствах работает приложение?</summary><p>В браузере телефона, планшета или компьютера. Для планшета есть крупный режим.</p></details>
-        <details><summary>Как перенести записи на другое устройство?</summary><p>Откройте «Данные и копии», скачайте копию с паролем и откройте её в «Расчёте» на другом устройстве.</p></details>
+        <details><summary>Можно уже пользоваться «Расчётом»?</summary><p>На сайте доступно интерактивное демо. Для уточнения доступности и условий получения Android-приложения свяжитесь с Ventry.</p></details>
+        <details><summary>На каких устройствах работает приложение?</summary><p>Основное приложение предназначено для Android. Демо открывается в браузере телефона, планшета или компьютера.</p></details>
+        <details><summary>Сохраняются ли данные демо?</summary><p>Нет. Изменения существуют только до перезагрузки страницы. Демо не принимает резервные копии и не предназначено для реального учёта.</p></details>
       </div>
     </section>
   </main>

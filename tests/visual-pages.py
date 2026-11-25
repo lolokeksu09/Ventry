@@ -81,6 +81,9 @@ try:
             "start", "about", "method", "projects", "contact"
         ]
         assert not js("return !!document.querySelector('dialog, .chapter-strip')")
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 3
+        assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/projects/"
+        assert js("return !!document.querySelector('#projects .demo-note')")
         composition = js("""const hero = document.querySelector('.opening').getBoundingClientRect();
           return {
             heroHeight: Math.round(hero.height),
@@ -99,12 +102,15 @@ try:
         for section in ("about", "method", "projects", "contact"):
             open_home_section(section, width)
             if section == "method":
-                summary = driver.find_element(By.CSS_SELECTOR, ".method-entries details:nth-of-type(2) summary")
-                summary.click()
-                assert js("return document.querySelector('.method-entries details:nth-of-type(2)').open")
+                principles = driver.find_elements(By.CSS_SELECTOR, ".principle-list li p")
+                assert len(principles) == 3 and all(p.is_displayed() for p in principles)
             if section == "projects":
                 wait.until(lambda _: js("""return document.querySelector('#projects img').naturalWidth > 0"""))
                 assert js("""return document.querySelector('#projects .work-item a[href="/projects/raschet/"]').pathname""") == "/projects/raschet/"
+            if section == "contact":
+                topics = driver.find_elements(By.CSS_SELECTOR, ".contact-topics li a")
+                assert len(topics) == 3
+                assert all(a.get_attribute("href").startswith("mailto:ventrybusinesswork@gmail.com?subject=") for a in topics)
             if width in (390, 1440):
                 capture(f"ui-{label}-{section}.png")
 
@@ -112,6 +118,16 @@ try:
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
         assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 350 ₽"
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
+        screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
+        assert len(screenshots) == 3
+        js("document.querySelectorAll('.android-gallery-grid img').forEach(img => img.loading = 'eager')")
+        wait.until(lambda _: js("return [...document.querySelectorAll('.android-gallery-grid img')].every(img => img.complete && img.naturalWidth === 540 && img.naturalHeight === 1200)"))
+        assert js("return [...document.querySelectorAll('.android-gallery-grid a')].every(a => a.getAttribute('href') === a.querySelector('img').getAttribute('src'))")
+        assert js("return document.documentElement.scrollWidth <= innerWidth")
+        assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
+        assert js("return document.querySelector('.product-next a.primary-button').pathname") == "/raschet/"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
         if width <= 768:
@@ -121,6 +137,9 @@ try:
             assert not js("""return document.querySelector('#main-nav').classList.contains('is-open')""")
         if width in (390, 1440):
             capture(f"ui-{label}-raschet.png")
+            js("document.querySelector('.android-gallery').scrollIntoView({block: 'start', behavior: 'instant'})")
+            capture(f"ui-{label}-android-gallery.png")
+            js("window.scrollTo({top:0,behavior:'instant'})")
 
         for route, headings in (
             ("/legal/", ["legal-status", "legal-contact", "legal-service", "legal-data"]),
@@ -177,6 +196,42 @@ try:
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
     driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
     assert js("return location.hash") == "#about"
+    # The public preview must never load or mutate legacy personal records.
+    driver.get(BASE + "/raschet/")
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    legacy = '{"version":2,"clients":[{"id":"legacy","name":"Старый тест","phone":""}],"entries":[]}'
+    js("localStorage.setItem('dolgbook-v1-own', " + json.dumps(legacy) + ")")
+    js("localStorage.setItem('dolgbook-v1-demo', " + json.dumps(legacy) + ")")
+    driver.refresh()
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    assert "Старый тест" not in driver.find_element(By.ID, "clients").text
+    assert not js("return !!document.querySelector('input[type=file],input[type=tel]')")
+    capture("ui-390-demo.png")
+    driver.find_element(By.ID, "add-client").click()
+    assert js("return document.querySelector('#client-form [name=name]').readOnly")
+    driver.find_element(By.ID, "client-submit").click()
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
+    driver.find_element(By.ID, "demo-payment").click()
+    driver.find_element(By.ID, "entry-submit").click()
+    wait.until(lambda _: driver.find_element(By.ID, "demo-operation").is_displayed())
+    driver.find_element(By.ID, "demo-operation").click()
+    assert "2 350" in driver.find_element(By.ID, "demo-result-summary").text.replace("\\xa0", " ").replace("\\u202f", " ")
+    assert js("return !!document.querySelector('#history [data-operation-id]')")
+    js("document.querySelector('[data-view=settings]').click()")
+    wait.until(lambda _: not js("return document.querySelector('#legacy-export').disabled"))
+    assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
+    assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
+    driver.get(BASE + "/raschet/?demo=1")
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    driver.find_element(By.ID, "add-client").click()
+    driver.find_element(By.ID, "client-submit").click()
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
+    driver.find_element(By.ID, "switch-mode").click()
+    driver.find_element(By.ID, "confirm-import").click()
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
+    assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
+    report["demo_only_and_legacy_preservation"] = "PASS"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print("PASS: 6 viewports, 8 public pages, section links, history, focus, clipboard and no-JS",flush=True)

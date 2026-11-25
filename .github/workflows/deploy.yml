@@ -48,6 +48,8 @@ jobs:
           node --check site/company-nav.js
           node --check site/raschet/app.js
           node --check site/raschet/ledger.js
+          node --check site/raschet/book-storage.js
+          node --test tests/raschet-scale.mjs
           node tests/copy-link.cjs
           node --test tests/raschet-history.mjs
           node --test tests/raschet-backups.mjs
