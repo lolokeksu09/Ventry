@@ -1,6 +1,7 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,debtOverview,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
 import { filterHistory } from './history.js';
 import { MAX_BACKUP_BYTES, listBackups, storeBackup } from './backups.js';
+import { writeBookSnapshot } from './book-storage.js';
 import { decryptBackup, encryptBackup, isEncryptedBackup, MAX_ENCRYPTED_BYTES } from './backup-encryption.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -8,6 +9,8 @@ const blank=()=>({version:2,clients:[],entries:[]});
 let mode=new URLSearchParams(location.search).get('demo') === '1' ? 'demo' : 'own';
 let book=blank(),filter='all',entryClient='',entryType='debt',detailId='',pending=null,loadBlocked=false,editClientId='',reverseEntryId='';
 const key=()=>`dolgbook-v1-${mode}`;
+let loadedRaw, mutationSnapshot, writing = false;
+const snapshot = () => ({bookKey: key(), raw: loadedRaw});
 const rub=n=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:n%100?2:0}).format(n/100);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateText=s=>new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'short',year:'numeric'}).format(new Date(s.length===10?s+'T12:00:00':s));
@@ -16,8 +19,10 @@ function toast(message){const error=$('dialog[open] .dialog-error');if(error){er
 function load() {
   loadBlocked = false;
   let raw;
+  loadedRaw = undefined;
   try {
     raw = localStorage.getItem(key());
+    loadedRaw = raw;
     book = raw ? validateBook(JSON.parse(raw)) : (mode === 'demo' ? demoBook() : blank());
   } catch {
     book = blank();
@@ -28,24 +33,34 @@ function load() {
   if (raw && !loadBlocked) recordBackup(key(), raw, book);
   else refreshBackups();
 }
-function save(next) {
-  if (loadBlocked) throw Error('Восстановите книгу в разделе «Данные и копии».');
+async function save(next, source = mutationSnapshot, { allowBlocked = false } = {}) {
+  if (writing) throw Error('Сохранение уже выполняется.');
+  if (loadBlocked && !allowBlocked) throw Error('Восстановите книгу в разделе «Данные и копии».');
+  if (!source || source.bookKey !== key()) throw Error('Открыта другая книга. Повторите действие.');
   const clean = validateBook(next);
   const raw = JSON.stringify(clean);
+  writing = true;
   try {
-    localStorage.setItem(key(), raw);
-  } catch {
-    throw Error('Браузер не сохранил запись. Проверьте свободное место и разрешение на хранение данных.');
+    await writeBookSnapshot({storage: localStorage, locks: navigator.locks,
+      key: source.bookKey, expected: source.raw, raw});
+    loadBlocked = false;
+    loadedRaw = raw;
+    book = clean;
+    render();
+    recordBackup(source.bookKey, raw, clean);
+  } catch (error) {
+    if (error.code === 'STALE_BOOK') load();
+    throw error;
+  } finally {
+    writing = false;
   }
-  book = clean;
-  render();
-  recordBackup(key(), raw, clean);
 }
 function switchView(view){if(!['book','history','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshBackups();}
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
 function switchBook(nextMode) {
+  if (writing) return toast('Дождитесь окончания сохранения.');
   mode = nextMode;
   const url = new URL(location.href);
   if (mode === 'demo') url.searchParams.set('demo', '1');
@@ -223,12 +238,17 @@ function render(){
   $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.balance)}<small>${c.balance?'остаток долга':'всё оплачено'}</small>${deadlineNote(c)}</div><div class="status ${c.overdue?'late':''}">${c.overdue?'◷ Срок прошёл':c.balance?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.balance?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
   $('#export-encrypted').disabled = loadBlocked;
+  $('#legacy-origin-notice').hidden = location.hostname !== '135-106-227-179.sslip.io' || mode !== 'own';
+  $('#safe-write-notice').hidden = typeof navigator.locks?.request === 'function';
   renderHistory();$('#book-note').textContent=loadBlocked?'Ошибка чтения: исходные записи сохранены в браузере, изменения заблокированы.':mode==='demo'?'Режим примера: все имена, суммы и операции вымышлены. Ваша книга хранится отдельно.':'Записи сохраняются только в этом браузере. Синхронизация между устройствами пока не подключена.';
   try{const last=localStorage.getItem(key()+'-backup');$('#backup-status').textContent=last?'Последняя выгрузка: '+dateText(last):'Резервная копия ещё не выгружалась.';}catch{}
 }
 function openClient(clientId=''){
   if(loadBlocked)return toast('Восстановите книгу в разделе «Данные и копии».');
+  if(writing)return;
   editClientId=typeof clientId==='string'?clientId:'';
+  if(editClientId&&!book.clients.some(c=>c.id===editClientId))return toast('Клиент больше не найден.');
+  mutationSnapshot=snapshot();
   $('#client-form').reset();$('#client-dialog .dialog-error').hidden=true;
   const c=book.clients.find(c=>c.id===editClientId);
   if(c){$('#client-form [name=name]').value=c.name;$('#client-form [name=phone]').value=c.phone;}
@@ -236,10 +256,10 @@ function openClient(clientId=''){
   $('#client-dialog').showModal();
 }
 $('#add-client').onclick=()=>openClient();
-$('#client-form').onsubmit=e=>{e.preventDefault();try{
+$('#client-form').onsubmit=async e=>{e.preventDefault();if(writing)return;try{
   const f=new FormData(e.target),name=f.get('name').trim(),phone=f.get('phone').trim();if(!name)throw Error('Введите имя клиента.');
   const newClientId=editClientId||id();
-  save({...book,clients:editClientId?book.clients.map(c=>c.id===editClientId?{...c,name,phone}:c):[...book.clients,{id:newClientId,name,phone}]});
+  await save({...book,clients:editClientId?book.clients.map(c=>c.id===editClientId?{...c,name,phone}:c):[...book.clients,{id:newClientId,name,phone}]});
   const addDebt=!editClientId&&e.submitter?.id==='client-submit-debt';
   $('#client-dialog').close();if(editClientId)openDetail(editClientId);else if(addDebt)openEntry(newClientId,'debt');else toast('Карточка клиента создана.');
 }catch(err){toast(err.message);}};
@@ -279,6 +299,9 @@ function updateEntryBalance() {
 }
 
 function openEntry(clientId, type, { fromDemoGuide = false } = {}) {
+  if(writing||loadBlocked)return;
+  if(!book.clients.some(c=>c.id===clientId))return toast('Клиент больше не найден.');
+  mutationSnapshot=snapshot();
   demoEntry = fromDemoGuide;
   entryClient = clientId;
   entryType = type;
@@ -310,9 +333,9 @@ fullPayment.onclick = () => {
   updateEntryBalance();
 };
 
-entryForm.onsubmit = event => {
+entryForm.onsubmit = async event => {
   event.preventDefault();
-  if (!entryDialog.open || entrySubmit.disabled) return;
+  if (!entryDialog.open || entrySubmit.disabled || writing) return;
   entryError.hidden = true;
 
   const fields = new FormData(entryForm);
@@ -336,7 +359,7 @@ entryForm.onsubmit = event => {
       date: new Date().toISOString(), due: entryType === 'debt' ? fields.get('due') : '',
       note: fields.get('note').trim(),
     };
-    save(addEntry(book, operation));
+    await save(addEntry(book, operation));
     entryDialog.close();
     if (demoEntry && mode === 'demo') {
       lastDemoPayment = { id: operation.id, remaining: balance(book, operation.clientId) };
@@ -353,6 +376,7 @@ entryForm.onsubmit = event => {
 };
 function openDetail(clientId){
   detailId=clientId;const c=book.clients.find(c=>c.id===clientId),last=activeEntries(book).filter(e=>e.clientId===clientId).at(-1);
+  if(!c)return toast('Клиент больше не найден.');
   $('#detail-name').textContent=c.name;
   $('#detail-content').innerHTML=`<p>${esc(prefs.shop)} · ${esc(c.phone)} · Выписка на ${dateText(today())}${mode==='demo'?' · ДЕМО':''}</p><p class="muted">Долги и оплаты из книги магазина. Не является кассовым чеком.</p><div class="detail-balance">Остаток: ${rub(balance(book,clientId))}</div>${historyRows(book.entries.filter(e=>e.clientId===clientId))}`;
   $('#detail-reverse').disabled=!last;$('#detail-dialog').showModal();
@@ -360,17 +384,19 @@ function openDetail(clientId){
 $('#detail-edit').onclick=()=>{$('#detail-dialog').close();openClient(detailId);};
 $('#detail-reverse').onclick=()=>{
   const e=activeEntries(book).filter(e=>e.clientId===detailId).at(-1);if(!e)return;
+  mutationSnapshot=snapshot();
   reverseEntryId=e.id;$('#detail-dialog').close();$('#reverse-form').reset();$('#reverse-dialog .dialog-error').hidden=true;
   const after=balance(book,detailId)+(e.type==='debt'?-e.amount:e.amount);
   $('#reverse-description').textContent=`${book.clients.find(c=>c.id===detailId).name}: ${e.type==='debt'?'долг':'оплата'} ${rub(e.amount)} от ${dateText(e.date)}. Остаток после отмены: ${rub(after)}.`;
   $('#reverse-dialog').showModal();
 };
-$('#reverse-form').onsubmit=e=>{e.preventDefault();try{
+$('#reverse-form').onsubmit=async e=>{e.preventDefault();if(writing)return;try{
   const original=book.entries.find(e=>e.id===reverseEntryId),reason=new FormData(e.target).get('reason').trim();if(!original||!reason)throw Error('Укажите причину отмены.');
-  save(addEntry(book,{id:id(),clientId:original.clientId,type:'reversal',amount:original.amount,date:new Date().toISOString(),due:'',note:reason,reverses:original.id}));
+  await save(addEntry(book,{id:id(),clientId:original.clientId,type:'reversal',amount:original.amount,date:new Date().toISOString(),due:'',note:reason,reverses:original.id}));
   $('#reverse-dialog').close();openDetail(original.clientId);
 }catch(err){toast(err.message);}};
-$('#print-statement').onclick=()=>window.print();$$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+$('#print-statement').onclick=()=>window.print();$('[data-close]').forEach(b=>b.onclick=()=>{if(!writing)b.closest('dialog').close();});
+$('dialog').forEach(dialog=>dialog.addEventListener('cancel',event=>{if(writing)event.preventDefault();}));
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function downloadBackup(raw, encrypted = false) {
   const suffix = encrypted ? '-protected' : '';
@@ -484,7 +510,9 @@ function recordBackup(bookKey, raw, currentBook) {
 }
 
 function confirmReplacement(next, { restartDemo = false } = {}) {
-  pending = { next, bookKey: key(), raw: localStorage.getItem(key()), restartDemo };
+  if (writing) return;
+  if (loadedRaw === undefined) return toast('Не удалось прочитать исходную книгу. Восстановление остановлено.');
+  pending = { next, ...snapshot(), restartDemo };
   $('#confirm-title').textContent = restartDemo ? 'Начать пример заново?' : 'Заменить текущую книгу?';
   applyBackup.textContent = restartDemo ? 'Начать заново' : 'Заменить книгу';
   const description = `Клиенты: ${book.clients.length} → ${next.clients.length}. Операции: ${book.entries.length} → ${next.entries.length}.`;
@@ -591,7 +619,7 @@ confirmBackup.addEventListener('cancel', event => {
   if (applyBackup.disabled) event.preventDefault();
 });
 applyBackup.onclick = async () => {
-  if (!pending || applyBackup.disabled) return;
+  if (!pending || applyBackup.disabled || writing) return;
   const { next, bookKey, raw, restartDemo } = pending;
   applyBackup.disabled = cancelBackup.disabled = true;
   confirmBackup.querySelector('.dialog-error').hidden = true;
@@ -604,20 +632,10 @@ applyBackup.onclick = async () => {
         throw Error('Не удалось сохранить текущую книгу в автоматических копиях. Восстановление остановлено.');
       }
     }
-    if (bookKey !== key() || localStorage.getItem(bookKey) !== raw) {
-      throw Error('Книга изменилась в другой вкладке. Закройте окно и выберите копию заново.');
-    }
-    const wasBlocked = loadBlocked;
-    loadBlocked = false;
-    try {
-      save(next);
-      if (mode === 'demo') {
-        lastDemoPayment = null;
-        renderDemoOperation();
-      }
-    } catch (error) {
-      loadBlocked = wasBlocked;
-      throw error;
+    await save(next, {bookKey, raw}, {allowBlocked: true});
+    if (mode === 'demo') {
+      lastDemoPayment = null;
+      renderDemoOperation();
     }
     confirmBackup.close();
     toast(restartDemo ? 'Пример начат заново.' : 'Книга восстановлена.');
@@ -628,7 +646,7 @@ applyBackup.onclick = async () => {
   }
 };
 window.addEventListener('storage', e => {
-  if (e.key !== key()) return;
+  if (e.storageArea !== localStorage || (e.key !== null && e.key !== key())) return;
   load();
   if (entryDialog.open) updateEntryBalance();
 });
