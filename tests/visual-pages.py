@@ -81,6 +81,9 @@ try:
             "start", "about", "method", "projects", "contact"
         ]
         assert not js("return !!document.querySelector('dialog, .chapter-strip')")
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 3
+        assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/projects/"
+        assert js("return !!document.querySelector('#projects .demo-note')")
         composition = js("""const hero = document.querySelector('.opening').getBoundingClientRect();
           return {
             heroHeight: Math.round(hero.height),
@@ -99,12 +102,15 @@ try:
         for section in ("about", "method", "projects", "contact"):
             open_home_section(section, width)
             if section == "method":
-                summary = driver.find_element(By.CSS_SELECTOR, ".method-entries details:nth-of-type(2) summary")
-                summary.click()
-                assert js("return document.querySelector('.method-entries details:nth-of-type(2)').open")
+                principles = driver.find_elements(By.CSS_SELECTOR, ".principle-list li p")
+                assert len(principles) == 3 and all(p.is_displayed() for p in principles)
             if section == "projects":
                 wait.until(lambda _: js("""return document.querySelector('#projects img').naturalWidth > 0"""))
                 assert js("""return document.querySelector('#projects .work-item a[href="/projects/raschet/"]').pathname""") == "/projects/raschet/"
+            if section == "contact":
+                topics = driver.find_elements(By.CSS_SELECTOR, ".contact-topics li a")
+                assert len(topics) == 3
+                assert all(a.get_attribute("href").startswith("mailto:ventrybusinesswork@gmail.com?subject=") for a in topics)
             if width in (390, 1440):
                 capture(f"ui-{label}-{section}.png")
 
