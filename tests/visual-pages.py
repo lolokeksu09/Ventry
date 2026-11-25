@@ -118,6 +118,10 @@ try:
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
         assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 350 ₽"
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
+        assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
+        assert js("return document.querySelector('.product-next a.primary-button').pathname") == "/raschet/"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
         if width <= 768:
