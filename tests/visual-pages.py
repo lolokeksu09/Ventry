@@ -183,38 +183,41 @@ try:
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
     driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
     assert js("return location.hash") == "#about"
-    # Use the real application in two tabs of the same origin, not a mocked storage API.
+    # The public preview must never load or mutate legacy personal records.
     driver.get(BASE + "/raschet/")
-    assert js("return typeof navigator.locks?.request") == "function"
-    js("localStorage.removeItem('dolgbook-v1-own')")
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    legacy = '{"version":2,"clients":[{"id":"legacy","name":"Старый тест","phone":""}],"entries":[]}'
+    js("localStorage.setItem('dolgbook-v1-own', " + json.dumps(legacy) + ")")
+    js("localStorage.setItem('dolgbook-v1-demo', " + json.dumps(legacy) + ")")
     driver.refresh()
-    wait.until(lambda _: driver.find_element(By.ID, "add-client").is_enabled())
-    tab_a = driver.current_window_handle
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    assert "Старый тест" not in driver.find_element(By.ID, "clients").text
+    assert not js("return !!document.querySelector('input[type=file],input[type=tel]')")
     driver.find_element(By.ID, "add-client").click()
-    driver.find_element(By.CSS_SELECTOR, '#client-form [name="name"]').send_keys("Тест А")
-    driver.switch_to.new_window("tab")
-    tab_b = driver.current_window_handle
-    driver.get(BASE + "/raschet/")
-    wait.until(lambda _: driver.find_element(By.ID, "add-client").is_enabled())
+    assert js("return document.querySelector('#client-form [name=name]').readOnly")
+    driver.find_element(By.ID, "client-submit").click()
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
+    driver.find_element(By.ID, "demo-payment").click()
+    driver.find_element(By.ID, "entry-submit").click()
+    wait.until(lambda _: driver.find_element(By.ID, "demo-operation").is_displayed())
+    driver.find_element(By.ID, "demo-operation").click()
+    assert "2 350" in driver.find_element(By.ID, "demo-result-summary").text.replace("\\xa0", " ").replace("\\u202f", " ")
+    assert js("return !!document.querySelector('#history [data-operation-id]')")
+    js("document.querySelector('[data-view=settings]').click()")
+    wait.until(lambda _: not js("return document.querySelector('#legacy-export').disabled"))
+    assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
+    assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
+    driver.get(BASE + "/raschet/?demo=1")
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     driver.find_element(By.ID, "add-client").click()
-    driver.find_element(By.CSS_SELECTOR, '#client-form [name="name"]').send_keys("Тест Б")
-    driver.switch_to.window(tab_a)
     driver.find_element(By.ID, "client-submit").click()
-    wait.until(lambda _: js("return JSON.parse(localStorage.getItem('dolgbook-v1-own') || 'null')?.clients?.length") == 1)
-    wait.until(lambda _: not js("return document.querySelector('#client-dialog').open"))
-    driver.switch_to.window(tab_b)
-    driver.find_element(By.ID, "client-submit").click()
-    wait.until(lambda _: "Книга изменилась" in driver.find_element(By.CSS_SELECTOR, "#client-dialog .dialog-error").text)
-    assert js("return JSON.parse(localStorage.getItem('dolgbook-v1-own')).clients.map(c => c.name)") == ["Тест А"]
-    driver.find_element(By.CSS_SELECTOR, "#client-dialog [data-close]").click()
-    driver.find_element(By.ID, "add-client").click()
-    driver.find_element(By.CSS_SELECTOR, '#client-form [name="name"]').send_keys("Тест Б")
-    driver.find_element(By.ID, "client-submit").click()
-    wait.until(lambda _: js("return JSON.parse(localStorage.getItem('dolgbook-v1-own')).clients.map(c => c.name)") == ["Тест А", "Тест Б"])
-    driver.close()
-    driver.switch_to.window(tab_a)
-    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "2")
-    report["concurrent_book_writes"] = "PASS"
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
+    driver.find_element(By.ID, "switch-mode").click()
+    driver.find_element(By.ID, "confirm-import").click()
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
+    assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
+    assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
+    report["demo_only_and_legacy_preservation"] = "PASS"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print("PASS: 6 viewports, 8 public pages, section links, history, focus, clipboard and no-JS",flush=True)
