@@ -38,6 +38,12 @@ if [[ "${SSH_ORIGINAL_COMMAND:-}" == "ventry-deploy" ]]; then
             echo 'VENTRY_DEPLOY_FAILED; restoring previous release' >&2
             if compose_at "$previous" "$workdir/rollback.yaml" up -d --no-build --pull never --force-recreate web &&
                check_release "$previous"; then
+                if [[ "$previous" == "$root" ]]; then
+                    rm -f -- "$root/current"
+                else
+                    ln -s "$previous" "$workdir/rollback-current"
+                    mv -Tf "$workdir/rollback-current" "$root/current"
+                fi
                 echo 'VENTRY_ROLLBACK_OK' >&2
             else
                 echo 'VENTRY_ROLLBACK_FAILED; operator intervention required' >&2
@@ -54,18 +60,19 @@ if [[ "${SSH_ORIGINAL_COMMAND:-}" == "ventry-deploy" ]]; then
 
     # Bound compressed input and reject unsafe paths, duplicate names and
     # special entries before extracting. Verify the CI-generated manifest.
-    python3 - "$workdir/release.tar.gz" "$workdir/unpacked" <<'PY'
+    python3 - "$workdir/release.tar.gz" "$workdir/unpacked" 3<&0 <<'PY'
 import hashlib
 import json
+import os
 import pathlib
 import re
 import sys
 import tarfile
 
 archive, destination = map(pathlib.Path, sys.argv[1:])
-with archive.open("wb") as out:
+with archive.open("wb") as out, os.fdopen(3, "rb") as source:
     size = 0
-    while chunk := sys.stdin.buffer.read(1024 * 1024):
+    while chunk := source.read(1024 * 1024):
         size += len(chunk)
         if size > 256 * 1024 * 1024:
             raise SystemExit("Compressed release exceeds 256 MiB")
