@@ -395,8 +395,8 @@ $('#reverse-form').onsubmit=async e=>{e.preventDefault();if(writing)return;try{
   await save(addEntry(book,{id:id(),clientId:original.clientId,type:'reversal',amount:original.amount,date:new Date().toISOString(),due:'',note:reason,reverses:original.id}));
   $('#reverse-dialog').close();openDetail(original.clientId);
 }catch(err){toast(err.message);}};
-$('#print-statement').onclick=()=>window.print();$('[data-close]').forEach(b=>b.onclick=()=>{if(!writing)b.closest('dialog').close();});
-$('dialog').forEach(dialog=>dialog.addEventListener('cancel',event=>{if(writing)event.preventDefault();}));
+$('#print-statement').onclick=()=>window.print();$$('[data-close]').forEach(b=>b.onclick=()=>{if(!writing)b.closest('dialog').close();});
+$$('dialog').forEach(dialog=>dialog.addEventListener('cancel',event=>{if(writing)event.preventDefault();}));
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function downloadBackup(raw, encrypted = false) {
   const suffix = encrypted ? '-protected' : '';
