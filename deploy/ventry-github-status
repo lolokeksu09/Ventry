@@ -24,6 +24,11 @@ check_release() {
     return 1
 }
 
+if [[ "${SSH_ORIGINAL_COMMAND:-}" == "ventry-deploy-capabilities" ]]; then
+    printf '%s\n' 'VENTRY_STAGED_DEPLOY_V1'
+    exit 0
+fi
+
 if [[ "${SSH_ORIGINAL_COMMAND:-}" == "ventry-deploy" ]]; then
     umask 022
     install -d -m 755 "$root" "$root/releases"
