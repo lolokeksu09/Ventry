@@ -163,3 +163,26 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .section-page h1{font:400 clamp(36px,5.3vw,69px)/1.1 var(--ventry-display);letter-spacing:-.035em;overflow-wrap:break-word}
 .section-page .work h1{margin-bottom:20px}
 .section-page .body-link{text-decoration:underline;text-underline-offset:3px}
+
+/* Ventry 2.0 — editorial layout, readable process and direct contact routes. */
+.principle-list{list-style:none;counter-reset:principle;margin:0;padding:0;border-top:1px solid #344a3b}
+.principle-list li{counter-increment:principle;display:grid;grid-template-columns:2.1rem minmax(0,1fr);column-gap:12px;row-gap:6px;padding:17px 0;border-bottom:1px solid #344a3b}
+.principle-list li::before{content:counter(principle,decimal-leading-zero);color:#9ab9a5;font-size:13px;grid-row:1 / span 2;line-height:1.6;font-variant-numeric:tabular-nums}
+.principle-list h3{font:600 16px/1.4 var(--ventry-sans);letter-spacing:0}
+.principle-list p{grid-column:2;color:#afc2b5;font-size:14px;line-height:1.6;max-width:60ch}
+.work-detail .demo-note{font-size:13px;color:#a6b6ab;line-height:1.55;margin-top:12px;max-width:62ch}
+.contact-topics{margin-top:clamp(30px,5vw,64px);max-width:720px}
+.contact-topics h2{font:400 clamp(25px,3vw,36px)/1.2 var(--ventry-display)}
+.contact-topics p{font-size:14px;color:#b8cabd;margin-top:12px;max-width:66ch}
+.contact-topics ul{list-style:none;padding:0;margin:20px 0 0;border-top:1px solid #344a3b}
+.contact-topics li{border-bottom:1px solid #344a3b}
+.contact-topics li a{min-height:52px;padding:12px 4px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.contact-topics li a:hover{color:#b9e2bf}
+.contact-topics li a span{color:#9ab9a5}
+.contact-privacy a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:620px){
+ .opening{min-height:0;padding-bottom:28px}
+ .opening-actions a{white-space:normal;text-align:center}
+ .principle-list li{padding:14px 0}
+ .work-item{align-items:start}
+}
