@@ -119,6 +119,11 @@ jobs:
           printf '%s\n' "$VENTRY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/ventry_key" "$HOME/.ssh/known_hosts"
           ssh-keygen -y -f "$HOME/.ssh/ventry_key" >/dev/null
+      - name: Проверить версию установленного серверного entrypoint
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
+            root@135.106.227.179 ventry-deploy-capabilities | grep -Fxq 'VENTRY_STAGED_DEPLOY_V1'
       - name: Опубликовать пакет через ограниченную SSH-команду
         run: |
           set -euo pipefail
