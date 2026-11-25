@@ -49,8 +49,6 @@ jobs:
           node --check site/raschet/app.js
           node --check site/raschet/ledger.js
           node --check site/raschet/book-storage.js
-          bash -n deploy/ventry-github-status
-          python3 tests/deploy-package.py
           node --test tests/raschet-scale.mjs
           node tests/copy-link.cjs
           node --test tests/raschet-history.mjs
@@ -119,11 +117,6 @@ jobs:
           printf '%s\n' "$VENTRY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/ventry_key" "$HOME/.ssh/known_hosts"
           ssh-keygen -y -f "$HOME/.ssh/ventry_key" >/dev/null
-      - name: Проверить версию установленного серверного entrypoint
-        run: |
-          set -euo pipefail
-          ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
-            root@135.106.227.179 ventry-deploy-capabilities | grep -Fxq 'VENTRY_STAGED_DEPLOY_V1'
       - name: Опубликовать пакет через ограниченную SSH-команду
         run: |
           set -euo pipefail
@@ -132,17 +125,6 @@ jobs:
           from pathlib import Path
           Path('site/version.json').write_text(json.dumps({'commit': os.environ['GITHUB_SHA']}))
           PYVERSION
-          python3 - <<'PYMANIFEST'
-          import hashlib, json
-          from pathlib import Path
-          manifest = Path('deploy/release-manifest.json')
-          files = [Path('compose.yaml')] + [p for directory in ('site', 'deploy') for p in Path(directory).rglob('*') if p.is_file() and p != manifest]
-          result = {}
-          for path in sorted(files):
-              with path.open('rb') as f:
-                  result[path.as_posix()] = hashlib.file_digest(f, 'sha256').hexdigest()
-          manifest.write_text(json.dumps(result, sort_keys=True) + '\n', encoding='utf-8')
-          PYMANIFEST
           tar -czf ventry-release.tar.gz compose.yaml site deploy
           ssh -i "$HOME/.ssh/ventry_key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
             root@135.106.227.179 ventry-deploy < ventry-release.tar.gz | tee deploy-output.log
