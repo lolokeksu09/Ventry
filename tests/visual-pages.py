@@ -183,6 +183,38 @@ try:
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
     driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
     assert js("return location.hash") == "#about"
+    # Use the real application in two tabs of the same origin, not a mocked storage API.
+    driver.get(BASE + "/raschet/")
+    assert js("return typeof navigator.locks?.request") == "function"
+    js("localStorage.removeItem('dolgbook-v1-own')")
+    driver.refresh()
+    wait.until(lambda _: driver.find_element(By.ID, "add-client").is_enabled())
+    tab_a = driver.current_window_handle
+    driver.find_element(By.ID, "add-client").click()
+    driver.find_element(By.CSS_SELECTOR, '#client-form [name="name"]').send_keys("Тест А")
+    driver.switch_to.new_window("tab")
+    tab_b = driver.current_window_handle
+    driver.get(BASE + "/raschet/")
+    wait.until(lambda _: driver.find_element(By.ID, "add-client").is_enabled())
+    driver.find_element(By.ID, "add-client").click()
+    driver.find_element(By.CSS_SELECTOR, '#client-form [name="name"]').send_keys("Тест Б")
+    driver.switch_to.window(tab_a)
+    driver.find_element(By.ID, "client-submit").click()
+    wait.until(lambda _: js("return JSON.parse(localStorage.getItem('dolgbook-v1-own') || 'null')?.clients?.length") == 1)
+    wait.until(lambda _: not js("return document.querySelector('#client-dialog').open"))
+    driver.switch_to.window(tab_b)
+    driver.find_element(By.ID, "client-submit").click()
+    wait.until(lambda _: "Книга изменилась" in driver.find_element(By.CSS_SELECTOR, "#client-dialog .dialog-error").text)
+    assert js("return JSON.parse(localStorage.getItem('dolgbook-v1-own')).clients.map(c => c.name)") == ["Тест А"]
+    driver.find_element(By.CSS_SELECTOR, "#client-dialog [data-close]").click()
+    driver.find_element(By.ID, "add-client").click()
+    driver.find_element(By.CSS_SELECTOR, '#client-form [name="name"]').send_keys("Тест Б")
+    driver.find_element(By.ID, "client-submit").click()
+    wait.until(lambda _: js("return JSON.parse(localStorage.getItem('dolgbook-v1-own')).clients.map(c => c.name)") == ["Тест А", "Тест Б"])
+    driver.close()
+    driver.switch_to.window(tab_a)
+    wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "2")
+    report["concurrent_book_writes"] = "PASS"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print("PASS: 6 viewports, 8 public pages, section links, history, focus, clipboard and no-JS",flush=True)
