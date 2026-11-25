@@ -62,6 +62,11 @@
       </div>
     </section>
     <div id="history"></div>
+    <nav class="history-tools" id="history-pagination" aria-label="Страницы истории операций" hidden>
+      <button type="button" class="secondary" id="history-newer">Новее</button>
+      <p id="history-page-status" role="status"></p>
+      <button type="button" class="secondary" id="history-older">Старее</button>
+    </nav>
   </div>
 </section>
 <section id="view-settings" class="view" hidden><p class="eyebrow">ВАША КНИГА</p><h2 class="view-title">Данные и копии</h2><p class="subtitle">Копия — это способ сохранить записи при смене устройства или очистке браузера.</p><div class="card"><h2>Настройки магазина</h2><form id="shop-form"><label>Название магазина<input id="shop-name" maxlength="80" required value="Мой магазин"></label><button class="secondary" type="submit">Сохранить название</button></form><p>Крупный режим увеличивает кнопки, имена и суммы. Настройки сохраняются на этом устройстве.</p></div><div class="business-grid"><article class="card"><h2>Сохранить записи</h2><p>JSON содержит клиентов и полную историю. CSV подходит для таблиц. Для хранения вне устройства используйте копию с паролем.</p><button id="export-encrypted" class="primary" type="button">Скачать копию с паролем</button><button id="export-json" class="secondary" type="button">Скачать обычную копию</button><button id="export-csv" class="secondary">Скачать CSV операций</button><p id="backup-status" class="muted"></p></article><article class="card"><h2>Восстановить книгу</h2><p>Импорт полностью заменит текущую книгу в выбранном режиме. Перед заменой скачайте резервную копию. Файл проверяется до сохранения.</p><button type="button" class="secondary" id="choose-backup-file">Выбрать JSON-файл</button><input type="file" id="import-json" accept="application/json,.json" hidden><p class="muted">Подходят обычные и защищённые JSON-копии. Данные примера и ваша книга хранятся отдельно.</p></article></div><section class="card" aria-labelledby="local-backups-title">
