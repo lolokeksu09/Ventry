@@ -137,6 +137,9 @@ try:
             assert not js("""return document.querySelector('#main-nav').classList.contains('is-open')""")
         if width in (390, 1440):
             capture(f"ui-{label}-raschet.png")
+            js("document.querySelector('.android-gallery').scrollIntoView({block: 'start', behavior: 'instant'})")
+            capture(f"ui-{label}-android-gallery.png")
+            js("window.scrollTo({top:0,behavior:'instant'})")
 
         for route, headings in (
             ("/legal/", ["legal-status", "legal-contact", "legal-service", "legal-data"]),
@@ -203,6 +206,7 @@ try:
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     assert "Старый тест" not in driver.find_element(By.ID, "clients").text
     assert not js("return !!document.querySelector('input[type=file],input[type=tel]')")
+    capture("ui-390-demo.png")
     driver.find_element(By.ID, "add-client").click()
     assert js("return document.querySelector('#client-form [name=name]').readOnly")
     driver.find_element(By.ID, "client-submit").click()
