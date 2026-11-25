@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 import { validateBook, debtOverview, addEntry } from '../site/raschet/ledger.js';
-import { filterHistory } from '../site/raschet/history.js';
+import { filterHistory, historyPage } from '../site/raschet/history.js';
 
 const count = 100_000;
 function largeBook() {
@@ -52,4 +52,23 @@ test('large ledger rejects overpayment and duplicate operation ID', () => {
   book.entries.at(-1).amount = 4_000;
   book.entries.at(-1).id = book.entries[0].id;
   assert.throws(() => validateBook(book), /Некорректная операция/);
+});
+
+test('history pagination covers every operation once, newest first, without oversized pages', () => {
+  const {entries} = largeBook();
+  const seen = new Set();
+  assert.equal(historyPage(entries).pages, 1000);
+  assert.equal(historyPage(entries).entries.at(-1).id, 'e99999');
+  for (let page = 0; page < 1000; page++) {
+    const result = historyPage(entries, page);
+    assert.equal(result.entries.length, 100);
+    for (const entry of result.entries) {
+      assert.ok(!seen.has(entry.id));
+      seen.add(entry.id);
+    }
+  }
+  assert.equal(seen.size, count);
+  assert.equal(historyPage(entries, 5000).page, 999);
+  assert.equal(historyPage(entries.slice(0, 101), 1).entries.length, 1);
+  assert.deepEqual(historyPage([], -1), {page:0, pages:1, entries:[]});
 });
