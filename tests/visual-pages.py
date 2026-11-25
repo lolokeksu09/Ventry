@@ -119,6 +119,12 @@ try:
         assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 350 ₽"
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
+        screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
+        assert len(screenshots) == 3
+        js("document.querySelectorAll('.android-gallery-grid img').forEach(img => img.loading = 'eager')")
+        wait.until(lambda _: js("return [...document.querySelectorAll('.android-gallery-grid img')].every(img => img.complete && img.naturalWidth === 540 && img.naturalHeight === 1200)"))
+        assert js("return [...document.querySelectorAll('.android-gallery-grid a')].every(a => a.getAttribute('href') === a.querySelector('img').getAttribute('src'))")
+        assert js("return document.documentElement.scrollWidth <= innerWidth")
         assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
         assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
         assert js("return document.querySelector('.product-next a.primary-button').pathname") == "/raschet/"
