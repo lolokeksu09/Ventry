@@ -1,5 +1,5 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,debtOverview,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
-import { filterHistory } from './history.js';
+import { filterHistory, historyPage, HISTORY_PAGE_SIZE } from './history.js';
 import { MAX_BACKUP_BYTES, listBackups, storeBackup } from './backups.js';
 import { writeBookSnapshot } from './book-storage.js';
 import { decryptBackup, encryptBackup, isEncryptedBackup, MAX_ENCRYPTED_BYTES } from './backup-encryption.js';
@@ -70,6 +70,7 @@ function switchBook(nextMode) {
   filter = 'all';
   $('#search').value = '';
   historyForm.reset();
+  currentHistoryPage = 0;
   load();
   toast(mode === 'demo' ? 'Это вымышленные данные. Ваша книга хранится отдельно.' : 'Открыта ваша книга.');
 }
@@ -105,6 +106,7 @@ function historyRows(entries){
 const historyForm = $('#history-filters');
 const historyControls = historyForm.elements;
 const historyExport = $('#history-export');
+let currentHistoryPage = 0;
 
 function historySelection() {
   const { query, kind, from, to } = historyControls;
@@ -123,15 +125,24 @@ function renderHistory() {
   historyControls.to.setAttribute('aria-invalid', String(rangeError));
   $('#history-count').textContent = rangeError ? '' : `Найдено: ${entries.length} из ${book.entries.length}`;
   historyExport.disabled = loadBlocked || !entries.length;
+  const slice = historyPage(entries, currentHistoryPage);
+  currentHistoryPage = slice.page;
+  $('#history-pagination').hidden = rangeError || slice.pages <= 1;
+  $('#history-page-status').textContent = `Страница ${slice.page + 1} из ${slice.pages}`;
+  $('#history-newer').disabled = slice.page === 0;
+  $('#history-older').disabled = slice.page + 1 >= slice.pages;
   $('#history').innerHTML = rangeError ? '' : entries.length || !book.entries.length
-    ? historyRows(entries)
+    ? historyRows(slice.entries)
     : '<div class="empty"><p>По этим фильтрам ничего не найдено.</p></div>';
 }
 
 historyForm.addEventListener('submit', event => event.preventDefault());
-historyForm.addEventListener('input', renderHistory);
+historyForm.addEventListener('input', () => { currentHistoryPage = 0; renderHistory(); });
+$('#history-newer').onclick = () => { currentHistoryPage--; renderHistory(); };
+$('#history-older').onclick = () => { currentHistoryPage++; renderHistory(); };
 $('#history-reset').addEventListener('click', () => {
   historyForm.reset();
+  currentHistoryPage = 0;
   renderHistory();
 });
 historyExport.addEventListener('click', () => {
@@ -159,6 +170,8 @@ function renderDemoOperation() {
 
 demoOperation.onclick = () => {
   historyForm.reset();
+  const index = book.entries.findIndex(entry => entry.id === lastDemoPayment?.id);
+  currentHistoryPage = index < 0 ? 0 : Math.floor((book.entries.length - 1 - index) / HISTORY_PAGE_SIZE);
   switchView('history');
   renderHistory();
   const row = $$('#history [data-operation-id]').find(item => item.dataset.operationId === lastDemoPayment?.id);
