@@ -1,49 +1,149 @@
 #!/usr/bin/env bash
-# Restricted SSH entrypoint for the ventry-github-deploy key.
+# Restricted SSH entrypoint. Installation on VDS is a separate, manual action.
 set -euo pipefail
+root=/opt/ventry
+
+compose_at() {
+    local dir="$1" override="$2"
+    shift 2
+    local args=(--project-name ventry --project-directory "$dir" -f "$dir/compose.yaml" -f "$override")
+    if [[ -f "$root/.env" ]]; then args+=(--env-file "$root/.env"); fi
+    docker compose "${args[@]}" "$@"
+}
+
+check_release() {
+    local dir="$1" attempt
+    for attempt in {1..20}; do
+        if curl --noproxy '*' --resolve ventrylab.top:443:127.0.0.1 -fsS --max-time 5 https://ventrylab.top/healthz | grep -Fxq ok &&
+           curl --noproxy '*' --resolve ventrylab.top:443:127.0.0.1 -fsS --max-time 5 https://ventrylab.top/version.json | cmp -s "$dir/site/version.json" - &&
+           curl --noproxy '*' --resolve ventrylab.top:443:127.0.0.1 -fsS --max-time 5 https://ventrylab.top/ | cmp -s "$dir/site/index.html" -; then
+            return 0
+        fi
+        sleep 2
+    done
+    return 1
+}
 
 if [[ "${SSH_ORIGINAL_COMMAND:-}" == "ventry-deploy" ]]; then
     umask 022
-    install -d -m 755 /opt/ventry
-    workdir="$(mktemp -d /opt/ventry/.incoming.XXXXXXXX)"
-    trap 'rm -rf "$workdir"' EXIT
-    cat > "$workdir/release.tar.gz"
+    install -d -m 755 "$root" "$root/releases"
+    exec 9>"$root/.deploy.lock"
+    flock -n 9 || { echo 'VENTRY_DEPLOY_BUSY' >&2; exit 1; }
+    workdir="$(mktemp -d "$root/.incoming.XXXXXXXX")"
+    activation=0
+    cleanup() {
+        local status=$?
+        trap - EXIT
+        if (( activation )); then
+            echo 'VENTRY_DEPLOY_FAILED; restoring previous release' >&2
+            if compose_at "$previous" "$workdir/rollback.yaml" up -d --no-build --pull never --force-recreate web &&
+               check_release "$previous"; then
+                echo 'VENTRY_ROLLBACK_OK' >&2
+            else
+                echo 'VENTRY_ROLLBACK_FAILED; operator intervention required' >&2
+            fi
+            status=1
+        fi
+        rm -rf -- "$workdir"
+        exit "$status"
+    }
+    trap cleanup EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    trap 'exit 129' HUP
 
-    # Reject unexpected paths, links and special files before root extraction.
+    # Bound compressed input and reject unsafe paths, duplicate names and
+    # special entries before extracting. Verify the CI-generated manifest.
     python3 - "$workdir/release.tar.gz" "$workdir/unpacked" <<'PY'
+import hashlib
+import json
 import pathlib
+import re
 import sys
 import tarfile
 
-archive, destination = sys.argv[1:]
+archive, destination = map(pathlib.Path, sys.argv[1:])
+with archive.open("wb") as out:
+    size = 0
+    while chunk := sys.stdin.buffer.read(1024 * 1024):
+        size += len(chunk)
+        if size > 256 * 1024 * 1024:
+            raise SystemExit("Compressed release exceeds 256 MiB")
+        out.write(chunk)
+
 with tarfile.open(archive, "r:gz") as bundle:
-    members = bundle.getmembers()
-    if not members:
-        raise SystemExit("Empty release")
     paths = set()
-    for member in members:
-        parts = pathlib.PurePosixPath(member.name).parts
-        if not parts or ".." in parts or member.name.startswith("/"):
-            raise SystemExit("Unsafe release path")
-        if member.name != "compose.yaml" and parts[0] not in ("site", "deploy"):
+    total = 0
+    members = []
+    for member in bundle:
+        p = pathlib.PurePosixPath(member.name)
+        if (not p.parts or p.is_absolute() or ".." in p.parts
+                or member.name != p.as_posix() or member.name in paths):
+            raise SystemExit("Unsafe or duplicate release path")
+        if member.name != "compose.yaml" and p.parts[0] not in ("site", "deploy"):
             raise SystemExit("Unexpected release path")
         if not (member.isfile() or member.isdir()):
             raise SystemExit("Unsupported release entry")
+        if member.isfile():
+            total += member.size
         paths.add(member.name)
-    if not {"compose.yaml", "site/index.html", "deploy/Caddyfile"} <= paths:
+        members.append(member)
+        if total > 512 * 1024 * 1024 or len(members) > 10000:
+            raise SystemExit("Release exceeds extraction limits")
+    required = {"compose.yaml", "site/index.html", "site/version.json",
+                "deploy/Caddyfile", "deploy/caddy-patched", "deploy/release-manifest.json"}
+    if not required <= paths:
         raise SystemExit("Incomplete release")
-    bundle.extractall(destination, filter="data")
+    bundle.extractall(destination, members=members, filter="data")
+
+manifest_path = destination / "deploy/release-manifest.json"
+manifest = json.loads(manifest_path.read_text())
+version = json.loads((destination / "site/version.json").read_text())
+if (not isinstance(manifest, dict) or not re.fullmatch(r"[0-9a-f]{40}", version.get("commit", ""))):
+    raise SystemExit("Invalid release metadata")
+actual = {}
+for file in destination.rglob("*"):
+    if file.is_file() and file != manifest_path:
+        with file.open("rb") as f:
+            actual[file.relative_to(destination).as_posix()] = hashlib.file_digest(f, "sha256").hexdigest()
+if actual != manifest:
+    raise SystemExit("Release manifest mismatch")
 PY
 
-    install -d -m 755 /opt/ventry/site /opt/ventry/deploy
-    cp -a "$workdir/unpacked/site/." /opt/ventry/site/
-    cp -a "$workdir/unpacked/deploy/." /opt/ventry/deploy/
-    install -m 644 "$workdir/unpacked/compose.yaml" /opt/ventry/compose.yaml
-    cd /opt/ventry
-    docker compose --project-name ventry config --quiet
-    docker compose --project-name ventry up -d --pull always --force-recreate --remove-orphans
-    docker compose --project-name ventry ps
-    printf "%s\n" "VENTRY_DEPLOY_OK"
+    # Establish a verified rollback target before touching the running container.
+    previous="$root"
+    if [[ -e "$root/current" || -L "$root/current" ]]; then
+        previous="$(readlink -f "$root/current")"
+        [[ "$previous" == "$root/releases/"* && -d "$previous" ]] || exit 1
+    fi
+    container="$(docker ps -q --filter label=com.docker.compose.project=ventry --filter label=com.docker.compose.service=web)"
+    [[ "$container" =~ ^[0-9a-f]{12,64}$ ]] || { echo 'Expected one running Ventry web container' >&2; exit 1; }
+    check_release "$previous" || { echo 'Previous release cannot be verified; refusing activation' >&2; exit 1; }
+    old_image="$(docker inspect --format '{{.Image}}' "$container")"
+    [[ "$old_image" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+    old_tag="ventry-web:rollback-${old_image:7}"
+    docker image tag "$old_image" "$old_tag"
+    printf 'services:\n  web:\n    image: %s\n' "$old_tag" > "$workdir/rollback.yaml"
+    compose_at "$previous" "$workdir/rollback.yaml" config --quiet
+
+    sha="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["commit"])' "$workdir/unpacked/site/version.json")"
+    candidate="$(mktemp -d "$root/releases/$sha.XXXXXXXX")"
+    chmod 755 "$candidate"
+    mv -- "$workdir/unpacked/"* "$candidate/"
+    image="ventry-web:release-${candidate##*/}"
+    printf 'services:\n  web:\n    image: %s\n' "$image" > "$candidate/image.yaml"
+    compose_at "$candidate" "$candidate/image.yaml" config --quiet
+    compose_at "$candidate" "$candidate/image.yaml" build --pull web
+    docker run --rm -v "$candidate/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" "$image" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+    # From here any command failure restores the previously verified container.
+    activation=1
+    compose_at "$candidate" "$candidate/image.yaml" up -d --no-build --pull never --force-recreate web
+    check_release "$candidate"
+    ln -s "$candidate" "$workdir/current"
+    mv -Tf "$workdir/current" "$root/current"
+    activation=0
+    printf '%s\n' "VENTRY_DEPLOY_OK"
     exit 0
 fi
 
