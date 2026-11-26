@@ -61,7 +61,7 @@ assert csp_match, "CSP header missing"
 csp = csp_match.group(1)
 for requirement in (
     "default-src 'none'", "script-src 'self'", "style-src 'self'",
-    "img-src 'self'", "font-src 'self'", "object-src 'none'",
+    "img-src 'self'", "font-src 'self'", "connect-src 'self'", "object-src 'none'",
     "base-uri 'none'", "frame-ancestors 'none'", "form-action 'none'",
 ):
     assert requirement in csp, f"CSP requirement missing: {requirement}"
@@ -97,6 +97,8 @@ for page in pages:
     inspector.feed(page.read_text(encoding="utf-8"))
     assert not inspector.inline_violations, f"{page}: {inspector.inline_violations}"
 
-css = (SITE / "styles.css").read_text(encoding="utf-8")
-assert not re.search(r'@import\b|url\(\s*["\']?https?://', css, re.I), "External CSS dependency"
-print(f"PASS: CSP source compatibility ({len(pages)} pages), sensitive URL matcher, asset allowlist")
+stylesheets = list(SITE.rglob("*.css"))
+for path in stylesheets:
+    css = path.read_text(encoding="utf-8")
+    assert not re.search(r'@import\b|url\(\s*["\']?(?:https?:)?//', css, re.I), f"External CSS dependency: {path}"
+print(f"PASS: CSP source compatibility ({len(pages)} pages, {len(stylesheets)} stylesheets), sensitive URL matcher, asset allowlist")

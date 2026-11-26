@@ -7,12 +7,6 @@ body.product-page,body.document-page{
 }
 .product-page main,.document-page main{flex:1}
 .product-page :focus-visible,.document-page :focus-visible{outline:2px solid var(--ventry-focus);outline-offset:3px}
-.product-page .site-footer,.document-page .site-footer{margin-top:46px;border-top:1px solid var(--line)}
-.product-page .footer-inner,.document-page .footer-inner{min-height:83px;color:#b9ccbb;font-size:13px}
-.product-page .footer-links a,.document-page .footer-links a{min-height:43px;text-decoration:none;border-bottom:1px solid transparent}
-.product-page .footer-links a:hover,.document-page .footer-links a:hover,
-.product-page .footer-links a[aria-current],.document-page .footer-links a[aria-current]{border-color:#a4c6a6;color:#f3f5eb}
-.product-page .skip-link,.document-page .skip-link{background:var(--ventry-primary);color:var(--ventry-on-primary);border-radius:5px}
 .product-page .product-hero{margin-top:42px;background:transparent;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0}
 .product-page .product-copy{padding:clamp(24px,4vw,58px)}
 .product-page .breadcrumbs{font-size:13px;color:#afc2b2;margin-bottom:19px}
@@ -72,8 +66,6 @@ body.product-page,body.document-page{
  .product-page .product-copy h1{font-size:61px}
  .product-page .product-description{font-size:14px}
  .product-page .ledger-stage{padding:20px}
- .product-page .site-footer,.document-page .site-footer{margin-top:35px}
- .product-page .footer-inner,.document-page .footer-inner{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){
  .product-page *, .document-page *{scroll-behavior:auto!important;transition-duration:0s!important}
@@ -162,7 +154,6 @@ body.product-page,body.document-page{
 
 /* Shared navigation and product reading path. */
 /* Reserve the sticky header's height for all scroll-to-target operations. */
-html{scroll-padding-top:88px}
 .product-page main[id],.document-page main[id],.product-page main h2[id],.document-page main h2[id]{scroll-margin-top:4px}
 .document-page .legal-section{scroll-margin-top:4px}
 .product-page .product-section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--line)}

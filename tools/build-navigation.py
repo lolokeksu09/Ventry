@@ -69,7 +69,8 @@ def anchor(url,title,route,menu=False):
 def header(data,route):
     links = "\n".join("        "+anchor(u,t,route,True) for u,t in data["menu"])
     search = anchor(*data["search"],route).replace("<a ",'<a class="header-search" ',1)
-    return f'''<header class="ventry-header" id="top">
+    return f'''<a class="ventry-skip" href="#main">Перейти к содержимому</a>
+  <header class="ventry-header" id="top">
     <div class="ventry-header-inner">
       <a class="ventry-header-brand" href="/" aria-label="Ventry — на главную"><img src="/images/ventry-mark.webp" width="36" height="36" alt=""><span>Ventry</span></a>
       {search}

@@ -2,6 +2,7 @@
 :root {
   --ventry-background: #050907;
   --ventry-header: #050907;
+  --ventry-shell-gutter: clamp(20px,4vw,48px);
   --ventry-success: #a7dbb2;
   --ventry-warning: #e4c397;
   --ventry-neutral: #bbc7be;
@@ -38,7 +39,7 @@
 
 
 /* Shared site footer: one readable navigation system for company and product pages. */
-.ventry-footer{width:min(1240px,calc(100% - 2 * var(--gutter,22px)));margin:46px auto 0;padding:32px 0 20px;border-top:1px solid var(--ventry-line);color:var(--ventry-muted);font:400 13px/1.55 var(--ventry-sans)}
+.ventry-footer{width:min(1240px,calc(100% - 2 * var(--ventry-shell-gutter)));margin:46px auto 0;padding:32px 0 20px;border-top:1px solid var(--ventry-line);color:var(--ventry-muted);font:400 13px/1.55 var(--ventry-sans)}
 .ventry-footer-grid{display:grid;grid-template-columns:minmax(170px,1.3fr) repeat(3,minmax(0,1fr));gap:26px 24px;align-items:start}
 .ventry-footer-identity{display:grid;gap:12px;min-width:0}
 .ventry-footer-brand{display:inline-flex;align-items:center;gap:10px;font-size:22px;font-weight:600;color:var(--ventry-text);width:fit-content;min-height:44px}
@@ -60,7 +61,7 @@
 /* One corporate header, independent of page-specific layout. */
 html:has(.ventry-header){scroll-padding-top:88px;scrollbar-gutter:stable}
 .ventry-header{position:sticky;top:0;z-index:35;flex:none;background:var(--ventry-header);border-bottom:1px solid var(--ventry-line);font:500 14px/1.4 var(--ventry-sans);color:var(--ventry-text)}
-.ventry-header-inner{--header-gutter:clamp(20px,4vw,48px);width:min(1240px,calc(100% - 2 * var(--header-gutter)));min-height:72px;margin-inline:auto;display:flex;align-items:center;gap:clamp(12px,1.8vw,26px)}
+.ventry-header-inner{width:min(1240px,calc(100% - 2 * var(--ventry-shell-gutter)));min-height:72px;margin-inline:auto;display:flex;align-items:center;gap:clamp(12px,1.8vw,26px)}
 .ventry-header-brand{display:inline-flex;align-items:center;gap:10px;flex:none;min-height:44px;color:var(--ventry-text);font:600 24px/1 var(--ventry-sans);letter-spacing:-.03em;white-space:nowrap;text-decoration:none}
 .ventry-header-brand img{display:block;width:36px;height:36px;border-radius:8px;flex:none}
 .ventry-header .header-search{flex:none;font:500 14px/1.4 var(--ventry-sans)}
@@ -77,22 +78,28 @@ html:has(.ventry-header){scroll-padding-top:88px;scrollbar-gutter:stable}
  .ventry-nav a{font-size:13px}
 }
 @media(max-width:930px){
- .ventry-header:not(.has-menu){position:relative}
+ html:not(.ventry-js) .ventry-header{position:relative}
  .ventry-header-inner{min-height:72px;gap:12px;flex-wrap:wrap}
  .ventry-header .header-search{order:0;margin-left:auto}
  .ventry-header-contact{display:none}
  .ventry-nav{width:100%;margin:0;flex-wrap:wrap;padding-bottom:8px;gap:0 16px}
- .ventry-header.has-menu .ventry-header-inner{flex-wrap:nowrap}
- .ventry-header.has-menu .ventry-menu-toggle{display:grid;place-content:center;flex:none;gap:4px;width:44px;height:44px;padding:0;border:1px solid #49664d;border-radius:7px;background:#101f16;color:var(--ventry-text);cursor:pointer}
+ html.ventry-js .ventry-header .ventry-header-inner{flex-wrap:nowrap}
+ html.ventry-js .ventry-header .ventry-menu-toggle{display:grid;place-content:center;flex:none;gap:4px;width:44px;height:44px;padding:0;border:1px solid #49664d;border-radius:7px;background:#101f16;color:var(--ventry-text);cursor:pointer}
  .ventry-menu-toggle span{display:block;width:20px;height:2px;background:currentColor;border-radius:1px}
  .ventry-menu-toggle[aria-expanded=true] span:first-child{transform:translateY(6px) rotate(45deg)}
  .ventry-menu-toggle[aria-expanded=true] span:nth-child(2){opacity:0}
  .ventry-menu-toggle[aria-expanded=true] span:last-child{transform:translateY(-6px) rotate(-45deg)}
- .ventry-header.has-menu .ventry-nav{display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);width:min(1240px,calc(100% - 2 * var(--header-gutter)));max-height:calc(100vh - 88px);max-height:calc(100svh - 88px);overflow:auto;overscroll-behavior:contain;padding:8px 17px;border:1px solid #45604a;border-radius:8px;background:#101e15;box-shadow:0 20px 50px #0008;gap:0}
- .ventry-header.has-menu .ventry-nav.is-open{display:grid}
- .ventry-header.has-menu .ventry-nav a{min-height:49px;font-size:15px;white-space:normal;border-bottom:1px solid var(--ventry-line)}
- .ventry-header.has-menu .ventry-nav a:last-child:not([aria-current]){border-color:transparent}
- .ventry-header.has-menu .ventry-nav a[aria-current]{border-color:var(--ventry-green);color:var(--ventry-text)}
+ html.ventry-js .ventry-header .ventry-nav{display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);width:min(1240px,calc(100% - 2 * var(--ventry-shell-gutter)));max-height:calc(100vh - 88px);max-height:calc(100svh - 88px);overflow:auto;overscroll-behavior:contain;padding:8px 17px;border:1px solid #45604a;border-radius:8px;background:#101e15;box-shadow:0 20px 50px #0008;gap:0}
+ html.ventry-js .ventry-header .ventry-nav.is-open{display:grid}
+ html.ventry-js .ventry-header .ventry-nav a{min-height:49px;font-size:15px;white-space:normal;border-bottom:1px solid var(--ventry-line)}
+ html.ventry-js .ventry-header .ventry-nav a:last-child:not([aria-current]){border-color:transparent}
+ html.ventry-js .ventry-header .ventry-nav a[aria-current]{border-color:var(--ventry-green);color:var(--ventry-text)}
 }
 @media(max-width:360px){.ventry-header-inner{gap:8px}.ventry-header-brand{gap:7px;font-size:22px}}
 @media(prefers-reduced-motion:no-preference){.ventry-menu-toggle span{transition:transform .16s ease,opacity .16s ease}}
+
+/* Skip link and footer are owned exclusively by the shared corporate shell. */
+.ventry-skip{position:fixed;top:-100px;left:var(--ventry-shell-gutter);z-index:200;max-width:calc(100% - 2 * var(--ventry-shell-gutter));padding:12px 18px;background:var(--ventry-primary);color:var(--ventry-on-primary);border-radius:5px;font:500 14px/1.5 var(--ventry-sans);text-decoration:none}
+.ventry-skip{transition:none!important;animation:none!important}
+.ventry-skip:focus{top:12px;outline:2px solid var(--ventry-focus);outline-offset:3px}
+.ventry-footer :is(a,button):focus-visible{outline:2px solid var(--ventry-focus);outline-offset:3px}

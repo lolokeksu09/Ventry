@@ -1,6 +1,8 @@
 'use strict';
 
-(() => {
+// Set the mobile layout before the body is parsed; no-JS retains inline links.
+document.documentElement.classList.add('ventry-js');
+document.addEventListener('DOMContentLoaded', () => {
 const year = document.querySelector('#year');
 if (year) year.textContent = String(new Date().getFullYear());
 
@@ -30,7 +32,6 @@ if (header) {
     button.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
   };
   const close = () => setOpen(false);
-  header.classList.add('has-menu');
   button.addEventListener('click', () => setOpen(!nav.classList.contains('is-open')));
   desktop.addEventListener('change', close);
   nav.addEventListener('click', event => {
@@ -172,4 +173,4 @@ if (requestControls) {
   requestControls.hidden = false;
 }
 
-})();
+});

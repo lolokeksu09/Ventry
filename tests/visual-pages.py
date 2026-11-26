@@ -313,6 +313,8 @@ try:
                         "/docs/", "/support/", "/status/", "/explore/")
     for width, height in ((320,760), (390,844), (900,600), (1024,768), (1440,900)):
         baseline = None
+        footer_baseline = None
+        skip_baseline = None
         for route in corporate_routes:
             load(route, width, height)
             assert js("return document.querySelectorAll('.ventry-header').length") == 1
@@ -334,7 +336,31 @@ try:
             if width <= 930:
                 driver.switch_to.active_element.send_keys(Keys.ESCAPE)
                 assert js("return !document.querySelector('#main-nav').classList.contains('is-open') && document.activeElement===document.querySelector('.ventry-menu-toggle')")
+            footer_signature = js("""return ['.ventry-footer','.ventry-footer-grid','.ventry-footer-brand','.ventry-footer-group h2','.ventry-footer-group a'].map(s=>{
+                const e=document.querySelector(s),r=e.getBoundingClientRect(),c=getComputedStyle(e);
+                return {x:Math.round(r.x),w:Math.round(r.width),h:Math.round(r.height),font:c.fontFamily,
+                    size:c.fontSize,bg:c.backgroundColor,padding:c.padding,gap:c.gap,marginTop:c.marginTop};
+            })""")
+            if footer_baseline is None:
+                footer_baseline = footer_signature
+            assert footer_signature == footer_baseline, (width,route,footer_signature,footer_baseline)
+            skip = driver.find_element(By.CSS_SELECTOR, ".ventry-skip")
+            assert js("return document.querySelector('.ventry-skip').getBoundingClientRect().bottom <= 0"), (width,route,"skip not hidden")
+            js("document.querySelector('.ventry-skip').focus()")
+            wait.until(lambda _: js("""const e=document.querySelector('.ventry-skip');
+                return document.activeElement===e && Math.round(e.getBoundingClientRect().top)===12 &&
+                    getComputedStyle(e).transitionDuration.split(',').every(t=>parseFloat(t)===0)"""))
+            skip_signature = js("""const e=document.querySelector('.ventry-skip'),r=e.getBoundingClientRect(),c=getComputedStyle(e);
+                return {x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),
+                    font:c.fontFamily,bg:c.backgroundColor,radius:c.borderRadius};""")
+            if skip_baseline is None:
+                skip_baseline = skip_signature
+            assert skip_signature == skip_baseline, (width,route,skip_signature,skip_baseline)
+            skip.send_keys(Keys.ENTER)
+            wait.until(lambda _: js("return location.hash==='#main' && document.activeElement===document.querySelector('#main')"))
+            assert js("return document.querySelector('.ventry-skip').getBoundingClientRect().bottom <= 0"), (width,route,"skip still visible")
     report["shared_header_cross_page"] = "PASS"
+    report["shared_footer_and_skip_cross_page"] = "PASS"
 
     load("/", 390, 844)
     menu = driver.find_element(By.CSS_SELECTOR, ".ventry-menu-toggle")
@@ -676,6 +702,21 @@ try:
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
     assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
+    # A reversed guided payment must not continue to show a success result.
+    click_visible("demo-payment")
+    click_visible("entry-submit")
+    wait.until(lambda _: js("return !document.querySelector('#demo-result').hidden"))
+    js("document.querySelector('[data-view=clients]').click()")
+    js("document.querySelector('[data-detail=demo-0]').click()")
+    click_visible("detail-reverse")
+    driver.find_element(By.CSS_SELECTOR, "#reverse-form button[type=submit]").click()
+    wait.until(lambda _: js("return document.querySelector('#detail-dialog').open"))
+    assert js("return document.querySelector('#demo-result').hidden && document.querySelector('#demo-operation').hidden")
+    click_visible("detail-statistics")
+    assert js("return document.querySelector('#stats-back').textContent") == "← Клиенты"
+    click_visible("stats-back")
+    assert js("return location.hash") == "#clients"
+    report["demo_reversal_and_stats_return"] = "PASS"
     report["demo_only_and_legacy_preservation"] = "PASS"
     report["navigation"] = "PASS"
 

@@ -6,7 +6,7 @@ import { periodRange, previousRange, projectDemo, bookDays, calendarDays, analyt
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
 const mode='demo';
-let book=blank(),filter='all',entryClient='',entryType='debt',detailId='',loadBlocked=false,editClientId='',reverseEntryId='';
+let book=blank(),filter='all',entryClient='',entryType='debt',detailId='',reverseEntryId='';
 let writing=false;
 const rub=n=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:n%100?2:0}).format(n/100);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -29,13 +29,18 @@ async function save(next) {
 function switchView(view){
   if(view==='dates')view='book';
   if(!['book','clients','history','statistics','settings','collections'].includes(view))view='book';
-  const changed=!$('#view-'+view).hidden?false:true;
+  const changed=$('#view-'+view).hidden;
+  if(changed&&view==='statistics'){
+    const previous=$('.view:not([hidden])')?.id.replace('view-','')||'book';
+    statsReturn=['book','clients','history','settings','collections'].includes(previous)?previous:'book';
+    $('#stats-back').textContent='← '+({book:'Книга',clients:'Клиенты',history:'История',settings:'Настройки',collections:'Возврат долгов'})[statsReturn];
+  }
   $$('.view').forEach(el=>el.hidden=el.id!=='view-'+view);
   $$('.sidebar nav [data-view]').forEach(el=>{const active=el.dataset.view===(['statistics','collections'].includes(view)?'book':view);el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
   if(location.hash!=='#'+view)location.hash=view;
   if(changed)window.scrollTo(0,0);
-  if(view==='settings')refreshLegacyBackups();
-  if(view==='collections')renderCollections();
+  if(changed&&view==='settings')refreshLegacyBackups();
+  if(changed&&view==='collections')renderCollections();
 }
 $('#stats-back').onclick=()=>{switchView(statsReturn);statsReturn='book'};
 $('#book-collections').onclick=()=>{switchView('collections');$('#collection-search').focus()};
@@ -53,7 +58,7 @@ function resetDemo() {
   historyForm.reset();
   $('#collection-search').value='';$('#collection-mode').value='all';
   $('#book-client').value='';$('#book-from').value='';$('#book-to').value='';$('#book-filter-panel').open=false;
-  statsSection='summary';chartSelection=0;chartKey='';
+  statsSection='summary';chartSelection=0;chartKey='';statsReturn='book';
   $('#stats-period').value='month';
   $('#stats-client').value='';$('#stats-rank').value='balance';
   $('#stats-from').value=today();$('#stats-to').value=today();
@@ -123,7 +128,7 @@ function renderHistory() {
   $('#history-error').hidden = !rangeError;
   historyControls.to.setAttribute('aria-invalid', String(rangeError));
   $('#history-count').textContent = rangeError ? '' : `Найдено: ${entries.length} из ${book.entries.length}`;
-  historyExport.disabled = loadBlocked || !entries.length;
+  historyExport.disabled = !entries.length;
   const slice = historyPage(entries, currentHistoryPage);
   currentHistoryPage = slice.page;
   $('#history-pagination').hidden = rangeError || slice.pages <= 1;
@@ -146,7 +151,7 @@ $('#history-reset').addEventListener('click', () => {
 });
 historyExport.addEventListener('click', () => {
   const { entries } = historySelection();
-  if (!loadBlocked && entries.length) exportHistoryCsv([...entries].reverse(), true);
+  if (entries.length) exportHistoryCsv([...entries].reverse(), true);
 });
 
 const demoGuide = $('#demo-guide');
@@ -157,9 +162,10 @@ let demoEntry = false;
 let lastDemoPayment = null;
 
 function renderDemoOperation() {
-  const payment = !loadBlocked && mode === 'demo' && lastDemoPayment
-    ? book.entries.find(entry => entry.id === lastDemoPayment.id)
+  const payment = lastDemoPayment
+    ? activeEntries(book).find(entry => entry.id === lastDemoPayment.id)
     : null;
+  if (!payment) lastDemoPayment = null;
   demoOperation.hidden = !payment;
   $('#demo-result').hidden = !payment;
   if (payment) {
@@ -168,6 +174,7 @@ function renderDemoOperation() {
 }
 
 demoOperation.onclick = () => {
+  if(!lastDemoPayment) return;
   historyForm.reset();
   const index = book.entries.findIndex(entry => entry.id === lastDemoPayment?.id);
   currentHistoryPage = index < 0 ? 0 : Math.floor((book.entries.length - 1 - index) / HISTORY_PAGE_SIZE);
@@ -186,23 +193,20 @@ $('#demo-return').onclick = () => {
   demoOperation.focus();
 };
 function renderDemoGuide(clients) {
-  demoGuide.hidden = mode !== 'demo';
-  if (demoGuide.hidden) return;
+  demoGuide.hidden = false;
   demoCustomer = clients.find(client => client.id === 'demo-0' && client.balance > 1)
     ?? clients.find(client => client.balance > 1);
   const copy = $('#demo-guide-description');
-  if (loadBlocked) {
-    copy.textContent = 'Не удалось открыть пример. Начните его заново, чтобы продолжить.';
-  } else if (demoCustomer) {
+  if (demoCustomer) {
     copy.textContent = `У клиента ${demoCustomer.name} остаток ${rub(demoCustomer.balance)}. Отметьте частичную оплату и посмотрите, сколько останется.`;
   } else {
     copy.textContent = 'В этой книге больше нет долга, который можно погасить частично. Начните пример заново, чтобы повторить.';
   }
-  demoPayment.disabled = loadBlocked || !demoCustomer;
+  demoPayment.disabled = !demoCustomer;
 }
 
 demoPayment.onclick = () => {
-  if (mode !== 'demo' || loadBlocked || !demoCustomer) return;
+  if (!demoCustomer) return;
   const amount = Math.min(100_000, Math.floor(demoCustomer.balance / 2));
   openEntry(demoCustomer.id, 'payment', { fromDemoGuide: true });
   entryAmount.value = (amount / 100).toFixed(2).replace('.', ',');
@@ -397,24 +401,20 @@ $('#stats-client').onchange=renderStats;
 $('#stats-rank').onchange=renderStats;
 $('#stats-from').onchange=renderStats;$('#stats-to').onchange=renderStats;
 
-function openClient(clientId=''){
-  if(loadBlocked)return toast('Восстановите книгу в разделе «Данные и копии».');
+function openClient(){
   if(writing)return;
-  editClientId=typeof clientId==='string'?clientId:'';
-  if(editClientId&&!book.clients.some(c=>c.id===editClientId))return toast('Клиент больше не найден.');
-  $('#client-form').reset();$('#client-dialog .dialog-error').hidden=true;
-  const c=book.clients.find(c=>c.id===editClientId);
-  $('#client-form [name=name]').value=c ? c.name : 'Демо-клиент '+(book.clients.length+1);
-  $('#client-submit-debt').hidden=!!c;$('#client-title').textContent=c?'Изменить клиента':'Новый клиент';$('#client-submit').textContent=c?'Сохранить изменения':'Создать карточку';$('#client-hint').textContent=c?'История и остаток клиента сохранятся.':'После создания карточки можно записать долг.';
+  $('#client-form').reset();
+  $('#client-dialog .dialog-error').hidden=true;
+  $('#client-form [name=name]').value='Демо-клиент '+(book.clients.length+1);
   $('#client-dialog').showModal();
 }
 $('#add-client').onclick=()=>openClient();
 $('#client-form').onsubmit=async e=>{e.preventDefault();if(writing)return;try{
-  const existing=book.clients.find(c=>c.id===editClientId),name=existing?.name||'Демо-клиент '+(book.clients.length+1),phone='';
-  const newClientId=editClientId||id();
-  await save({...book,clients:editClientId?book.clients.map(c=>c.id===editClientId?{...c,name,phone}:c):[...book.clients,{id:newClientId,name,phone}]});
-  const addDebt=!editClientId&&e.submitter?.id==='client-submit-debt';
-  $('#client-dialog').close();if(editClientId)openDetail(editClientId);else if(addDebt)openEntry(newClientId,'debt');else toast('Карточка клиента создана.');
+  const name='Демо-клиент '+(book.clients.length+1),newClientId=id();
+  await save({...book,clients:[...book.clients,{id:newClientId,name,phone:''}]});
+  const addDebt=e.submitter?.id==='client-submit-debt';
+  $('#client-dialog').close();
+  if(addDebt)openEntry(newClientId,'debt');else toast('Карточка клиента создана.');
 }catch(err){toast(err.message);}};
 const entryDialog = $('#entry-dialog');
 const entryForm = $('#entry-form');
@@ -453,7 +453,7 @@ function updateEntryBalance() {
 
 let entryReturnToDetail=false;
 function openEntry(clientId, type, { fromDemoGuide = false, returnToDetail = false } = {}) {
-  if(writing||loadBlocked)return;
+  if(writing)return;
   if(!book.clients.some(c=>c.id===clientId))return toast('Клиент больше не найден.');
   demoEntry = fromDemoGuide;
   entryReturnToDetail=returnToDetail;
@@ -515,7 +515,7 @@ entryForm.onsubmit = async event => {
     };
     await save(addEntry(book, operation));
     entryDialog.close();
-    if (demoEntry && mode === 'demo') {
+    if (demoEntry) {
       lastDemoPayment = { id: operation.id, remaining: balance(book, operation.clientId) };
       renderDemoOperation();
       demoOperation.focus();
@@ -534,13 +534,13 @@ function openDetail(clientId){
   if(!c)return toast('Клиент больше не найден.');
   $('#detail-name').textContent=c.name;
   $('#detail-balance').textContent='Остаток: '+rub(balance(book,clientId));$('#detail-payment').disabled=balance(book,clientId)<=0;
-  $('#detail-content').innerHTML=`<h3>История клиента</h3><p>${esc(prefs.shop)} · ${esc(c.phone)} · Выписка на ${dateText(today())}${mode==='demo'?' · ДЕМО':''}</p><p class="muted">Долги и оплаты из книги магазина. Не является кассовым чеком.</p>${historyRows(book.entries.filter(e=>e.clientId===clientId))}`;
+  $('#detail-content').innerHTML=`<h3>История клиента</h3><p>${esc(prefs.shop)} · ${esc(c.phone)} · Выписка на ${dateText(today())} · ДЕМО</p><p class="muted">Долги и оплаты из книги магазина. Не является кассовым чеком.</p>${historyRows(book.entries.filter(e=>e.clientId===clientId))}`;
   $('#detail-reverse').disabled=!last;$('#detail-dialog').showModal();
 }
 $('#detail-debt').onclick=()=>{if(writing)return;$('#detail-dialog').close();openEntry(detailId,'debt',{returnToDetail:true})};
 $('#detail-payment').onclick=()=>{if(writing)return;$('#detail-dialog').close();openEntry(detailId,'payment',{returnToDetail:true})};
 $('#detail-history').onclick=()=>{if(writing)return;$('#detail-dialog').close();openHistoryScope(detailId)};
-$('#detail-statistics').onclick=()=>{if(writing)return;statsReturn=location.hash.slice(1)||'book';$('#detail-dialog').close();$('#stats-client').value=detailId;statsSection='summary';switchView('statistics');renderStats();$('#stats-client').focus()};
+$('#detail-statistics').onclick=()=>{if(writing)return;$('#detail-dialog').close();$('#stats-client').value=detailId;statsSection='summary';switchView('statistics');renderStats();$('#stats-client').focus()};
 $('#stats-csv').onclick=()=>{
   const scope=$('#stats-client').value,preset=$('#stats-period').value;
   const range=periodRange(preset,today(),book.entries,{from:$('#stats-from').value,to:$('#stats-to').value}),t=projectDemo(book,range,scope).totals;
@@ -590,8 +590,9 @@ const legacyKey='dolgbook-v1-own';
 let legacyRequest=0;
 function refreshLegacyBackups() {
   const request=++legacyRequest;
-  const status=$('#legacy-status'), list=$('#legacy-backups');
+  const status=$('#legacy-status'), backupStatus=$('#legacy-backup-status'), list=$('#legacy-backups');
   list.replaceChildren();
+  backupStatus.textContent='Проверяем прежние автоматические копии…';
   try {
     const raw=localStorage.getItem(legacyKey);
     $('#legacy-export').disabled=raw===null;
@@ -602,14 +603,17 @@ function refreshLegacyBackups() {
   }
   listBackups(legacyKey).then(copies=>{
     if(request!==legacyRequest)return;
-    for(const copy of copies){
+    if(!Array.isArray(copies))throw Error('Invalid legacy metadata');
+    const readable=copies.filter(copy=>typeof copy?.raw==='string'&&typeof copy?.date==='string'&&!Number.isNaN(Date.parse(copy.date)));
+    for(const copy of readable){
       const li=document.createElement('li'),button=document.createElement('button');
       button.type='button';button.className='secondary';
       button.textContent='Скачать копию от '+dateText(copy.date);
       button.onclick=()=>download('dolgbook-legacy-'+copy.date.replaceAll(':','-')+'.json',copy.raw,'application/json');
       li.append(button);list.append(li);
     }
-  }).catch(()=>{if(request===legacyRequest)$('#legacy-backup-status').textContent='Автоматические копии недоступны.';});
+    backupStatus.textContent=(readable.length?'Доступно копий: '+readable.length+'.':'Прежние автоматические копии не найдены.')+(readable.length!==copies.length?' Некоторые копии имеют некорректные метаданные.':'');
+  }).catch(()=>{if(request===legacyRequest)backupStatus.textContent='Автоматические копии недоступны.';});
 }
 $('#legacy-export').onclick=()=>{
   try{
