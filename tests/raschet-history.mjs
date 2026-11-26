@@ -26,3 +26,36 @@ test('finds notes and keeps reversals visible in the audit trail', () => {
   assert.deepEqual(ids({ query: 'Анна' }), ['debt', 'payment', 'reversal']);
   assert.deepEqual(ids({ query: 'нет совпадений' }), []);
 });
+
+import { periodRange, projectDemo } from '../site/raschet/demo-analytics.js';
+const analyticsBook={"clients":[{"id":"a","name":"А"},{"id":"b","name":"Б"}],"entries":[{"id":"1","clientId":"a","type":"debt","amount":10000,"date":"2026-11-01"},{"id":"2","clientId":"a","type":"payment","amount":3000,"date":"2026-11-03"},{"id":"3","clientId":"b","type":"debt","amount":5000,"date":"2026-11-04"},{"id":"4","clientId":"b","type":"reversal","reverses":"3","amount":5000,"date":"2026-11-06"}]};
+test('analytics respects historical cutoffs, cancellation and client scope', () => {
+  const a=projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-05'}).totals;
+  assert.deepEqual([a.start,a.end,a.debt,a.payment,a.debtors],[10000,12000,5000,3000,2]);
+  const b=projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-06'}).totals;
+  assert.deepEqual([b.end,b.debt,b.debtCount,b.cancelDebt,b.debtors],[7000,0,0,5000,1]);
+  assert.equal(projectDemo(analyticsBook,{from:'2026-11-01',to:'2026-11-06'},'a').totals.debtCount,1);
+  assert.equal(periodRange('week','2026-11-26',analyticsBook.entries).from,'2026-11-23');
+});
+
+import { previousRange, bookDays, calendarDays } from '../site/raschet/demo-analytics.js';
+test('calendar handles Monday start and leap years',()=>{
+  assert.equal(calendarDays('2026-02').length,34);
+  assert.equal(calendarDays('2024-02').at(-1),'2024-02-29');
+  assert.equal(bookDays(analyticsBook,'debt')[0].total,0);
+  assert.equal(bookDays(analyticsBook,'debt')[0].entries.length,1);
+});
+test('comparison matches Android calendar policy',()=>{
+  assert.deepEqual(previousRange('month',periodRange('month','2026-03-31',[])),{from:'2026-02-01',to:'2026-02-28'});
+  assert.deepEqual(previousRange('custom',{from:'2026-11-03',to:'2026-11-05'}),{from:'2026-10-31',to:'2026-11-02'});
+  assert.equal(periodRange('quarter','2026-11-26',[]).from,'2026-10-01');
+  assert.equal(previousRange('all',{from:'2026-01-01',to:'2026-11-26'}),null);
+});
+
+test('movement includes cancelled operations, effective counts do not',()=>{
+  const p=projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-06'}),t=p.totals;
+  assert.deepEqual([t.movementDebt,t.debt,t.active,t.borrowers,t.newBorrowers],[5000,0,2,0,0]);
+  assert.deepEqual(p.days.map(d=>d.closing),[7000,12000,7000]);
+  assert.equal(p.days.at(-1).cancelDebt,5000);
+  assert.equal(projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-05'}).totals.newBorrowers,1);
+});

@@ -206,17 +206,47 @@ try:
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     assert "Старый тест" not in driver.find_element(By.ID, "clients").text
     assert not js("return !!document.querySelector('input[type=file],input[type=tel]')")
+    driver.find_element(By.ID, "quick-debt").click()
+    assert js("return document.querySelector('#entry-dialog').open")
+    driver.find_element(By.CSS_SELECTOR, "#entry-dialog [data-close]").click()
+    wait.until(lambda _: not js("return document.querySelector('#entry-dialog').open"))
     capture("ui-390-demo.png")
     driver.find_element(By.ID, "add-client").click()
     assert js("return document.querySelector('#client-form [name=name]').readOnly")
     driver.find_element(By.ID, "client-submit").click()
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
+    wait.until(lambda _: not js("return document.querySelector('#client-dialog').open"))
     driver.find_element(By.ID, "demo-payment").click()
     driver.find_element(By.ID, "entry-submit").click()
     wait.until(lambda _: driver.find_element(By.ID, "demo-operation").is_displayed())
     driver.find_element(By.ID, "demo-operation").click()
     assert "2 350" in driver.find_element(By.ID, "demo-result-summary").text.replace("\\xa0", " ").replace("\\u202f", " ")
     assert js("return !!document.querySelector('#history [data-operation-id]')")
+    js("document.querySelector('[data-view=statistics]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "stats-content").is_displayed())
+    js("document.querySelector('#stats-period').value='all';document.querySelector('#stats-period').dispatchEvent(new Event('change'))")
+    assert "7 010" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
+    js("document.querySelector('[data-stats-client=demo-0]').click()")
+    assert js("return document.querySelector('#stats-client').value") == "demo-0"
+    assert "2 350" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
+    assert js("return !document.querySelector('#stats-csv').disabled")
+    js("document.querySelector('#stats-client').value='';document.querySelector('#stats-client').dispatchEvent(new Event('change'))")
+    js("document.querySelector('#stats-rank').value='debtCount';document.querySelector('#stats-rank').dispatchEvent(new Event('change'))")
+    assert js("return document.querySelectorAll('[data-stats-client]').length") >= 1
+    assert js("return !!document.querySelector('.chart-balance')")
+    assert "Активность клиентов" in driver.find_element(By.ID, "stats-content").text
+    assert js("return document.documentElement.scrollWidth <= innerWidth")
+    capture("ui-390-demo-statistics.png")
+    report["demo_statistics"] = "PASS"
+    js("document.querySelector('[data-view=dates]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "date-entries").is_displayed())
+    assert js("return document.querySelectorAll('#date-entries details').length") >= 1
+    driver.find_element(By.ID, "dates-payment").click()
+    driver.find_element(By.ID, "dates-calendar").click()
+    driver.find_element(By.ID, "calendar-today").click()
+    assert js("return document.querySelectorAll('#date-entries [data-operation-id]').length") >= 1
+    capture("ui-390-demo-calendar.png")
+    report["demo_calendar"] = "PASS"
     js("document.querySelector('[data-view=settings]').click()")
     wait.until(lambda _: not js("return document.querySelector('#legacy-export').disabled"))
     assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
