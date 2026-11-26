@@ -95,6 +95,17 @@
                 <option value="partner">Сотрудничество</option>
               </select>
               <p class="request-hint" id="request-hint"></p>
+              <div id="request-purpose-group" hidden>
+                <label for="request-purpose">Что хотите уточнить?</label>
+                <select id="request-purpose" autocomplete="off">
+                  <option value="">Не выбрано (необязательно)</option>
+                  <option value="first">Получение приложения впервые</option>
+                  <option value="update">Обновление установленного приложения</option>
+                  <option value="compatibility">Совместимость с устройством</option>
+                  <option value="terms">Условия получения и использования</option>
+                </select>
+                <p class="request-hint">Запрос не является покупкой. Сборка и условия уточняются в ответе Ventry. <a class="body-link" href="/docs/#get-app">Порядок получения</a>.</p>
+              </div>
               <label for="request-message">Сообщение</label>
               <textarea id="request-message" rows="5" maxlength="800" aria-describedby="request-hint request-limit" autocomplete="off"></textarea>
               <p id="request-limit" class="request-limit">0 / 800 символов</p>
