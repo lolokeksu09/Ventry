@@ -134,6 +134,10 @@ try:
                 topics = driver.find_elements(By.CSS_SELECTOR, ".contact-topics li a")
                 assert len(topics) == 3
                 assert all(a.get_attribute("href").startswith("mailto:ventrybusinesswork@gmail.com?subject=") for a in topics)
+                assert driver.find_element(By.ID, "request-controls").is_displayed()
+                assert js("return document.querySelector('#request-message').maxLength") == 800
+                assert js("return !document.querySelector('#request-controls form')")
+                assert js("return document.querySelector('#request-mail').protocol") == "mailto:"
             if width in (390, 1440):
                 capture(f"ui-{label}-{section}.png")
 
@@ -153,8 +157,19 @@ try:
         driver.find_element(By.CSS_SELECTOR, ".hero-screen-link").click()
         wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
         assert "долговая книга" in js("return document.querySelector('#screen-dialog-image').alt").lower()
+        assert js("return document.querySelector('#screen-dialog-position').textContent") == "Экран 1 из 3"
+        driver.find_element(By.ID, "screen-next").click()
+        assert js("return document.querySelector('#screen-dialog-position').textContent") == "Экран 2 из 3"
+        assert js("return document.querySelector('#screen-dialog-image').src.endsWith('/android-statistics.webp')")
+        driver.switch_to.active_element.send_keys(Keys.ARROW_RIGHT)
+        assert js("return document.querySelector('#screen-dialog-position').textContent") == "Экран 3 из 3"
+        driver.find_element(By.ID, "screen-next").click()
+        assert js("return document.querySelector('#screen-dialog-position').textContent") == "Экран 1 из 3"
+        driver.find_element(By.ID, "screen-prev").click()
+        assert js("return document.querySelector('#screen-dialog-position').textContent") == "Экран 3 из 3"
         driver.switch_to.active_element.send_keys(Keys.ESCAPE)
         wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
+        wait.until(lambda _: js("return document.activeElement === document.querySelector('.hero-screen-link')"))
         driver.find_element(By.CSS_SELECTOR, ".android-gallery-grid a[data-screen-preview]").click()
         wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
         assert "Долговая книга" in js("return document.querySelector('#screen-dialog-caption').textContent")
@@ -164,6 +179,8 @@ try:
         assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
         assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
         assert js("return document.querySelector('.product-next a.primary-button').pathname") == "/raschet/"
+        assert js("return document.querySelector('.product-next a.quiet-button').pathname") == "/contact/"
+        assert js("return document.querySelector('.product-next a.quiet-button').search") == "?topic=raschet"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
         if width <= 768:
@@ -219,6 +236,22 @@ try:
     wait.until(lambda _: "вручную" in js("return document.querySelector('#copy-email-status').textContent"))
     assert js("return window.getSelection().toString()") == "ventrybusinesswork@gmail.com"
 
+    load("/contact/?topic=support#request", 390, 844)
+    assert js("return document.querySelector('#request-topic').value") == "support"
+    js("document.querySelector('#request-message').value='Проверка & ? #';document.querySelector('#request-message').dispatchEvent(new Event('input'))")
+    assert js("""const href=document.querySelector('#request-mail').getAttribute('href');const query=new URLSearchParams(href.split('?')[1]);return query.get('body')==='Проверка & ? #' && query.get('subject')==='Ventry: вопрос или ошибка'""")
+    assert js("return document.querySelector('#request-limit').textContent") == "14 / 800 символов"
+    js("Object.defineProperty(navigator, 'clipboard', {value: undefined})")
+    click_visible("request-copy")
+    wait.until(lambda _: js("return !document.querySelector('#request-fallback').hidden"))
+    assert "Проверка & ? #" in js("return document.querySelector('#request-text').value")
+    js("document.querySelector('#request-topic').value='partner';document.querySelector('#request-topic').dispatchEvent(new Event('change'))")
+    assert js("return document.querySelector('#request-fallback').hidden")
+    assert js("return document.querySelector('#request-message').value") == "Проверка & ? #"
+    driver.refresh()
+    assert js("return document.querySelector('#request-message').value") == ""
+    report["local_email_draft"] = "PASS"
+
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": True})
     driver.get(BASE + "/?no-js=1")
     driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
@@ -227,6 +260,8 @@ try:
     assert driver.find_element(By.CSS_SELECTOR, "#projects .work-item").is_displayed()
     driver.get(BASE + "/contact/")
     assert not driver.find_element(By.CSS_SELECTOR, "[data-copy-email]").is_displayed()
+    assert not driver.find_element(By.ID, "request-controls").is_displayed()
+    assert len(driver.find_elements(By.CSS_SELECTOR, ".contact-topics li a")) == 3
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": False})
 
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())

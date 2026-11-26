@@ -71,33 +71,64 @@ if (copyButton && copyStatus && copyFallback) {
 }
 
 
-// Native, keyboard-accessible screenshot viewer. Links remain usable without JavaScript.
+// Native screenshot viewer with three unique screens. Direct links work without JavaScript.
 const screenDialog = document.querySelector('#screen-dialog');
 if (screenDialog && typeof screenDialog.showModal === 'function') {
-  const screenImage = screenDialog.querySelector('#screen-dialog-image');
-  const screenCaption = screenDialog.querySelector('#screen-dialog-caption');
-
-  document.querySelectorAll('[data-screen-preview]').forEach(link => {
-    link.addEventListener('click', event => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const sourceImage = link.querySelector('img');
-      if (!sourceImage) return;
-      event.preventDefault();
-      screenImage.src = link.href;
-      screenImage.alt = sourceImage.alt;
-      const figure = link.closest('figure');
-      const caption = figure && figure.querySelector('figcaption');
-      screenCaption.textContent = caption ? caption.innerText.replace(/\\s+/g, ' ').trim() : sourceImage.alt;
-      screenDialog.showModal();
+  const image = screenDialog.querySelector('#screen-dialog-image');
+  const caption = screenDialog.querySelector('#screen-dialog-caption');
+  const position = screenDialog.querySelector('#screen-dialog-position');
+  const previous = screenDialog.querySelector('#screen-prev');
+  const next = screenDialog.querySelector('#screen-next');
+  const close = screenDialog.querySelector('.screen-dialog-close');
+  const links = Array.from(document.querySelectorAll('[data-screen-preview]'));
+  const screens = Array.from(document.querySelectorAll('.android-gallery-grid [data-screen-preview]'));
+  let index = 0;
+  let opener = null;
+  const show = value => {
+    index = (value + screens.length) % screens.length;
+    const link = screens[index];
+    const source = link.querySelector('img');
+    image.src = link.href;
+    image.alt = source.alt;
+    caption.textContent = link.closest('figure').querySelector('figcaption').innerText.replace(/\s+/g, ' ').trim();
+    position.textContent = 'Экран ' + (index + 1) + ' из ' + screens.length;
+  };
+  if (screens.length) {
+    for (const link of links) {
+      link.addEventListener('click', event => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || screenDialog.open) return;
+        const target = screens.findIndex(screen => screen.href === link.href);
+        if (target < 0) return;
+        event.preventDefault();
+        opener = link;
+        show(target);
+        screenDialog.showModal();
+        close.focus();
+      });
+    }
+    previous.addEventListener('click', () => show(index - 1));
+    next.addEventListener('click', () => show(index + 1));
+    close.addEventListener('click', () => screenDialog.close());
+    screenDialog.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        show(index + (event.key === 'ArrowRight' ? 1 : -1));
+      }
     });
-  });
-
-  screenDialog.addEventListener('click', event => {
-    if (event.target === screenDialog) screenDialog.close();
-  });
-  screenDialog.addEventListener('close', () => {
-    screenImage.removeAttribute('src');
-    screenImage.alt = '';
-    screenCaption.textContent = '';
-  });
+    screenDialog.addEventListener('click', event => {
+      if (event.target === screenDialog) {
+        const rect = screenDialog.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) screenDialog.close();
+      }
+    });
+    screenDialog.addEventListener('close', () => {
+      if (screenDialog.open) return;
+      image.removeAttribute('src');
+      image.alt = '';
+      caption.textContent = '';
+      position.textContent = '';
+      if (opener && opener.isConnected) opener.focus({preventScroll:true});
+      opener = null;
+    });
+  }
 }

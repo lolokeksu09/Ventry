@@ -22,8 +22,8 @@
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-2-screen-gallery">
-  <script defer src="/app.js?v=ui-audit-3"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-gallery">
+  <script defer src="/app.js?v=ui-audit-4"></script>
 </head>
 <body class="product-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -54,7 +54,7 @@
         <p class="product-description" itemprop="description">«Расчёт» — отдельное Android-приложение для долгового учёта. На сайте можно попробовать базовые сценарии без установки.</p>
         <div class="product-actions">
           <a class="primary-button" href="/raschet/?demo=1">Попробовать демо <span class="arrow" aria-hidden="true"></span></a>
-          <a class="quiet-button" href="mailto:ventrybusinesswork@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BE%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B5%20%C2%AB%D0%A0%D0%B0%D1%81%D1%87%D1%91%D1%82%C2%BB">Узнать условия получения <span class="arrow" aria-hidden="true"></span></a>
+          <a class="quiet-button" href="/contact/?topic=raschet#request">Узнать условия получения <span class="arrow" aria-hidden="true"></span></a>
           <button class="quiet-button" type="button" data-copy-link hidden>Скопировать ссылку</button>
         </div>
         <p class="preview-note">Без установки и регистрации. Вымышленные данные, сброс при перезагрузке.</p>
@@ -88,8 +88,15 @@
     </section>
     <dialog class="screen-dialog" id="screen-dialog" aria-label="Просмотр экрана приложения">
       <div class="screen-dialog-panel">
-        <form method="dialog"><button class="screen-dialog-close" type="submit" aria-label="Закрыть просмотр">×</button></form>
+        <div class="screen-dialog-toolbar">
+          <p id="screen-dialog-position" role="status" aria-live="polite"></p>
+          <button class="screen-dialog-close" type="button" aria-label="Закрыть просмотр" autofocus>×</button>
+        </div>
         <figure><img id="screen-dialog-image" alt=""><figcaption id="screen-dialog-caption"></figcaption></figure>
+        <div class="screen-dialog-navigation" aria-label="Переключение экранов">
+          <button type="button" id="screen-prev" aria-label="Предыдущий экран">← Назад</button>
+          <button type="button" id="screen-next" aria-label="Следующий экран">Далее →</button>
+        </div>
       </div>
     </dialog>
     <section class="product-scope content-width" id="possibilities" aria-labelledby="possibilities-title">
@@ -105,7 +112,7 @@
     </section>
     <section class="product-next content-width" aria-labelledby="next-title">
       <div><p class="section-kicker">Расчёт для Android</p><h2 id="next-title">Подходит вашему магазину?</h2><p>Сначала попробуйте демо. Если приложение подходит вашему магазину, напишите нам, чтобы уточнить доступность Android-версии и условия получения.</p></div>
-      <div class="product-next-actions"><a class="primary-button" href="/raschet/?demo=1">Открыть демо</a><a class="quiet-button" href="mailto:ventrybusinesswork@gmail.com?subject=%D0%A0%D0%B0%D1%81%D1%87%D1%91%D1%82%3A%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20Android-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F">Запросить Android-версию</a></div>
+      <div class="product-next-actions"><a class="primary-button" href="/raschet/?demo=1">Открыть демо</a><a class="quiet-button" href="/contact/?topic=raschet#request">Запросить Android-версию</a></div>
     </section>
     <section class="product-faq content-width" aria-labelledby="faq-title">
       <h2 id="faq-title">Вопросы о «Расчёте»</h2>

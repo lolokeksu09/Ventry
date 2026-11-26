@@ -64,3 +64,66 @@ if (copyEmailButton && copyEmailStatus && emailLink) {
     }
   });
 }
+
+
+// Compose a local email draft; the website never submits or stores these fields.
+const requestControls = document.querySelector('#request-controls');
+if (requestControls) {
+  const topics = new Map([
+    ['raschet', ['Расчёт: получение Android-приложения', 'Напишите, для каких задач нужен «Расчёт», и что хотите уточнить об Android-версии.']],
+    ['support', ['Ventry: вопрос или ошибка', 'Укажите страницу или приложение, что произошло и как повторить проблему. Не указывайте данные клиентов.']],
+    ['partner', ['Ventry: сотрудничество', 'Кратко опишите предложение и ожидаемый результат.']]
+  ]);
+  const topic = document.querySelector('#request-topic');
+  const message = document.querySelector('#request-message');
+  const hint = document.querySelector('#request-hint');
+  const limit = document.querySelector('#request-limit');
+  const mail = document.querySelector('#request-mail');
+  const copy = document.querySelector('#request-copy');
+  const status = document.querySelector('#request-status');
+  const fallback = document.querySelector('#request-fallback');
+  const manual = document.querySelector('#request-text');
+  const recipient = 'ventrybusinesswork@gmail.com';
+  let revision = 0;
+  const requested = new URLSearchParams(location.search).get('topic');
+  if (topics.has(requested)) topic.value = requested;
+  // URLSearchParams normalizes malformed Unicode; mailto requires percent-encoded spaces.
+  const encode = value => new URLSearchParams([['v', value]]).toString().slice(2).replace(/\+/g, '%20');
+  const draft = () => {
+    const [subject, guidance] = topics.get(topic.value) || topics.get('raschet');
+    const body = message.value.slice(0, 800).trim().replace(/\r?\n/g, '\r\n');
+    return {subject, guidance, body, text: 'Кому: ' + recipient + '\nТема: ' + subject + '\n\n' + body};
+  };
+  const refresh = () => {
+    revision += 1;
+    const value = draft();
+    hint.textContent = value.guidance;
+    limit.textContent = Math.min(message.value.length, 800) + ' / 800 символов';
+    mail.href = 'mailto:' + recipient + '?subject=' + encode(value.subject) + '&body=' + encode(value.body);
+    status.textContent = '';
+    fallback.hidden = true;
+    manual.value = '';
+  };
+  topic.addEventListener('change', refresh);
+  message.addEventListener('input', refresh);
+  copy.addEventListener('click', async () => {
+    const value = draft();
+    const currentRevision = revision;
+    copy.disabled = true;
+    try {
+      await navigator.clipboard.writeText(value.text);
+      if (currentRevision === revision) status.textContent = 'Письмо скопировано. Вставьте его в почтовое приложение.';
+    } catch {
+      if (currentRevision !== revision) return;
+      manual.value = value.text;
+      fallback.hidden = false;
+      manual.focus();
+      manual.select();
+      status.textContent = 'Автокопирование недоступно. Скопируйте выделенный текст вручную.';
+    } finally {
+      copy.disabled = false;
+    }
+  });
+  refresh();
+  requestControls.hidden = false;
+}
