@@ -211,6 +211,7 @@ try:
     assert js("return document.querySelector('#client-form [name=name]').readOnly")
     driver.find_element(By.ID, "client-submit").click()
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
+    wait.until(lambda _: not js("return document.querySelector('#client-dialog').open"))
     driver.find_element(By.ID, "demo-payment").click()
     driver.find_element(By.ID, "entry-submit").click()
     wait.until(lambda _: driver.find_element(By.ID, "demo-operation").is_displayed())
@@ -226,6 +227,15 @@ try:
     assert "2 350" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
     capture("ui-390-demo-statistics.png")
     report["demo_statistics"] = "PASS"
+    js("document.querySelector('[data-view=dates]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "date-entries").is_displayed())
+    assert js("return document.querySelectorAll('#date-entries details').length") >= 1
+    driver.find_element(By.ID, "dates-payment").click()
+    driver.find_element(By.ID, "dates-calendar").click()
+    driver.find_element(By.ID, "calendar-today").click()
+    assert js("return document.querySelectorAll('#date-entries [data-operation-id]').length") >= 1
+    capture("ui-390-demo-calendar.png")
+    report["demo_calendar"] = "PASS"
     js("document.querySelector('[data-view=settings]').click()")
     wait.until(lambda _: not js("return document.querySelector('#legacy-export').disabled"))
     assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
