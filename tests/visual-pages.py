@@ -217,6 +217,15 @@ try:
     driver.find_element(By.ID, "demo-operation").click()
     assert "2 350" in driver.find_element(By.ID, "demo-result-summary").text.replace("\\xa0", " ").replace("\\u202f", " ")
     assert js("return !!document.querySelector('#history [data-operation-id]')")
+    js("document.querySelector('[data-view=statistics]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "stats-content").is_displayed())
+    js("document.querySelector('#stats-period').value='all';document.querySelector('#stats-period').dispatchEvent(new Event('change'))")
+    assert "7 010" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
+    js("document.querySelector('[data-stats-client=demo-0]').click()")
+    assert js("return document.querySelector('#stats-client').value") == "demo-0"
+    assert "2 350" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
+    capture("ui-390-demo-statistics.png")
+    report["demo_statistics"] = "PASS"
     js("document.querySelector('[data-view=settings]').click()")
     wait.until(lambda _: not js("return document.querySelector('#legacy-export').disabled"))
     assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
