@@ -62,8 +62,14 @@ jobs:
           for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
               encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
               css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
-          encoded = base64.b64encode((root/'images'/'raschet-ledger-small.webp').read_bytes()).decode('ascii')
-          html = html.replace('/images/raschet-ledger-small.webp','data:image/webp;base64,'+encoded)
+          for rel, mime in [('images/raschet/android-book.webp','image/webp'), ('images/raschet-icon.svg','image/svg+xml')]:
+              encoded = base64.b64encode((root/rel).read_bytes()).decode('ascii')
+              html = html.replace('src="/'+rel+'"', 'src="data:'+mime+';base64,'+encoded+'"')
+          brand = (root/'brand.css').read_text(encoding='utf-8')
+          for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
+              encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
+              brand = brand.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
+          html = html.replace('<link rel="stylesheet" href="/brand.css">','<style>'+brand+'</style>')
           favicon = base64.b64encode((root/'favicon.svg').read_bytes()).decode('ascii')
           html = html.replace('href="/favicon.svg"', 'href="data:image/svg+xml;base64,'+favicon+'"')
           html, css_count = re.subn(r'<link rel="stylesheet" href="/home-company\.css(?:\?[^"]*)?">', lambda _: '<style>\n'+css+'\n</style>', html)
@@ -75,8 +81,9 @@ jobs:
           for route in ('/projects/raschet/','/legal/','/privacy/'):
               html = html.replace('href="'+route+'"','href="https://ventrylab.top'+route+'"')
           assert css_count == js_count == 1
-          # The homepage no longer embeds the ledger preview image.
-          assert '/images/raschet-ledger-small.webp' not in html
+          assert 'src="/images/raschet/android-book.webp"' not in html
+          html = html.replace('href="/projects/raschet/#gallery-title"','href="https://ventrylab.top/projects/raschet/#gallery-title"')
+          html = html.replace('href="/raschet/?demo=1"','href="https://ventrylab.top/raschet/?demo=1"')
           Path('artifacts/Ventry-ui-audit.html').write_text(html,encoding='utf-8')
           PY
           python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview.log 2>&1 &
