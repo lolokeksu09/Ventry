@@ -92,6 +92,7 @@ try:
         assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 3
         assert js("return document.querySelector('.opening-actions a.hero-primary').pathname") == "/projects/"
         assert js("return !!document.querySelector('#projects .demo-note')")
+        assert js("""const org=document.querySelector('footer[itemtype="https://schema.org/Organization"]');return !!org && org.querySelector('[itemprop="name"]').textContent==='Ventry' && org.querySelector('[itemprop="email"]').href.startsWith('mailto:')""")
         assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/about/"
         assert js("return document.querySelector('#projects .work-actions a.hero-primary').pathname") == "/raschet/"
         assert len(driver.find_elements(By.CSS_SELECTOR, "#projects .work-features li")) == 3
@@ -134,7 +135,7 @@ try:
         assert js("return document.querySelector('.hero-screen').naturalHeight") == 1200
         assert js("return document.querySelector('.screen-dialog').open") is False
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
-        assert js("""const schema=JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);return schema['@type']==='SoftwareApplication' && schema.name==='Расчёт' && schema.operatingSystem==='Android'""")
+        assert js("""const app=document.querySelector('main[itemtype="https://schema.org/SoftwareApplication"]');return !!app && app.querySelector('[itemprop="name"]').textContent==='Расчёт' && app.querySelector('[itemprop="operatingSystem"]').content==='Android'""")
         assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
         screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
         assert len(screenshots) == 3
