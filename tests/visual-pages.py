@@ -45,7 +45,7 @@ SECTION_ROUTES = {"about": "/about/", "method": "/approach/", "projects": "/proj
 
 def open_home_section(section, width):
     route = SECTION_ROUTES[section]
-    scope = ".rail-links" if width > 930 else ".mobile-nav nav"
+    scope = "#main-nav"
     if section == "method":
         # Approach is a child page of Company, not another top-level destination.
         driver.find_element(By.CSS_SELECTOR, 'main a[href="/approach/"]').click()
@@ -53,8 +53,8 @@ def open_home_section(section, width):
         driver.find_element(By.CSS_SELECTOR, '.ventry-footer-group a[href="/contact/"]').click()
     else:
         if width <= 930:
-            driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
-            assert js("return document.querySelector('.mobile-nav').open")
+            driver.find_element(By.CSS_SELECTOR, ".ventry-menu-toggle").click()
+            assert js("return document.querySelector('#main-nav').classList.contains('is-open')")
         driver.find_element(By.CSS_SELECTOR, f'{scope} a[href="{route}"]').click()
     wait.until(lambda _: js("return location.pathname") == route)
     current = "/about/" if section in ("method","contact") else route
@@ -71,7 +71,7 @@ def open_home_section(section, width):
         assert js("return document.querySelector('.method-next .hero-secondary').pathname") == "/raschet/"
     assert js("return document.documentElement.scrollWidth <= innerWidth")
     if width <= 930:
-        assert not js("return document.querySelector('.mobile-nav').open")
+        assert not js("return document.querySelector('#main-nav').classList.contains('is-open')")
 
 
 def load(route, width, height):
@@ -98,16 +98,16 @@ try:
     for width, height in ((320, 760), (360, 800), (390, 844), (430, 900), (768, 1000), (900, 600), (1024, 768), (1440, 900), (1920, 1080)):
         label = str(width)
         page = load("/", width, height)
-        header_selector = ".mobile-top" if width <= 930 else ".rail"
+        header_selector = ".ventry-header"
         assert driver.find_element(By.CSS_SELECTOR, header_selector).is_displayed()
         assert js("return document.querySelectorAll('.ventry-footer-group').length") == 3
         assert js("return !document.querySelector('main footer')")
         if width <= 620:
             assert js("return document.querySelector('.work-detail').getBoundingClientRect().width >= document.querySelector('.work-item').getBoundingClientRect().width - 40")
         assert js("return document.querySelectorAll('.ventry-footer a[href=\"/explore/\"]').length") == 1
-        assert js("return [...document.querySelectorAll('.rail-links a')].map(a=>a.pathname)") == ["/projects/", "/releases/", "/docs/", "/support/", "/about/"]
+        assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == ["/projects/", "/releases/", "/docs/", "/support/", "/about/"]
         assert driver.find_element(By.CSS_SELECTOR, header_selector+" .header-search").is_displayed()
-        assert js("return document.querySelectorAll('header .header-search[href=\"/explore/\"]').length") == 2
+        assert js("return document.querySelectorAll('header .header-search[href=\"/explore/\"]').length") == 1
         assert js("""return [...document.querySelectorAll('main > section')].map(s => s.id)""") == [
             "start", "projects", "about", "method", "contact"
         ]
@@ -228,13 +228,13 @@ try:
         assert js("return document.querySelectorAll('.demo-boundary-grid article').length") == 2
         gallery_link = driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]')
         driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", gallery_link)
-        assert driver.execute_script("""const a=arguments[0],r=a.getBoundingClientRect(),h=document.querySelector('.site-header').getBoundingClientRect();return r.top>=h.bottom && a.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))""", gallery_link)
+        assert driver.execute_script("""const a=arguments[0],r=a.getBoundingClientRect(),h=document.querySelector('.ventry-header').getBoundingClientRect();return r.top>=h.bottom && a.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))""", gallery_link)
         gallery_link.click()
         wait.until(lambda _: js("return location.hash") == "#gallery-title")
         wait.until(lambda _: js("const h=document.querySelector('#gallery-title').getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))
         js("window.scrollTo(0,0)")
         if width <= 930:
-            driver.find_element(By.CSS_SELECTOR, ".menu-toggle").click()
+            driver.find_element(By.CSS_SELECTOR, ".ventry-menu-toggle").click()
             assert js("""return document.querySelector('#main-nav').classList.contains('is-open')""")
             driver.switch_to.active_element.send_keys(Keys.ESCAPE)
             assert not js("""return document.querySelector('#main-nav').classList.contains('is-open')""")
@@ -254,7 +254,7 @@ try:
             assert links == headings, (route, links)
             first = driver.find_element(By.CSS_SELECTOR, ".document-toc a")
             driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", first)
-            assert driver.execute_script("return arguments[0].getBoundingClientRect().top >= document.querySelector('.site-header').getBoundingClientRect().bottom", first)
+            assert driver.execute_script("return arguments[0].getBoundingClientRect().top >= document.querySelector('.ventry-header').getBoundingClientRect().bottom", first)
             first.click()
             assert js("return location.hash") == "#" + headings[0]
             wait.until(lambda _: js("const h=document.getElementById(location.hash.slice(1)).getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))
@@ -307,11 +307,40 @@ try:
             capture(f"ui-{label}-explore.png")
         report[label] = {"home": page, "product": product}
 
+    # Compare actual rendered shared-component geometry and styles at the same viewport.
+    corporate_routes = ("/", "/about/", "/approach/", "/projects/", "/contact/",
+                        "/projects/raschet/", "/legal/", "/privacy/", "/releases/",
+                        "/docs/", "/support/", "/status/", "/explore/")
+    for width, height in ((320,760), (390,844), (900,600), (1024,768), (1440,900)):
+        baseline = None
+        for route in corporate_routes:
+            load(route, width, height)
+            assert js("return document.querySelectorAll('.ventry-header').length") == 1
+            assert js("return document.querySelectorAll('#main-nav').length") == 1
+            if width <= 930:
+                driver.find_element(By.CSS_SELECTOR, ".ventry-menu-toggle").click()
+                assert js("return document.querySelector('.ventry-menu-toggle').getAttribute('aria-expanded')") == "true"
+            signature = js("""return ['.ventry-header','.ventry-header-brand','.header-search','.ventry-menu-toggle','#main-nav','#main-nav a'].map(s=>{
+                const e=document.querySelector(s),r=e.getBoundingClientRect(),c=getComputedStyle(e);
+                return {x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),
+                    font:c.fontFamily,size:c.fontSize,bg:c.backgroundColor,radius:c.borderRadius,
+                    display:c.display,padding:c.padding,gap:c.gap};
+            })""")
+            if baseline is None:
+                baseline = signature
+            assert signature == baseline, (width,route,signature,baseline)
+            if width == 390 and route in ("/","/releases/","/projects/raschet/"):
+                capture("shared-header-" + (route.strip("/").replace("/","-") or "home") + ".png")
+            if width <= 930:
+                driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+                assert js("return !document.querySelector('#main-nav').classList.contains('is-open') && document.activeElement===document.querySelector('.ventry-menu-toggle')")
+    report["shared_header_cross_page"] = "PASS"
+
     load("/", 390, 844)
-    menu = driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary")
+    menu = driver.find_element(By.CSS_SELECTOR, ".ventry-menu-toggle")
     menu.click()
     menu.send_keys(Keys.ESCAPE)
-    assert js("return !document.querySelector('.mobile-nav').open && document.activeElement === document.querySelector('.mobile-nav summary')")
+    assert js("return !document.querySelector('#main-nav').classList.contains('is-open') && document.activeElement === document.querySelector('.ventry-menu-toggle')")
     open_home_section("about", 390)
     open_home_section("projects", 390)
     driver.back()
@@ -400,7 +429,7 @@ try:
     report["knowledge_search"] = "PASS"
     report["contextual_help"] = "PASS"
     load("/",390,844)
-    driver.find_element(By.CSS_SELECTOR,".mobile-top .header-search").click()
+    driver.find_element(By.CSS_SELECTOR,".ventry-header .header-search").click()
     wait.until(lambda _: js("return location.pathname") == "/explore/")
     assert driver.find_element(By.ID,"directory-search").is_displayed()
     directory = driver.find_element(By.ID, "directory-search")
@@ -456,8 +485,8 @@ try:
     driver.get(BASE + "/support/")
     assert driver.find_element(By.CSS_SELECTOR, ".knowledge-faq summary").is_displayed()
     driver.get(BASE + "/?no-js=1")
-    driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
-    driver.find_element(By.CSS_SELECTOR, '.mobile-nav nav a[href="/projects/"]').click()
+    assert not driver.find_element(By.CSS_SELECTOR, ".ventry-menu-toggle").is_displayed()
+    driver.find_element(By.CSS_SELECTOR, '#main-nav a[href="/projects/"]').click()
     assert driver.current_url == BASE + "/projects/"
     assert driver.find_element(By.CSS_SELECTOR, "#projects .work-item").is_displayed()
     driver.get(BASE + "/contact/")

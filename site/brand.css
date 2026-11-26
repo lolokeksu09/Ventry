@@ -58,12 +58,12 @@
 .header-search:hover,.header-search[aria-current=page]{color:var(--ventry-text);text-decoration:underline;text-underline-offset:5px}
 
 /* One corporate header, independent of page-specific layout. */
-html:has(.ventry-header){scroll-padding-top:88px}
+html:has(.ventry-header){scroll-padding-top:88px;scrollbar-gutter:stable}
 .ventry-header{position:sticky;top:0;z-index:35;flex:none;background:var(--ventry-header);border-bottom:1px solid var(--ventry-line);font:500 14px/1.4 var(--ventry-sans);color:var(--ventry-text)}
 .ventry-header-inner{--header-gutter:clamp(20px,4vw,48px);width:min(1240px,calc(100% - 2 * var(--header-gutter)));min-height:72px;margin-inline:auto;display:flex;align-items:center;gap:clamp(12px,1.8vw,26px)}
 .ventry-header-brand{display:inline-flex;align-items:center;gap:10px;flex:none;min-height:44px;color:var(--ventry-text);font:600 24px/1 var(--ventry-sans);letter-spacing:-.03em;white-space:nowrap;text-decoration:none}
 .ventry-header-brand img{display:block;width:36px;height:36px;border-radius:8px;flex:none}
-.ventry-header .header-search{order:2;flex:none;font:500 14px/1.4 var(--ventry-sans)}
+.ventry-header .header-search{flex:none;font:500 14px/1.4 var(--ventry-sans)}
 .ventry-nav{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);margin-left:auto}
 .ventry-nav a{display:flex;align-items:center;min-height:44px;font:500 14px/1.4 var(--ventry-sans);color:var(--ventry-muted);text-decoration:none;white-space:nowrap;border-bottom:1px solid transparent}
 .ventry-nav a:hover,.ventry-nav a[aria-current]{color:var(--ventry-text);border-color:var(--ventry-green)}

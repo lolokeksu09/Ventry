@@ -87,7 +87,7 @@ jobs:
           for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
               encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
               brand = brand.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
-          html = html.replace('<link rel="stylesheet" href="/brand.css">','<style>'+brand+'</style>')
+          html = html.replace('<link rel="stylesheet" href="/brand.css?v=ventry-shared-header">','<style>'+brand+'</style>')
           favicon = base64.b64encode((root/'favicon.svg').read_bytes()).decode('ascii')
           html = html.replace('href="/favicon.svg"', 'href="data:image/svg+xml;base64,'+favicon+'"')
           html, css_count = re.subn(r'<link rel="stylesheet" href="/home-company\.css(?:\?[^"]*)?">', lambda _: '<style>\n'+css+'\n</style>', html)
