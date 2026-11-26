@@ -18,6 +18,10 @@ if (document.getElementById('section-dialog')) {
   openSectionPage();
 }
 
+// Close the native menu when switching to the desktop layout.
+window.matchMedia('(min-width: 931px)').addEventListener('change', event => {
+  if (event.matches) mobileMenu.open = false;
+});
 mobileMenu.querySelector('nav').addEventListener('click', event => {
   if (event.target.closest('a') && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
     mobileMenu.open = false;

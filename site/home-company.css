@@ -253,3 +253,8 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .reach-footer nav a{display:inline-flex;align-items:center;min-height:44px}
 
 .contact-description .body-link{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* Short-screen menus and accessible header action. */
+.mobile-nav nav{max-height:calc(100vh - 88px);max-height:calc(100svh - 88px);overflow:auto}
+.header-mail{min-height:44px}
+@media(max-width:930px){.mobile-nav nav{max-width:calc(100vw - 2 * var(--gutter))}}
