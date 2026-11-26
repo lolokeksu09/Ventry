@@ -4,6 +4,11 @@ ventrylab.top, 135-106-227-179.sslip.io {
     root * /srv
     encode zstd gzip
 
+    # A static presentation never needs write methods or cross-origin preflights.
+    @nonread not method GET HEAD
+    header @nonread Allow "GET, HEAD"
+    respond @nonread 405
+
     @health path /healthz
     respond @health "ok" 200
 
@@ -14,6 +19,7 @@ ventrylab.top, 135-106-227-179.sslip.io {
 
 
     header {
+        -Server
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
@@ -33,10 +39,17 @@ ventrylab.top, 135-106-227-179.sslip.io {
     @release path /version.json
     header @release Cache-Control "no-store"
 
+    # Explicit publication manifest. New public files must be deliberately listed.
+    # The CI source guard keeps this list in sync with site/.
+    @unpublished not path / /about /about/ /about/index.html /app.js /approach /approach/ /approach/index.html /brand.css /company-nav.js /contact /contact/ /contact/index.html /favicon.svg /fonts/OFL.txt /fonts/golos-cyrillic.woff2 /fonts/golos-latin.woff2 /google9048871eda96ab4a.html /home-company.css /images/raschet-icon.svg /images/raschet-ledger-small.webp /images/raschet-ledger.webp /images/raschet/android-book.webp /images/raschet/android-client-statistics.webp /images/raschet/android-statistics.webp /images/ventry-glass-mobile.webp /images/ventry-glass.webp /images/ventry-mark-large.webp /images/ventry-mark.webp /index.html /inner-pages.css /legal /legal/ /legal/index.html /og-cover.png /og-cover.svg /privacy /privacy/ /privacy/index.html /projects /projects/ /projects/index.html /projects/raschet /projects/raschet/ /projects/raschet/index.html /raschet /raschet-cover.jpg /raschet/ /raschet/app.js /raschet/backup-encryption.js /raschet/backups.js /raschet/book-storage.js /raschet/demo-analytics.js /raschet/history.js /raschet/index.html /raschet/ledger.js /raschet/style.css /robots.txt /sitemap.xml /styles.css /ventry-brand-cover.jpg /ventry-company-cover.png /version.json
+    header @unpublished Cache-Control "no-store"
+    respond @unpublished 404
+
     file_server
 }
 
 # Preserve the original IP redirect target and existing legacy URLs.
 http://135.106.227.179 {
+    header -Server
     redir https://135-106-227-179.sslip.io{uri} 308
 }
