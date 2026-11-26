@@ -86,22 +86,28 @@ try:
         header_selector = ".mobile-top" if width <= 930 else ".rail"
         assert driver.find_element(By.CSS_SELECTOR, header_selector).is_displayed()
         assert js("""return [...document.querySelectorAll('main > section')].map(s => s.id)""") == [
-            "start", "about", "method", "projects", "contact"
+            "start", "projects", "about", "method", "contact"
         ]
         assert not js("return !!document.querySelector('dialog, .chapter-strip')")
         assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 3
-        assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/projects/"
+        assert js("return document.querySelector('.opening-actions a.hero-primary').pathname") == "/projects/"
         assert js("return !!document.querySelector('#projects .demo-note')")
+        assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/about/"
+        assert js("return document.querySelector('#projects .work-actions a.hero-primary').pathname") == "/raschet/"
+        assert len(driver.find_elements(By.CSS_SELECTOR, "#projects .work-features li")) == 3
+        js("document.querySelector('#projects .work-preview img').loading='eager'")
+        wait.until(lambda _: js("return document.querySelector('#projects .work-preview img').naturalWidth === 540"))
+        assert js("return document.querySelector('#projects .work-preview>a').hash") == "#gallery-title"
         composition = js("""const hero = document.querySelector('.opening').getBoundingClientRect();
           return {
             heroHeight: Math.round(hero.height),
             gapAfterActions: Math.round(hero.bottom - document.querySelector('.opening-actions').getBoundingClientRect().bottom),
-            aboutTop: Math.round(document.querySelector('#about').getBoundingClientRect().top),
+            projectTop: Math.round(document.querySelector('#projects').getBoundingClientRect().top),
             brandShape: document.querySelector('.identity-construction use').getAttribute('href'),
             ctas: [...document.querySelectorAll('.opening-actions a')].map(a => Math.round(a.getBoundingClientRect().height))
           }""")
         assert composition["gapAfterActions"] <= 110, (width, composition)
-        assert composition["aboutTop"] < height, (width, composition)
+        assert composition["projectTop"] < height, (width, composition)
         assert composition["brandShape"] == "#ventry-brand-shape", (width, composition)
         assert all(h >= 44 for h in composition["ctas"]), (width, composition)
         page["composition"] = composition
@@ -203,7 +209,7 @@ try:
 
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
     driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
-    assert js("return location.hash") == "#about"
+    assert js("return location.hash") == "#projects"
     # The public preview must never load or mutate legacy personal records.
     driver.get(BASE + "/raschet/")
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
