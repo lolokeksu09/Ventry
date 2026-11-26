@@ -112,3 +112,7 @@ VENTRY_CADDY_IMAGE=ventry-caddy:patched-test bash tests/security-http.sh
 ### Производительность и публичная доступность
 
 `python3 tools/verify-performance.py` — бюджет исходных локальных ресурсов всех страниц (включает ленивые изображения и шрифты), 300 КиБ / 24 файла на страницу. Visual QA сохраняет `performance-budget.json` и `browser-performance.json` с лабораторными показателями Chromium, а не полевыми метриками реальных посетителей. `/status/` проверяет три публичных HTTP-ответа из браузера; не является историей uptime или проверкой установленного APK. Для локального preview со служебным healthz используйте `python3 tests/serve-preview.py`.
+
+### Общая навигация и поиск
+
+`data/navigation.json` содержит проверенные маршруты меню, футера и поискового каталога `/explore/`. После редактирования выполнить `python3 tools/build-navigation.py --write`; CI проверяет `--check`. Поиск работает локально по названиям и описаниям каталога, с фильтрами и статическим fallback без JavaScript. Не индексирует данные пользователей.
