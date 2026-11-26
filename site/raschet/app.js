@@ -275,7 +275,7 @@ function renderStats(){
   $('#stats-content').innerHTML='<p class="footnote">ДЕМО · '+esc(scope?book.clients.find(c=>c.id===scope).name:'Весь магазин')+'</p>'+group('На сегодня',[metric('Остаток',rub(sum('balance'))),metric('Просрочено',rub(sum('overdue'))),metric('Должников',String(current.filter(x=>x.balance>0).length))])+
     group('За период · '+dateText(range.from)+' — '+dateText(range.to),[metric('Остаток на начало',rub(t.start)),metric('Остаток на конец',rub(t.end)),metric('Изменение остатка',rub(t.end-t.start)),metric('Записано долгов',rub(t.debt)),metric('Записей долга',String(t.debtCount)),metric('Получено оплат',rub(t.payment)),metric('Записей оплаты',String(t.paymentCount)),metric('Средний долг',t.debtCount?rub(Math.round(t.debt/t.debtCount)):'Нет данных'),metric('Максимальный долг',t.debtCount?rub(t.maxDebt):'Нет данных'),metric('Отменено долгов',rub(t.cancelDebt)),metric('Отменено оплат',rub(t.cancelPayment))])+
     '<p class="footnote">Суммы действительных долгов и оплат не включают записи, отменённые к концу периода. Остаток учитывает движение и отмены.</p>'+compare+chart+ranking+daily;
-  $('[data-stats-client]').forEach(b=>b.onclick=()=>{select.value=b.dataset.statsClient;renderStats();select.focus();});
+  $$('[data-stats-client]').forEach(b=>b.onclick=()=>{select.value=b.dataset.statsClient;renderStats();select.focus();});
 }
 $('#stats-period').onchange=renderStats;
 $('#stats-client').onchange=renderStats;
