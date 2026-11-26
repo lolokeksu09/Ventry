@@ -27,11 +27,14 @@ done
 # For HTTP-only security tests, replace just the production site-address line.
 # The full production Caddyfile is validated separately with both HTTPS names.
 grep -Fxq 'ventrylab.top, 135-106-227-179.sslip.io {' "$PWD/deploy/Caddyfile"
-sed 's/^ventrylab[.]top, 135-106-227-179[.]sslip[.]io {$/:18080 {/' "$PWD/deploy/Caddyfile" > "$tmp/Caddyfile"
-grep -Fxq ':18080 {' "$tmp/Caddyfile"
+sed 's/^ventrylab[.]top, 135-106-227-179[.]sslip[.]io {$/:80 {/' "$PWD/deploy/Caddyfile" > "$tmp/Caddyfile"
+grep -Fxq ':80 {' "$tmp/Caddyfile"
 
 docker run --detach --rm --name "$name" \
-  --publish 127.0.0.1:18080:18080 \
+  --publish 127.0.0.1:18080:80 \
+  --read-only --tmpfs /tmp \
+  --security-opt no-new-privileges:true --cap-drop ALL --cap-add NET_BIND_SERVICE \
+  --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 \
   --volume "$tmp/site:/srv:ro" \
   --volume "$tmp/Caddyfile:/etc/caddy/Caddyfile:ro" \
   "${VENTRY_CADDY_IMAGE:-ventry-caddy:patched-test}" > /dev/null
@@ -47,6 +50,15 @@ done
 if [ "$ready" != 1 ]; then
   echo "FAIL: Caddy did not start"; docker logs "$name" 2>&1 | tail -20; exit 1
 fi
+
+# Confirm process credentials, not merely Docker configuration.
+docker exec "$name" cat /proc/1/status > "$tmp/process-status"
+grep -Eq '^NoNewPrivs:[[:space:]]+1$' "$tmp/process-status"
+grep -Eiq '^CapEff:[[:space:]]+0*400$' "$tmp/process-status"
+grep -Eiq '^CapBnd:[[:space:]]+0*400$' "$tmp/process-status"
+test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$name")" = true
+test "$(docker inspect --format '{{index .HostConfig.LogConfig.Config "max-size"}}' "$name")" = 10m
+test "$(docker inspect --format '{{index .HostConfig.LogConfig.Config "max-file"}}' "$name")" = 3
 
 curl --fail --silent --show-error --dump-header "$tmp/headers" --output "$tmp/home" "$base/"
 grep -Fq 'Ventry' "$tmp/home"
