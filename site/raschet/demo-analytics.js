@@ -21,9 +21,9 @@ export function previousRange(preset,range){
   return {from,to:[shiftDay(from,elapsed),shiftDay(range.from,-1)].sort()[0]};
 }
 
-export function bookDays(book,kind){
+export function bookDays(book,kind,{clientId='',from='',to=''}={}){
   const reversed=new Set(book.entries.filter(e=>e.type==='reversal').map(e=>e.reverses)),groups=new Map();
-  for(const e of book.entries.filter(e=>e.type===kind)){const day=localDay(e.date),g=groups.get(day)||{day,entries:[],total:0};g.entries.push(e);if(!reversed.has(e.id))g.total+=e.amount;groups.set(day,g)}
+  for(const e of book.entries.filter(e=>e.type===kind)){const day=localDay(e.date);if((clientId&&e.clientId!==clientId)||(from&&day<from)||(to&&day>to))continue;const g=groups.get(day)||{day,entries:[],total:0};g.entries.push(e);if(!reversed.has(e.id))g.total+=e.amount;groups.set(day,g)}
   return [...groups.values()].sort((a,b)=>b.day.localeCompare(a.day));
 }
 
@@ -73,4 +73,37 @@ export function projectDemo(book,{from,to},clientId=''){
   const daily=[...days.values()].sort((a,b)=>a.day.localeCompare(b.day)).map(d=>({...d,closing:closing+=d.delta}));
   if(closing!==totals.end)throw Error('Нарушена согласованность остатков.');
   return {totals,customers,days:daily};
+}
+
+/** Contiguous bounded intervals for an interactive chart, including days without operations. */
+export function analyticsBuckets(data,range,limit=24){
+  const count=Math.round((Date.parse(range.to)-Date.parse(range.from))/86400000)+1;
+  if(!Number.isSafeInteger(count)||count<1||!Number.isInteger(limit)||limit<1||limit>60)throw Error('Некорректный диапазон графика.');
+  const step=Math.ceil(count/limit),buckets=[];let closing=data.totals.start,index=0;
+  for(let offset=0;offset<count;offset+=step){
+    const from=shiftDay(range.from,offset),to=shiftDay(range.from,Math.min(count-1,offset+step-1));
+    const bucket={from,to,opening:closing,closing,debt:0,payment:0,cancelDebt:0,cancelPayment:0};
+    while(index<data.days.length&&data.days[index].day<=to){
+      const day=data.days[index++];
+      for(const key of ['debt','payment','cancelDebt','cancelPayment'])bucket[key]+=day[key];
+      closing=day.closing;
+    }
+    bucket.closing=closing;buckets.push(bucket);
+  }
+  if(index!==data.days.length||closing!==data.totals.end)throw Error('Некорректный остаток графика.');
+  return buckets;
+}
+/** Android ranking semantics: new borrowers ranked by debts, settled by opening balance. */
+export function analyticsRankValue(customer,mode,current,range){
+  if(mode==='balance'||mode==='overdue')return current?.[mode]||0;
+  if(mode==='new')return customer.firstDebt&&customer.firstDebt>=range.from&&customer.firstDebt<=range.to?customer.debt:0;
+  if(mode==='settled')return customer.start>0&&customer.end===0?customer.start:0;
+  return ['debt','debtCount','payment'].includes(mode)?customer[mode]:0;
+}
+export function collectionRows(items,query='',mode='all'){
+  const q=query.trim().toLocaleLowerCase('ru');
+  const priority=c=>c.overdue>0?0:c.soon>0?1:2;
+  return items.filter(c=>c.balance>0&&(!q||[c.name,c.phone||''].some(s=>s.toLocaleLowerCase('ru').includes(q)))&&
+    (mode==='urgent'?priority(c)<2:mode==='overdue'?priority(c)===0:mode==='soon'?c.soon>0:true))
+    .sort((a,b)=>priority(a)-priority(b)||b.overdue-a.overdue||b.soon-a.soon||b.balance-a.balance||a.name.localeCompare(b.name,'ru'));
 }

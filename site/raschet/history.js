@@ -8,16 +8,17 @@ function localDay(timestamp) {
   ].join('-');
 }
 
-export function filterHistory(book, { query, kind, from, to }) {
+export function filterHistory(book, { query, kind, from, to, clientId = '' }) {
   const search = query.trim().toLocaleLowerCase('ru');
-  const names = new Map(book.clients.map(client => [client.id, client.name]));
+  const names = new Map(book.clients.map(client => [client.id, [client.name, client.phone || '']]));
   return book.entries.filter(entry => {
+    if (clientId && entry.clientId !== clientId) return false;
     if (kind && entry.type !== kind) return false;
     if (from || to) {
       const day = localDay(entry.date);
       if ((from && day < from) || (to && day > to)) return false;
     }
-    return !search || [names.get(entry.clientId), entry.note]
+    return !search || [...(names.get(entry.clientId) || []), entry.note || '']
       .some(text => text.toLocaleLowerCase('ru').includes(search));
   });
 }

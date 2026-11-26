@@ -514,3 +514,28 @@ h1,.view-title{font-family:var(--ventry-sans);font-weight:650;letter-spacing:-.7
 .demo-skip:focus{transform:none}
 #demo-main:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ventry-focus);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Ventry 4 workspace: one compact hierarchy for book filters, collections and analytics. */
+.workspace-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:10px}
+.workspace-fields label,.chart-controls label{font-size:13px;color:var(--muted);min-width:0}
+.workspace-fields input,.workspace-fields select,.collection-controls select,.chart-controls select{display:block;width:100%;margin-top:6px;min-height:44px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:8px;font:inherit;padding:8px}
+.book-filter-panel{border-block:1px solid var(--line);margin:10px 0;padding:4px 0}
+.book-filter-panel summary{cursor:pointer;min-height:44px;padding:12px 0;color:var(--green)}
+.book-filter-panel button{margin:12px 0}
+.collection-summary{margin:0 0 14px}
+.collection-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;margin-bottom:12px}
+.collection-controls label{margin:0;min-width:0}
+.collection-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:16px;margin-bottom:10px;align-items:start}
+.collection-name{padding:0;text-align:left;background:transparent;font-size:16px;overflow-wrap:anywhere}
+.collection-row p{margin:0}.collection-row>strong{font-variant-numeric:tabular-nums;padding-top:12px}
+.collection-pay{grid-column:1/-1}
+.stats-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.stats-tabs button{padding:8px 4px;min-height:44px;background:transparent;color:var(--muted);border-bottom:2px solid var(--line);border-radius:0;font-size:13px}
+.stats-tabs button[aria-pressed=true]{color:var(--ink);border-color:var(--green)}
+#view-statistics .stats-controls{padding:14px;margin-bottom:12px}
+.chart-selected{fill:var(--green);opacity:.12}
+.chart-controls{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:end;margin:12px 0}
+.chart-controls button{padding:0;min-height:44px}.chart-controls select{font-size:13px}
+.stats-chart{cursor:pointer}.detail-balance{overflow-wrap:anywhere}
+@media(max-width:480px){.collection-controls{grid-template-columns:minmax(0,1fr)}.workspace-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-fields label:first-child{grid-column:1/-1}}
+@media print{body.print-stats .stats-tabs{display:none!important}}

@@ -471,7 +471,7 @@ try:
     })
     report["demo_accessible_navigation"] = "PASS"
     # Every public scenario is an explicit, safe entry into the demo.
-    for scenario, view in (("debt","book"),("payment","book"),("deadlines","clients"),("history","history"),("calendar","book"),("statistics","statistics")):
+    for scenario, view in (("debt","book"),("payment","book"),("deadlines","collections"),("history","history"),("calendar","book"),("statistics","statistics")):
         driver.get(BASE + "/raschet/?demo=1&scenario=" + scenario)
         wait.until(lambda _: js("return !document.querySelector('#scenario-panel').hidden"))
         assert js("return location.hash") == "#" + view
@@ -485,7 +485,7 @@ try:
             driver.switch_to.active_element.send_keys(Keys.ESCAPE)
             wait.until(lambda _: not js("return document.querySelector(" + json.dumps(dialog) + ").open"))
         elif scenario == "deadlines":
-            assert js("return document.querySelector('[data-filter=soon]').getAttribute('aria-pressed')") == "true"
+            assert js("return document.querySelector('#collection-mode').value") == "soon"
         elif scenario == "calendar":
             assert js("return !document.querySelector('#calendar-panel').hidden")
         elif scenario == "statistics":
@@ -541,14 +541,27 @@ try:
     wait.until(lambda _: driver.find_element(By.ID, "stats-content").is_displayed())
     js("document.querySelector('#stats-period').value='all';document.querySelector('#stats-period').dispatchEvent(new Event('change'))")
     assert "7 010" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
+    assert js("return !!document.querySelector('.chart-balance')")
+    assert js("return document.querySelectorAll('#chart-interval option').length") >= 1
+    js("const s=document.querySelector('#chart-interval');s.value='0';s.dispatchEvent(new Event('change'))")
+    assert js("return document.querySelector('#chart-prev').disabled")
+    js("document.querySelector('[data-stats-section=details]').click()")
     js("document.querySelector('[data-stats-client=demo-0]').click()")
     assert js("return document.querySelector('#stats-client').value") == "demo-0"
     assert "2 350" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
-    assert js("return !document.querySelector('#stats-csv').disabled")
+    js("document.querySelector('[data-stats-section=reports]').click()")
+    assert js("return !document.querySelector('#stats-csv').disabled && !document.querySelector('#stats-actions').hidden")
+    click_visible("stats-history")
+    assert js("return location.hash") == "#history"
+    assert js("return document.querySelector('#history-client').value") == "demo-0"
+    assert js("return !!document.querySelector('#history-filters [name=from]').value")
+    js("document.querySelector('[data-view=book]').click()")
+    click_visible("book-statistics-entry")
     js("document.querySelector('#stats-client').value='';document.querySelector('#stats-client').dispatchEvent(new Event('change'))")
+    js("document.querySelector('[data-stats-section=details]').click()")
     js("document.querySelector('#stats-rank').value='debtCount';document.querySelector('#stats-rank').dispatchEvent(new Event('change'))")
     assert js("return document.querySelectorAll('[data-stats-client]').length") >= 1
-    assert js("return !!document.querySelector('.chart-balance')")
+    assert not js("return !!document.querySelector('.chart-balance')")
     assert "Активность клиентов" in driver.find_element(By.ID, "stats-content").text
     assert js("return document.documentElement.scrollWidth <= innerWidth")
     capture("ui-390-demo-statistics.png")
@@ -562,6 +575,28 @@ try:
     assert js("return document.querySelectorAll('#date-entries [data-operation-id]').length") >= 1
     capture("ui-390-demo-calendar.png")
     report["demo_calendar"] = "PASS"
+    js("document.querySelector('#book-filter-panel').open=true;document.querySelector('#book-client').value='demo-0';document.querySelector('#book-client').dispatchEvent(new Event('change'))")
+    assert js("return !document.querySelector('#book-filter-status').hidden")
+    assert js("return [...document.querySelectorAll('#date-entries [data-operation-id]')].every(e=>e.textContent.includes('Амина'))")
+    click_visible("book-filter-reset")
+    assert js("return document.querySelector('#book-filter-status').hidden")
+    click_visible("book-collections")
+    assert js("return location.hash") == "#collections"
+    assert js("return document.querySelectorAll('[data-collection-client]').length") == 3
+    js("document.querySelector('[data-collection-client=demo-0]').click()")
+    assert js("return document.querySelector('#detail-dialog').open")
+    assert driver.find_element(By.ID,"detail-payment").is_enabled()
+    click_visible("detail-debt")
+    assert js("return document.querySelector('#entry-dialog').open")
+    js("document.querySelector('#entry-dialog [name=amount]').value='10';document.querySelector('#entry-dialog [name=amount]').dispatchEvent(new Event('input'))")
+    click_visible("entry-submit")
+    wait.until(lambda _: js("return document.querySelector('#detail-dialog').open"))
+    assert "2 360" in driver.find_element(By.ID,"detail-balance").text.replace("\xa0"," ").replace("\u202f"," ")
+    click_visible("detail-history")
+    assert js("return location.hash") == "#history"
+    assert js("return document.querySelector('#history-client').value") == "demo-0"
+    assert js("return [...document.querySelectorAll('#history [data-operation-id]')].every(e=>e.textContent.includes('Амина'))")
+    report["demo_workspace_parity"] = "PASS"
     js("document.querySelector('[data-view=settings]').click()")
     wait.until(lambda _: not js("return document.querySelector('#legacy-export').disabled"))
     assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy
