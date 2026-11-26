@@ -19,7 +19,10 @@ for fixture in '.env' '.git/config' 'backup.sql' 'data.zip' 'project.bak' \
   'certs/server.pem' 'projects/raschet/.git/HEAD'; do
   printf '%s\n' 'non-secret smoke-test fixture' > "$tmp/site/$fixture"
 done
-printf '%s\n' 'public test fixture' > "$tmp/site/public-security-test.txt"
+# These files look like ordinary web assets but are not approved for publication.
+for fixture in notes.txt debug.json extra.html stray.js stray.css app.js.map; do
+  printf '%s\n' 'non-secret unpublished fixture' > "$tmp/site/$fixture"
+done
 
 # For HTTP-only security tests, replace just the production site-address line.
 # The full production Caddyfile is validated separately with both HTTPS names.
@@ -51,6 +54,7 @@ tr -d '\r' < "$tmp/headers" > "$tmp/headers-clean"
 grep -Eiq "^content-security-policy: .*default-src 'none'; script-src 'self'; style-src 'self';" "$tmp/headers-clean"
 grep -Eiq "^x-content-type-options: nosniff" "$tmp/headers-clean"
 grep -Eiq "^x-frame-options: DENY" "$tmp/headers-clean"
+if grep -Eiq "^server:" "$tmp/headers-clean"; then echo "FAIL: Server header exposed"; exit 1; fi
 
 for path in '/' '/index.html' '/projects/raschet/' '/legal/' '/privacy/'; do
   curl --fail --silent --show-error --max-time 5 --head "$base$path" > "$tmp/page-headers"
@@ -62,7 +66,8 @@ done
 for path in \
   '/.env' '/.env.local' '/.git/config' '/.github/workflows/deploy.yml' \
   '/backup.sql' '/data.zip' '/archive.tar.gz' '/project.bak' \
-  '/projects/raschet/.git/HEAD' '/certs/server.pem' '/snapshots/backup.sqlite'; do
+  '/projects/raschet/.git/HEAD' '/certs/server.pem' '/snapshots/backup.sqlite' \
+  '/notes.txt' '/debug.json' '/extra.html' '/stray.js' '/stray.css' '/app.js.map'; do
   status="$(curl --path-as-is --silent --show-error --max-time 5 \
     --output /dev/null --write-out '%{http_code}' "$base$path")"
   if [ "$status" != 404 ]; then
@@ -72,7 +77,7 @@ done
 
 for path in '/projects/raschet/' '/legal/' '/privacy/' '/app.js' \
   '/styles.css' '/favicon.svg' '/sitemap.xml' \
-  '/google9048871eda96ab4a.html' '/public-security-test.txt'; do
+  '/google9048871eda96ab4a.html' '/fonts/OFL.txt' '/raschet/' '/raschet/app.js'; do
   status="$(curl --silent --show-error --max-time 5 \
     --output /dev/null --write-out '%{http_code}' "$base$path")"
   if [ "$status" != 200 ]; then
@@ -80,4 +85,17 @@ for path in '/projects/raschet/' '/legal/' '/privacy/' '/app.js' \
   fi
 done
 
-echo "PASS: Caddy CSP/security headers, 11 denied paths (including existing fixtures) and 9 public paths"
+for method in POST PUT PATCH DELETE OPTIONS TRACE; do
+  for path in '/' '/healthz' '/raschet/'; do
+    status="$(curl --silent --show-error --max-time 5 --request "$method" --dump-header "$tmp/method-headers" --output /dev/null --write-out '%{http_code}' "$base$path")"
+    test "$status" = 405 || { echo "FAIL: $method $path returned $status"; exit 1; }
+    grep -Eiq '^allow: GET, HEAD[[:space:]]*$' "$tmp/method-headers"
+    if grep -Eiq '^server:' "$tmp/method-headers"; then echo "FAIL: Server header on rejection"; exit 1; fi
+  done
+done
+for path in '/notes.txt' '/.env' '/__not_found__'; do
+  status="$(curl --silent --show-error --max-time 5 --dump-header "$tmp/deny-headers" --output /dev/null --write-out '%{http_code}' "$base$path")"
+  test "$status" = 404
+  if grep -Eiq '^server:' "$tmp/deny-headers"; then echo "FAIL: Server header on denial"; exit 1; fi
+done
+echo "PASS: headers, publication manifest, denied existing fixtures, public routes and method restrictions"
