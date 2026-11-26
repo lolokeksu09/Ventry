@@ -312,6 +312,7 @@ try:
     open_home_section("contact", 390)
     driver.execute_cdp_cmd("Browser.grantPermissions", {"origin": BASE, "permissions": ["clipboardSanitizedWrite"]})
     copy = driver.find_element(By.CSS_SELECTOR, "[data-copy-email]")
+    assert copy.accessible_name.startswith("Копировать")
     copy.click()
     wait.until(lambda _: js("return document.querySelector('#copy-email-status').textContent") == "Адрес скопирован")
     js("Object.defineProperty(navigator, 'clipboard', {value: undefined})")
@@ -448,6 +449,12 @@ try:
         for view, name in (("book","Книга"),("clients","Клиенты"),("history","История"),("settings","Настройки")):
             button=driver.find_element(By.CSS_SELECTOR, f'.sidebar [data-view="{view}"]')
             assert button.accessible_name == name, (width,view,button.accessible_name)
+        assert driver.find_element(By.CSS_SELECTOR, ".sidebar .brand").accessible_name.startswith("Расчёт Ventry")
+        for day in driver.find_elements(By.CSS_SELECTOR, "#week-grid button.calendar-day"):
+            visible = " ".join(day.get_attribute("textContent").split())
+            # The calendar includes the visible weekday, number and count in the name.
+            parts = [child.get_attribute("textContent") for child in day.find_elements(By.XPATH, "./*")]
+            assert day.accessible_name.startswith(" ".join(parts)), (width, day.accessible_name, visible)
         driver.find_element(By.TAG_NAME,"body").send_keys(Keys.TAB)
         assert js("return document.activeElement.classList.contains('demo-skip')")
         driver.switch_to.active_element.send_keys(Keys.ENTER)
