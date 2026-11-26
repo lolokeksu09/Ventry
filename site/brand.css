@@ -1,6 +1,10 @@
 /* Shared visual foundations for Ventry and its products. */
 :root {
   --ventry-background: #050907;
+  --ventry-header: #050907;
+  --ventry-success: #a7dbb2;
+  --ventry-warning: #e4c397;
+  --ventry-neutral: #bbc7be;
   --ventry-surface: #0d1912;
   --ventry-line: #243a30;
   --ventry-text: #eef2e9;

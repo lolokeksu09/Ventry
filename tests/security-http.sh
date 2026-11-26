@@ -68,7 +68,7 @@ grep -Eiq "^x-content-type-options: nosniff" "$tmp/headers-clean"
 grep -Eiq "^x-frame-options: DENY" "$tmp/headers-clean"
 if grep -Eiq "^server:" "$tmp/headers-clean"; then echo "FAIL: Server header exposed"; exit 1; fi
 
-for path in '/' '/index.html' '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/support/'; do
+for path in '/' '/index.html' '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/support/' '/status/'; do
   curl --fail --silent --show-error --max-time 5 --head "$base$path" > "$tmp/page-headers"
   grep -Eiq '^cache-control: no-cache[[:space:]]*$' "$tmp/page-headers" || {
     echo "FAIL: HTML cache revalidation missing for $path"; exit 1;
@@ -87,7 +87,7 @@ for path in \
   fi
 done
 
-for path in '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/support/' '/app.js' \
+for path in '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/support/' '/status/' '/app.js' \
   '/styles.css' '/favicon.svg' '/sitemap.xml' \
   '/google9048871eda96ab4a.html' '/fonts/OFL.txt' '/raschet/' '/raschet/app.js'; do
   status="$(curl --silent --show-error --max-time 5 \
@@ -95,6 +95,13 @@ for path in '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/s
   if [ "$status" != 200 ]; then
     echo "FAIL: public URL $path returned HTTP $status"; exit 1
   fi
+done
+
+curl --fail --silent --show-error --max-time 5 --dump-header "$tmp/health-headers" "$base/healthz" | grep -Fxq 'ok'
+grep -Eiq '^cache-control: no-store[[:space:]]*$' "$tmp/health-headers"
+for path in '/fonts/golos-cyrillic.woff2' '/fonts/golos-latin.woff2'; do
+  curl --fail --silent --show-error --max-time 5 --head "$base$path" > "$tmp/font-headers"
+  grep -Eiq '^cache-control: public, max-age=3600, must-revalidate[[:space:]]*$' "$tmp/font-headers"
 done
 
 for method in POST PUT PATCH DELETE OPTIONS TRACE; do
