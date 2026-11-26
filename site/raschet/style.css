@@ -368,3 +368,16 @@
 .stats-ranking,.stats-day{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px 0;border-bottom:1px solid var(--line);text-align:left;background:transparent;font-size:13px}
 .stats-ranking strong{white-space:nowrap}.stats-day{flex-wrap:wrap}.stats-ranking small{margin-top:4px}
 @media(max-width:600px){#view-statistics .card{padding:16px}.stats-value strong{font-size:18px}}
+
+.date-tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.date-tools button[aria-pressed=true],.calendar-day[aria-pressed=true]{background:var(--ventry-forest);color:var(--ink);outline:1px solid var(--green)}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin:12px 0;max-width:480px}
+.calendar-weekday{text-align:center;color:var(--muted);font-size:12px}
+.calendar-day{padding:4px 0;background:var(--paper);min-width:0;min-height:44px;font-size:13px}
+.calendar-day small{display:block;font-size:10px;color:var(--green)}
+.date-group{border-bottom:1px solid var(--line);padding:12px 0}
+.date-group summary{cursor:pointer;padding:10px 0;overflow-wrap:anywhere}
+.date-group summary strong{float:right}
+#view-dates .history-row{padding:12px 0}
+.stats-chart{display:block;width:100%;max-width:640px;height:auto}
+@media(max-width:600px){#view-dates .card{padding:16px}.date-tools button{margin:0;padding:9px 12px}}
