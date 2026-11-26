@@ -166,10 +166,11 @@ if (knowledge) {
     let target;
     try {target = document.getElementById(decodeURIComponent(hash.slice(1)));} catch {return;}
     if (!target || !knowledge.contains(target)) return;
-    if (target.closest('[data-knowledge-item][hidden]')) {
-      reset();
-      target.scrollIntoView({block:'start'});
-    }
+    const hiddenItem = target.closest('[data-knowledge-item][hidden]');
+    if (hiddenItem) reset();
+    const answer = target.closest('details[data-knowledge-item]');
+    if (answer) answer.open = true;
+    if (hiddenItem || answer) target.scrollIntoView({block:'start'});
   };
   window.addEventListener('hashchange', () => revealAnchor(location.hash));
   knowledge.addEventListener('click', event => {
@@ -178,6 +179,7 @@ if (knowledge) {
   });
   controls.hidden = false;
   refresh();
+  if (location.hash) revealAnchor(location.hash);
 }
 
 
