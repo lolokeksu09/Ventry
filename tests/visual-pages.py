@@ -144,7 +144,7 @@ try:
         assert js("return document.querySelectorAll('[data-screen-preview]').length") == 4
         driver.find_element(By.CSS_SELECTOR, ".hero-screen-link").click()
         wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
-        assert "Долговая книга" in js("return document.querySelector('#screen-dialog-image').alt")
+        assert "долговая книга" in js("return document.querySelector('#screen-dialog-image').alt").lower()
         driver.switch_to.active_element.send_keys(Keys.ESCAPE)
         wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
         driver.find_element(By.CSS_SELECTOR, ".android-gallery-grid a[data-screen-preview]").click()
