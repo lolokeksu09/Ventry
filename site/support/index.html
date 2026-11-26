@@ -20,8 +20,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-platform">
-  <script defer src="/app.js?v=ui-audit-5"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-knowledge">
+  <script defer src="/app.js?v=knowledge-1"></script>
 </head>
 <body class="document-page resource-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -59,13 +59,25 @@
           <article><p class="resource-kicker">03 · Ошибка</p><h3>Сообщить о проблеме</h3><p>Укажите версию, устройство, шаги воспроизведения и результат.</p><a class="resource-link" href="/contact/?topic=support#request">Подготовить обращение ↗</a></article>
         </div>
       </section>
-      <section class="resource-block" aria-labelledby="support-faq">
-        <h2 id="support-faq">Частые вопросы</h2>
-        <div class="faq-list resource-faq">
-          <details><summary>Как получить Android-приложение?</summary><p>Напишите Ventry и уточните доступность сборки и условия получения. <a href="/contact/?topic=raschet#request">Запросить Android-версию</a>.</p></details>
-          <details><summary>Можно ли пользоваться демо для реального учёта?</summary><p>Нет, это только интерактивный пример. Данные вымышлены, изменения сбрасываются. <a href="/docs/#start-title">Инструкция по демо</a>.</p></details>
-          <details><summary>Почему записи исчезли после обновления страницы?</summary><p>Для демо это нормальное поведение. Реальные записи в отдельном Android-приложении требуют отдельной диагностики. Не очищайте данные и не переустанавливайте приложение до проверки резервных копий.</p></details>
-          <details><summary>Как передать информацию об ошибке?</summary><p>Опишите версию приложения, модель устройства, последовательность действий и ожидаемый результат. Не отправляйте имена клиентов, телефоны, пароли и резервные копии.</p></details>
+      <section class="resource-block" data-knowledge aria-labelledby="support-faq">
+        <p class="resource-kicker">База знаний</p><h2 id="support-faq">Найдите решение</h2>
+      <div class="knowledge-controls" id="support-controls" data-knowledge-controls hidden>
+        <label for="support-search">Найти ответ</label>
+        <div class="knowledge-search-row"><input id="support-search" data-knowledge-search type="search" maxlength="120" placeholder="Например, JSON" autocomplete="off"><button type="button" class="knowledge-reset" data-knowledge-reset>Сбросить</button></div>
+        <div class="knowledge-filters" role="group" aria-label="Темы"><button type="button" data-knowledge-filter="all" aria-pressed="true">Все</button><button type="button" data-knowledge-filter="start" aria-pressed="false">Получение и установка</button><button type="button" data-knowledge-filter="demo" aria-pressed="false">Демо</button><button type="button" data-knowledge-filter="data" aria-pressed="false">Данные</button><button type="button" data-knowledge-filter="issue" aria-pressed="false">Ошибки</button></div>
+        <p data-knowledge-count role="status" aria-live="polite"></p>
+        <p data-knowledge-empty hidden>Ничего не найдено. Измените запрос или <a href="/contact/?topic=support#request">напишите в поддержку</a>.</p>
+      </div>
+        <div class="faq-list resource-faq knowledge-faq">
+          <details data-knowledge-item="start"><summary>Как получить Android-приложение?</summary><p>Напишите Ventry и уточните доступность сборки и условия получения. <a href="/docs/#get-app">Порядок получения</a>.</p></details>
+          <details data-knowledge-item="start"><summary>На каком Android работает «Расчёт»?</summary><p>Для проверенного кандидата 0.29.0-beta.1 RC 2 — Android 8.0 и новее. Проверьте версию устройства и уточните совместимость. <a href="/releases/">Версии приложения</a>.</p></details>
+          <details data-knowledge-item="demo"><summary>Можно ли пользоваться демо для реального учёта?</summary><p>Нет. Данные вымышлены, изменения сбрасываются. <a href="/docs/#start-title">Инструкция по демо</a>.</p></details>
+          <details data-knowledge-item="demo"><summary>Почему записи исчезли после обновления страницы?</summary><p>Для демо это нормальное поведение. Реальные записи в отдельном Android-приложении требуют отдельной диагностики. Не очищайте данные и не переустанавливайте приложение до проверки резервных копий.</p></details>
+          <details data-knowledge-item="data"><summary>Как сделать резервную копию книги?</summary><p>В проверенном кандидате откройте настройки и выберите «Скачать JSON-копию». Сохраните файл отдельно от устройства. <a href="/docs/#backup">Подробная инструкция</a>.</p></details>
+          <details data-knowledge-item="data"><summary>Можно ли восстановить книгу из CSV?</summary><p>CSV предназначен для просмотра операций. Для восстановления используйте совместимую JSON-копию. Восстановление заменяет текущую книгу после подтверждения. <a href="/docs/#backup">Безопасное восстановление</a>.</p></details>
+          <details data-knowledge-item="data"><summary>Что делать, если сменил телефон?</summary><p>Сначала сохраните внешнюю JSON-копию на старом устройстве. Проверьте совместимость новой версии, затем переносите записи. Не удаляйте старую книгу до проверки результата.</p></details>
+          <details data-knowledge-item="issue"><summary>APK не устанавливается или не обновляется</summary><p>Не удаляйте установленное приложение. Запишите точный текст ошибки, модель телефона, Android и версию приложения. Проверьте внешнюю резервную копию. <a href="/contact/?topic=support#request">Сообщить о проблеме</a>.</p></details>
+          <details data-knowledge-item="issue"><summary>Как передать информацию об ошибке?</summary><p>Опишите версию приложения, модель устройства, последовательность действий и ожидаемый результат. Не отправляйте имена клиентов, телефоны, пароли и резервные копии.</p></details>
         </div>
       </section>
       <section class="resource-block" aria-labelledby="support-contact"><h2 id="support-contact">Обращение в Ventry</h2><p>Подготовьте письмо без регистрации. Оно будет отправлено только вами из вашего почтового приложения.</p><div class="resource-actions"><a class="primary-button" href="/contact/?topic=support#request">Написать в поддержку</a><a class="text-link" href="mailto:ventrybusinesswork@gmail.com">Электронная почта</a></div></section>

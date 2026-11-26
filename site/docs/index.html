@@ -20,8 +20,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-platform">
-  <script defer src="/app.js?v=ui-audit-5"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-knowledge">
+  <script defer src="/app.js?v=knowledge-1"></script>
 </head>
 <body class="document-page resource-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -50,8 +50,17 @@
         <a href="/support/">Поддержка</a>
       </nav>
     </div>
-    <div class="content-width resource-content">
-      <section class="resource-block" aria-labelledby="start-title">
+    <div class="content-width resource-content knowledge-layout" data-knowledge>
+      <aside class="knowledge-index" aria-label="Содержание документации"><p class="resource-kicker">Расчёт · справочник</p><nav aria-label="Разделы инструкции"><a href="#start-title">Быстрый старт</a><a href="#get-app">Получение Android-версии</a><a href="#daily-work">Работа с книгой</a><a href="#backup">Резервные копии</a><a href="#restore">Прежняя веб-книга</a><a href="#help-title">Помощь</a></nav></aside>
+      <div class="knowledge-main">
+      <div class="knowledge-controls" id="docs-controls" data-knowledge-controls hidden>
+        <label for="docs-search">Найти ответ</label>
+        <div class="knowledge-search-row"><input id="docs-search" data-knowledge-search type="search" maxlength="120" placeholder="Например, JSON" autocomplete="off"><button type="button" class="knowledge-reset" data-knowledge-reset>Сбросить</button></div>
+        <div class="knowledge-filters" role="group" aria-label="Темы"><button type="button" data-knowledge-filter="all" aria-pressed="true">Все</button><button type="button" data-knowledge-filter="start" aria-pressed="false">Начало работы</button><button type="button" data-knowledge-filter="operations" aria-pressed="false">Учёт</button><button type="button" data-knowledge-filter="data" aria-pressed="false">Сохранность данных</button></div>
+        <p data-knowledge-count role="status" aria-live="polite"></p>
+        <p data-knowledge-empty hidden>Ничего не найдено. Измените запрос или <a href="/contact/?topic=support#request">напишите в поддержку</a>.</p>
+      </div>
+      <section class="resource-block" data-knowledge-item="start" aria-labelledby="start-title">
         <p class="resource-kicker">Быстрый старт</p><h2 id="start-title">Попробуйте на тестовых данных</h2>
         <ol class="guide-steps">
           <li><h3>Откройте демо</h3><p>Выберите «Книга». В примере уже есть вымышленные клиенты и долги.</p><a class="resource-link" href="/raschet/?demo=1">Перейти к книге ↗</a></li>
@@ -61,18 +70,45 @@
         </ol>
         <div class="resource-note"><strong>Важно</strong><p>Демо не хранит вашу рабочую книгу. Изменения исчезают после перезагрузки. Не вводите реальные данные клиентов.</p></div>
       </section>
-      <section class="resource-block" aria-labelledby="backup">
-        <h2 id="backup">Резервные копии и обновления</h2>
-        <p>Перед заменой или обновлением Android-приложения уточните, какой формат резервных копий поддерживает ваша установленная версия. Сохраните копию отдельно от телефона и проверьте, что файл открывается. Не отправляйте его по электронной почте в поддержку.</p>
-        <p>Если Android предлагает удалить приложение перед установкой другой сборки, не соглашайтесь, пока не проверите резервную копию и не уточните порядок переноса. Удаление приложения может уничтожить локальные записи.</p>
+      <section class="resource-block" data-knowledge-item="start" aria-labelledby="get-app">
+        <p class="resource-kicker">Android · получение</p><h2 id="get-app">Как получить приложение</h2>
+        <p>На сайте можно познакомиться с продуктом и попробовать демо. Android-версия предоставляется отдельно; запрос не является покупкой или подтверждением доступности.</p>
+        <div class="knowledge-task-list">
+          <article><h3>01. Проверьте устройство</h3><p>Для проверенного кандидата 0.29.0-beta.1 RC 2 требуется Android 8.0 или новее. Совместимость конкретной модели уточняется отдельно.</p><a class="resource-link" href="/releases/">Посмотреть версии ↗</a></article>
+          <article><h3>02. Уточните условия</h3><p>Укажите модель устройства, версию Android и задачу. Ventry сможет уточнить доступность сборки и порядок получения.</p><a class="resource-link" href="/contact/?topic=raschet#request">Подготовить запрос ↗</a></article>
+          <article><h3>03. Сохраните существующую книгу</h3><p>Перед обновлением сделайте внешнюю JSON-копию. Не удаляйте прежнюю версию, если установка не проходит.</p><a class="resource-link" href="#backup">Безопасное обновление ↗</a></article>
+        </div>
+      </section>
+      <section class="resource-block" data-knowledge-item="operations" aria-labelledby="daily-work">
+        <p class="resource-kicker">Повседневный учёт</p><h2 id="daily-work">Работа с долговой книгой</h2>
+        <div class="knowledge-task-list">
+          <article><h3>Записать покупку в долг</h3><p>Выберите клиента, внесите сумму и при необходимости срок возврата. После подтверждения проверьте остаток.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=debt">Попробовать ↗</a></article>
+          <article><h3>Принять частичную оплату</h3><p>Запишите полученную сумму отдельно от покупки. Остаток уменьшится, а первоначальная операция останется в истории.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=payment">Попробовать ↗</a></article>
+          <article><h3>Проверить просрочки</h3><p>Откройте список клиентов с просрочкой или сроком в ближайшие семь дней.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=deadlines">Попробовать ↗</a></article>
+          <article><h3>Сверить календарь</h3><p>Выберите дату операции и вид записи: долг или оплата.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=calendar">Попробовать ↗</a></article>
+          <article><h3>Проанализировать статистику</h3><p>Выберите период отчёта, отдельно проверьте выданные долги, оплаты и текущую задолженность.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=statistics">Попробовать ↗</a></article>
+          <article><h3>Найти операцию</h3><p>Отфильтруйте историю по клиенту, дате и типу операции.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=history">Попробовать ↗</a></article>
+        </div>
+      </section>
+      <section class="resource-block" data-knowledge-item="data" aria-labelledby="backup">
+        <p class="resource-kicker">Android · сохранность данных</p><h2 id="backup">Резервные копии и обновления</h2>
+        <p>Названия действий ниже соответствуют проверенному кандидату 0.29.0-beta.1 RC 2. В других версиях интерфейс может отличаться.</p>
+        <div class="knowledge-task-list">
+          <article><h3>Внешняя JSON-копия</h3><p>В настройках найдите «Внешняя копия книги» → «Скачать JSON-копию». Сохраните файл в выбранное место и перенесите защищённую копию за пределы телефона. JSON содержит имена, телефоны и суммы без шифрования.</p></article>
+          <article><h3>Защищённые точки восстановления</h3><p>В настройках есть локальные зашифрованные точки восстановления. Они не заменяют внешнюю копию: после удаления приложения или сброса устройства восстановить их нельзя.</p></article>
+          <article><h3>Восстановление из JSON</h3><p>«Экспорт и восстановление» → «Восстановить из JSON». Подтверждение полностью заменяет данные текущей книги. Сначала сохраните её отдельную внешнюю копию и убедитесь, что выбран нужный файл.</p></article>
+          <article><h3>CSV не заменяет JSON</h3><p>CSV — таблица операций для просмотра и анализа. Для восстановления книги используйте поддерживаемую JSON-копию, а не CSV.</p></article>
+        </div>
+        <div class="resource-note"><strong>Не удаляйте приложение при ошибке установки</strong><p>Удаление или очистка данных может уничтожить локальную книгу. Сначала проверьте внешнюю копию и уточните совместимость. Не отправляйте JSON-файлы в поддержку.</p></div>
         <a class="resource-link" href="/releases/">История версий ↗</a>
       </section>
-      <section class="resource-block" aria-labelledby="restore">
+      <section class="resource-block" data-knowledge-item="data" aria-labelledby="restore">
         <h2 id="restore">Прежняя веб-книга</h2>
         <p>Если вы пользовались старой локальной веб-книгой, откройте демо в том же браузере и на том же адресе, затем «Настройки» → «Выгрузка данных прежней тестовой книги». Демо не загружает и не удаляет эти записи; совместимость JSON с Android нужно проверять отдельно.</p>
         <a class="resource-link" href="/raschet/?demo=1#settings">Открыть настройки демо ↗</a>
       </section>
       <section class="resource-block" aria-labelledby="help-title"><h2 id="help-title">Нужна помощь?</h2><p>В центре поддержки собраны ответы на распространённые вопросы и порядок обращения.</p><a class="primary-button" href="/support/">Центр поддержки</a></section>
+      </div>
     </div>
   </main>
   <footer class="site-footer">
