@@ -381,3 +381,10 @@
 #view-dates .history-row{padding:12px 0}
 .stats-chart{display:block;width:100%;max-width:640px;height:auto}
 @media(max-width:600px){#view-dates .card{padding:16px}.date-tools button{margin:0;padding:9px 12px}}
+
+@media print{
+ body.print-stats main{display:block!important;margin:0;padding:0;max-width:none}
+ body.print-stats #detail-dialog,body.print-stats header,body.print-stats .view:not(#view-statistics),body.print-stats .stats-controls{display:none!important}
+ body.print-stats #view-statistics{padding:0}
+ body.print-stats .card{break-inside:avoid;border-color:var(--line);padding:12px}
+}
