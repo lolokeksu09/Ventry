@@ -282,3 +282,26 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .request-context p{font-size:12px;line-height:1.55}
 .request-context[hidden]{display:none!important}
 @media(max-width:800px){.contact-workspace{grid-template-columns:1fr}.request-context-grid{grid-template-columns:1fr}}
+
+/* Composition: full-width card copy on narrow phones, primary actions first. */
+.ventry-amoled .ventry-footer{margin-top:24px}
+.contact-workspace{grid-template-columns:minmax(0,1.35fr) minmax(200px,.65fr)}
+.contact-workspace .request-composer{grid-column:1}
+.contact-route-list{min-width:0}
+@media(max-width:800px){.contact-workspace{grid-template-columns:minmax(0,1fr);gap:24px}}
+@media(max-width:620px){
+ .work-item{position:relative;grid-template-columns:minmax(0,1fr);gap:14px;padding:18px}
+ .work-mark{position:absolute;top:18px;left:18px;width:48px;height:48px}
+ .work-detail .work-category,.work-detail .work-name,.work-detail .work-type{padding-left:62px}
+ .work-detail .work-category{min-height:17px}
+ .work-detail .work-type{min-height:30px}
+ .work-detail .work-lead{margin-top:18px}
+ .work-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:16px}
+ .work-actions a{padding:9px 8px;white-space:normal;line-height:1.35}
+ .work-resource-links{gap:0 12px}
+ .work-preview{padding-top:12px}
+ .work-preview>a{max-width:132px}
+ .section-page .reach{padding-top:24px}
+ .contact-workspace .request-composer{padding:16px}
+}
+@media(max-width:360px){.work-actions{grid-template-columns:1fr}}

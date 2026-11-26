@@ -94,6 +94,9 @@ try:
         header_selector = ".mobile-top" if width <= 930 else ".rail"
         assert driver.find_element(By.CSS_SELECTOR, header_selector).is_displayed()
         assert js("return document.querySelectorAll('.ventry-footer-group').length") == 3
+        assert js("return !document.querySelector('main footer')")
+        if width <= 620:
+            assert js("return document.querySelector('.work-detail').getBoundingClientRect().width >= document.querySelector('.work-item').getBoundingClientRect().width - 40")
         assert js("return document.querySelectorAll('.ventry-footer a[href=\"/explore/\"]').length") == 1
         assert js("return [...document.querySelectorAll('.rail-links a')].map(a=>a.pathname)") == ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/", "/explore/"]
         assert js("""return [...document.querySelectorAll('main > section')].map(s => s.id)""") == [
@@ -139,6 +142,8 @@ try:
                 assert len(topics) == 3
                 assert all(a.get_attribute("href").startswith("mailto:ventrybusinesswork@gmail.com?subject=") for a in topics)
                 assert driver.find_element(By.ID, "request-controls").is_displayed()
+                assert js("return !!(document.querySelector('#request').compareDocumentPosition(document.querySelector('.contact-route-list')) & Node.DOCUMENT_POSITION_FOLLOWING)")
+                assert js("return !!(document.querySelector('#request-message').compareDocumentPosition(document.querySelector('#request-context')) & Node.DOCUMENT_POSITION_FOLLOWING)")
                 assert js("return document.querySelector('#request-message').maxLength") == 800
                 assert js("return !document.querySelector('#request-controls form')")
                 assert js("return document.querySelector('#request-mail').protocol") == "mailto:"
@@ -200,9 +205,11 @@ try:
         assert js("return document.documentElement.scrollWidth <= innerWidth")
         assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
         assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
-        assert js("return document.querySelector('.product-next a.primary-button').pathname") == "/raschet/"
-        assert js("return document.querySelector('.product-next a.quiet-button').pathname") == "/contact/"
-        assert js("return document.querySelector('.product-next a.quiet-button').search") == "?topic=raschet"
+        assert js("return document.querySelector('.demo-boundary-grid article:first-child a').pathname") == "/raschet/"
+        assert js("return document.querySelector('.demo-boundary-grid article:last-child a.primary-button').pathname") == "/contact/"
+        assert js("return document.querySelector('.demo-boundary-grid article:last-child a.primary-button').search") == "?topic=raschet"
+        assert not js("return !!document.querySelector('.product-next')")
+        assert js("return document.querySelector('#next-title').closest('.demo-boundary') !== null")
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
         expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/", "/explore/"]
@@ -262,9 +269,11 @@ try:
                 assert js("return document.querySelectorAll('.guide-steps li').length") == 4
                 assert js("return document.querySelectorAll('[data-knowledge-item]').length") == 5
                 assert driver.find_element(By.ID, "docs-search").is_displayed()
+                assert js("return !!(document.querySelector('#docs-controls').compareDocumentPosition(document.querySelector('.knowledge-index')) & Node.DOCUMENT_POSITION_FOLLOWING)")
                 assert js("return document.querySelector('#backup').textContent.includes('копии')")
             elif route == "/support/":
                 assert js("return document.querySelectorAll('.resource-route-grid article').length") == 3
+                assert js("return !!(document.querySelector('#support-faq').compareDocumentPosition(document.querySelector('#support-routes')) & Node.DOCUMENT_POSITION_FOLLOWING)")
                 faq = driver.find_element(By.CSS_SELECTOR, ".resource-faq summary")
                 driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})", faq)
                 faq.click()
