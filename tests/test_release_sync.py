@@ -2,6 +2,9 @@
 import importlib.util
 import pathlib
 import unittest
+from unittest.mock import patch, MagicMock
+import json
+from urllib.error import HTTPError
 
 PATH = pathlib.Path(__file__).resolve().parents[1] / "tools/sync-releases.py"
 SPEC = importlib.util.spec_from_file_location("sync_releases", PATH)
@@ -61,3 +64,20 @@ class ReleaseTests(unittest.TestCase):
     def test_invalid_snapshot(self):
         with self.assertRaises(ValueError):
             sync.render([{"tag": "x", "name": "x", "published_at": "bad", "prerelease": False}])
+
+    def test_api_credential_is_optional_and_not_returned(self):
+        for token in ("", "test-token"):
+            response = MagicMock()
+            response.__enter__.return_value.read.return_value = json.dumps([release()]).encode()
+            with patch.dict(sync.os.environ, {"GH_TOKEN":token}), patch.object(sync,"build_opener") as factory:
+                factory.return_value.open.return_value = response
+                result = sync.fetch()
+                request = factory.return_value.open.call_args.args[0]
+                self.assertEqual(request.full_url, sync.API)
+                self.assertEqual(request.get_header("Authorization"), "Bearer "+token if token else None)
+                self.assertNotIn("test-token", json.dumps(result))
+    def test_api_error_fails_without_exposing_credentials(self):
+        with patch.dict(sync.os.environ, {"GH_TOKEN":"test-token"}), patch.object(sync,"build_opener") as factory:
+            factory.return_value.open.side_effect = HTTPError(sync.API, 403, "rate limit exceeded", {}, None)
+            with self.assertRaisesRegex(RuntimeError, "HTTP 403; published snapshot unchanged"):
+                sync.fetch()
