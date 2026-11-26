@@ -26,7 +26,18 @@ async function save(next) {
     render();
   } finally { writing = false; }
 }
-function switchView(view){if(!['book','dates','history','statistics','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshLegacyBackups();}
+function switchView(view){
+  if(view==='dates')view='book';
+  if(!['book','clients','history','statistics','settings'].includes(view))view='book';
+  const changed=!$('#view-'+view).hidden?false:true;
+  $$('.view').forEach(el=>el.hidden=el.id!=='view-'+view);
+  $$('.sidebar nav [data-view]').forEach(el=>{const active=el.dataset.view===(view==='statistics'?'book':view);el.classList.toggle('active',active);if(active)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
+  if(location.hash!=='#'+view)location.hash=view;
+  if(changed)window.scrollTo(0,0);
+  if(view==='settings')refreshLegacyBackups();
+}
+$('#stats-back').onclick=()=>switchView('book');
+$$('.report-link').forEach(b=>b.onclick=()=>{switchView('statistics');$('#stats-actions').scrollIntoView({block:'center'});$('#stats-csv').focus()});
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
@@ -52,7 +63,7 @@ $$('[data-open-filter]').forEach(button => button.onclick = () => {
   filter = button.dataset.openFilter;
   $('#search').value = '';
   render();
-  $('#client-panel').focus();
+  switchView('clients');$('#client-panel').focus();
 });
 
 function deadlineNote(client) {
@@ -184,17 +195,26 @@ $('#demo-restart').onclick = () => {
   $('#confirm-dialog').showModal();
 };
 
+let quickKind='debt';
 function renderQuickActions(){
   const select=$('#quick-client'),selected=select.value;
-  select.innerHTML=book.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join('');
-  if(book.clients.some(c=>c.id===selected))select.value=selected;
-  $('#quick-debt').disabled=!select.value;
-  $('#quick-payment').disabled=!select.value||balance(book,select.value)<=0;
+  const clients=book.clients.filter(c=>quickKind==='debt'||balance(book,c.id)>0);
+  select.innerHTML=clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join('');
+  if(clients.some(c=>c.id===selected))select.value=selected;
+  $('#quick-continue').disabled=!select.value;
+  $('#quick-payment').disabled=!book.clients.some(c=>balance(book,c.id)>0);
 }
-$('#quick-client').onchange=renderQuickActions;
-$('#quick-debt').onclick=()=>openEntry($('#quick-client').value,'debt');
-$('#quick-payment').onclick=()=>openEntry($('#quick-client').value,'payment');
-$('#quick-dates').onclick=()=>{switchView('dates');$('#dates-list').focus()};
+function openQuick(kind){
+  quickKind=kind;renderQuickActions();
+  $('#quick-title').textContent=kind==='debt'?'Записать долг':'Принять оплату';
+  $('#quick-new').hidden=kind==='payment';
+  $('#quick-dialog').showModal();
+}
+$('#quick-client').onchange=()=>$('#quick-continue').disabled=!$('#quick-client').value;
+$('#quick-debt').onclick=()=>openQuick('debt');
+$('#quick-payment').onclick=()=>openQuick('payment');
+$('#quick-continue').onclick=()=>{const id=$('#quick-client').value;if(!id)return;$('#quick-dialog').close();openEntry(id,quickKind)};
+$('#quick-new').onclick=()=>{$('#quick-dialog').close();openClient()};
 function render(){
   $('#mode-label').textContent='ДЕМО · ВЫМЫШЛЕННЫЕ ДАННЫЕ';$('#mode-label').classList.add('demo');
   const summary = debtOverview(book);
@@ -205,7 +225,7 @@ function render(){
   $('#total').textContent = total('balance');
   $('#overdue').textContent = total('overdue');
   $('#due-soon').textContent = total('soon');
-  $('#active-count').textContent = `Клиентов с долгом: ${items.filter(client => client.balance > 0).length}`;
+  $('#active-count').textContent = `Должников: ${items.filter(client => client.balance > 0).length}`;
   $('#paid-month').textContent=rub(activeEntries(book).filter(e=>{const d=new Date(e.date),n=new Date();return e.type==='payment'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((n,e)=>n+e.amount,0));
   $('#client-count').textContent = book.clients.length;
   renderQuickActions();
@@ -238,25 +258,28 @@ let dateKind='debt',dateMode='list',dateSelected=today(),dateMonth=dateSelected.
 function renderDates(){
   const groups=bookDays(book,dateKind);
   for(const [id,active] of [['dates-debt',dateKind==='debt'],['dates-payment',dateKind==='payment'],['dates-list',dateMode==='list'],['dates-calendar',dateMode==='calendar']])$('#'+id).setAttribute('aria-pressed',String(active));
-  $('#calendar-panel').hidden=dateMode!=='calendar';
+  $('#calendar-panel').hidden=dateMode!=='calendar';$('#week-grid').hidden=dateMode==='calendar';$('#dates-list').hidden=dateMode==='list';$('#dates-calendar').hidden=dateMode==='calendar';$('#dates-heading').textContent=dateKind==='payment'?'Полученные оплаты':'Записи по датам';
   const counts=new Map(groups.map(g=>[g.day,g.entries.length]));
   $('#calendar-month').textContent=new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric'}).format(new Date(dateMonth+'-01T12:00:00'));
-  $('#calendar-next').disabled=dateMonth>=today().slice(0,7);
+  const monday=new Date(dateSelected+'T12:00:00Z');monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
+  const week=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
+  $('#calendar-next').disabled=dateMode==='calendar'?dateMonth>=today().slice(0,7):week.at(-1)>=today();
+  $('#week-grid').innerHTML=week.map((day,i)=>'<button type="button" class="calendar-day week-day" data-day="'+day+'" aria-label="'+dateText(day)+', записей: '+(counts.get(day)||0)+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'><small>'+['пн','вт','ср','чт','пт','сб','вс'][i]+'</small><strong>'+Number(day.slice(-2))+'</strong><small>'+(counts.get(day)||'—')+'</small></button>').join('');
   $('#calendar-grid').innerHTML=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>'<span class="calendar-weekday">'+x+'</span>').join('')+
     calendarDays(dateMonth).map(day=>day?'<button type="button" class="calendar-day" data-day="'+day+'" aria-label="'+dateText(day)+', записей: '+(counts.get(day)||0)+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'>'+Number(day.slice(-2))+(counts.has(day)?'<small>'+counts.get(day)+'</small>':'')+'</button>':'<span></span>').join('');
   const panel=$('#date-entries'),opened=new Set([...panel.querySelectorAll('details[open]')].map(x=>x.dataset.date));
-  if(dateMode==='calendar'){const g=groups.find(g=>g.day===dateSelected);panel.innerHTML='<h3>'+dateText(dateSelected)+'</h3><p>Действительные записи: '+rub(g?.total||0)+'</p>'+historyRows(g?.entries||[])}
+  if(dateMode==='calendar'||dateMode==='day'){const g=groups.find(g=>g.day===dateSelected);panel.innerHTML='<h3>'+dateText(dateSelected)+'</h3><p>Действительные записи: '+rub(g?.total||0)+'</p>'+historyRows(g?.entries||[])}
   else panel.innerHTML=groups.length?groups.map(g=>'<details class="date-group" data-date="'+g.day+'" '+(opened.has(g.day)?'open':'')+'><summary><span>'+dateText(g.day)+' · '+g.entries.length+' зап.</span><strong>'+rub(g.total)+'</strong></summary>'+historyRows(g.entries)+'</details>').join(''):'<p>Нет записей.</p>';
-  $$('[data-day]').forEach(b=>b.onclick=()=>{dateSelected=b.dataset.day;renderDates();$$('[data-day]').find(x=>x.dataset.day===dateSelected)?.focus()});
+  $$('[data-day]').forEach(b=>b.onclick=()=>{dateSelected=b.dataset.day;dateMonth=dateSelected.slice(0,7);if(dateMode!=='calendar')dateMode='day';renderDates();$$('[data-day]').find(x=>x.dataset.day===dateSelected&&!x.closest('[hidden]'))?.focus()});
 }
-function moveMonth(delta){const d=new Date(dateMonth+'-01T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+delta);dateMonth=d.toISOString().slice(0,7);dateSelected=dateMonth+'-01';renderDates()}
+function moveMonth(delta){const d=new Date((dateMode==='calendar'?dateMonth+'-01':dateSelected)+'T12:00:00Z');if(dateMode==='calendar')d.setUTCMonth(d.getUTCMonth()+delta);else d.setUTCDate(d.getUTCDate()+7*delta);dateSelected=[d.toISOString().slice(0,10),today()].sort()[0];dateMonth=dateSelected.slice(0,7);renderDates()}
 $('#dates-debt').onclick=()=>{dateKind='debt';renderDates()};
 $('#dates-payment').onclick=()=>{dateKind='payment';renderDates()};
 $('#dates-list').onclick=()=>{dateMode='list';renderDates()};
 $('#dates-calendar').onclick=()=>{dateMode='calendar';renderDates()};
 $('#calendar-prev').onclick=()=>moveMonth(-1);
 $('#calendar-next').onclick=()=>moveMonth(1);
-$('#calendar-today').onclick=()=>{dateSelected=today();dateMonth=dateSelected.slice(0,7);renderDates()};
+$('#calendar-today').onclick=()=>{dateSelected=today();dateMonth=dateSelected.slice(0,7);if(dateMode!=='calendar')dateMode='day';renderDates()};
 $('#stats-from').value=today();$('#stats-to').value=today();
 $('#stats-from').max=today();$('#stats-to').max=today();
 function renderStats(){

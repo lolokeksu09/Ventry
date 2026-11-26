@@ -25,6 +25,14 @@ def js(code):
     return driver.execute_script(code)
 
 
+def click_visible(element_id):
+    element = driver.find_element(By.ID, element_id)
+    driver.execute_script("arguments[0].scrollIntoView({block:'center',inline:'nearest'})", element)
+    wait.until(lambda _: driver.execute_script(
+        "const r=arguments[0].getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return arguments[0].contains(hit)", element))
+    element.click()
+
+
 def capture(name):
     data = driver.execute_cdp_cmd("Page.captureScreenshot", {
         "format": "png", "fromSurface": True, "captureBeyondViewport": False
@@ -207,22 +215,33 @@ try:
     assert "Старый тест" not in driver.find_element(By.ID, "clients").text
     assert not js("return !!document.querySelector('input[type=file],input[type=tel]')")
     driver.find_element(By.ID, "quick-debt").click()
+    assert js("return document.querySelector('#quick-dialog').open")
+    driver.find_element(By.ID, "quick-continue").click()
     assert js("return document.querySelector('#entry-dialog').open")
     driver.find_element(By.CSS_SELECTOR, "#entry-dialog [data-close]").click()
     wait.until(lambda _: not js("return document.querySelector('#entry-dialog').open"))
+    assert js("return document.querySelectorAll('.sidebar nav button').length") == 4
+    assert driver.find_element(By.ID, "book-statistics-entry").is_displayed()
+    assert js("return document.documentElement.scrollWidth <= innerWidth")
     capture("ui-390-demo.png")
-    driver.find_element(By.ID, "add-client").click()
+    js("document.querySelector('[data-view=clients]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "add-client").is_displayed())
+    click_visible("add-client")
     assert js("return document.querySelector('#client-form [name=name]').readOnly")
     driver.find_element(By.ID, "client-submit").click()
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
     wait.until(lambda _: not js("return document.querySelector('#client-dialog').open"))
-    driver.find_element(By.ID, "demo-payment").click()
+    js("document.querySelector('[data-view=book]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "demo-payment").is_displayed())
+    click_visible("demo-payment")
     driver.find_element(By.ID, "entry-submit").click()
     wait.until(lambda _: driver.find_element(By.ID, "demo-operation").is_displayed())
-    driver.find_element(By.ID, "demo-operation").click()
+    click_visible("demo-operation")
     assert "2 350" in driver.find_element(By.ID, "demo-result-summary").text.replace("\\xa0", " ").replace("\\u202f", " ")
     assert js("return !!document.querySelector('#history [data-operation-id]')")
-    js("document.querySelector('[data-view=statistics]').click()")
+    js("document.querySelector('[data-view=book]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "book-statistics-entry").is_displayed())
+    click_visible("book-statistics-entry")
     wait.until(lambda _: driver.find_element(By.ID, "stats-content").is_displayed())
     js("document.querySelector('#stats-period').value='all';document.querySelector('#stats-period').dispatchEvent(new Event('change'))")
     assert "7 010" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
@@ -238,12 +257,12 @@ try:
     assert js("return document.documentElement.scrollWidth <= innerWidth")
     capture("ui-390-demo-statistics.png")
     report["demo_statistics"] = "PASS"
-    js("document.querySelector('[data-view=dates]').click()")
+    js("document.querySelector('[data-view=book]').click()")
     wait.until(lambda _: driver.find_element(By.ID, "date-entries").is_displayed())
     assert js("return document.querySelectorAll('#date-entries details').length") >= 1
-    driver.find_element(By.ID, "dates-payment").click()
-    driver.find_element(By.ID, "dates-calendar").click()
-    driver.find_element(By.ID, "calendar-today").click()
+    click_visible("dates-payment")
+    click_visible("dates-calendar")
+    click_visible("calendar-today")
     assert js("return document.querySelectorAll('#date-entries [data-operation-id]').length") >= 1
     capture("ui-390-demo-calendar.png")
     report["demo_calendar"] = "PASS"
@@ -253,10 +272,12 @@ try:
     assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
     driver.get(BASE + "/raschet/?demo=1")
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
-    driver.find_element(By.ID, "add-client").click()
+    js("document.querySelector('[data-view=clients]').click()")
+    wait.until(lambda _: driver.find_element(By.ID, "add-client").is_displayed())
+    click_visible("add-client")
     driver.find_element(By.ID, "client-submit").click()
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "5")
-    driver.find_element(By.ID, "switch-mode").click()
+    click_visible("switch-mode")
     driver.find_element(By.ID, "confirm-import").click()
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     assert js("return localStorage.getItem('dolgbook-v1-own')") == legacy

@@ -433,3 +433,57 @@ h1,.view-title{font-family:var(--ventry-sans);font-weight:650;letter-spacing:-.7
 .quick-actions button{margin:0!important;min-height:48px;white-space:normal;padding:10px}
 .chart-dates{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:11px;margin-bottom:12px}
 @media(max-width:600px){.book-quick{padding:16px}.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-actions button:last-child{grid-column:1/-1}.book-quick select{font-size:16px}}
+
+/* Native book composition. Keep demo state and all existing report flows. */
+.native-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.native-heading h1,.native-heading h2{margin:0;min-width:0}
+.native-heading h2{font-size:18px}
+.native-balance{background:#191a1d;border-radius:12px;padding:16px;margin-bottom:8px}
+.native-balance>span{display:block;font-size:13px;color:var(--muted)}
+.native-balance>strong{display:block;font-size:40px;font-weight:650;letter-spacing:-1px;margin:12px 0}
+.native-balance-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);gap:8px}
+.native-balance-footer small{color:var(--muted)}
+.native-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.native-actions button{min-height:48px;padding:10px 5px}
+.native-statistics{display:flex;width:100%;min-height:80px;margin:12px 0;gap:12px;padding:12px;text-align:left;align-items:center;background:#191a1d;border:1px solid #9c917f;border-radius:12px}
+.native-statistics .stat-glyph{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;background:#3b372f;border-radius:10px;color:#e3d5bd}
+.stat-copy{display:grid;flex:1;min-width:0;gap:3px}
+.stat-copy strong{font-size:19px;color:var(--ink)}
+.stat-copy small{font-size:12px;color:var(--muted);line-height:1.4;font-weight:400}
+.stat-chevron{font-size:28px;color:#e3d5bd}
+.native-tabs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px 0 18px}
+.native-tabs button{background:transparent;border-radius:0;border-bottom:2px solid var(--line);color:var(--muted);font-size:13px;padding:10px 2px}
+.native-tabs button[aria-pressed=true]{border-color:#e3d5bd;color:var(--ink)}
+.native-dates .date-tools{margin:0;flex-wrap:nowrap}
+.native-dates .date-tools button{color:var(--green);background:transparent;padding:6px}
+.native-dates .date-tools button[aria-pressed=true]{outline:0;background:transparent}
+.native-dates .calendar-grid{max-width:none;margin:8px 0}
+.week-day{display:grid;justify-items:center;min-height:60px;gap:3px;background:var(--surface);border:1px solid transparent}
+.week-day strong{font-size:18px}
+.week-day[aria-pressed=true]{border-color:var(--green);outline:0;background:var(--surface)}
+.week-day small{color:var(--muted);font-size:11px}
+.full-report{display:block;margin:16px auto;color:var(--green)}
+.client-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+#quick-dialog select{display:block;width:100%;min-height:48px;background:var(--paper);color:var(--ink);font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0 12px}
+.sidebar .nav-icon{display:inline-grid;place-items:center;flex:none}
+@media screen and (max-width:700px){
+ .sidebar{position:static;width:auto;padding:12px 16px;background:var(--paper);display:block}
+ .sidebar .workspace,.sidebar .side-bottom{display:none}
+ .sidebar nav{position:fixed;z-index:10;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:7px 8px calc(7px + env(safe-area-inset-bottom));gap:4px;background:var(--surface);border-top:1px solid var(--line)}
+ .sidebar nav button{display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:58px;padding:3px 0;background:transparent;color:var(--muted)}
+ .sidebar nav button.active{color:var(--green);background:transparent}
+ .sidebar nav button.active .nav-icon{background:#343237}
+ .sidebar nav button .nav-icon{width:48px;height:30px;border-radius:15px}
+ .sidebar nav button .nav-full{display:none}
+ .sidebar nav button .nav-short{display:block;font-size:12px}
+ main{margin:0;padding:0 16px calc(92px + env(safe-area-inset-bottom));max-width:none}
+ main header{font-size:11px;padding:0 0 8px}
+ #view-book{padding-top:12px}
+ .native-balance>strong{font-size:36px}
+ .native-heading h1{font-size:23px}
+ .native-dates .calendar-grid{gap:3px}
+ .client-metrics{grid-template-columns:1fr}
+ #quick-dialog select{font-size:16px}
+}
+
+@media screen and (max-width:700px){html{scroll-padding-bottom:calc(88px + env(safe-area-inset-bottom));scroll-padding-top:12px}main button,main input,main select{scroll-margin-block:12px}}
