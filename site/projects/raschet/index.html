@@ -22,8 +22,8 @@
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-gallery">
-  <script defer src="/app.js?v=ui-audit-4"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-4-navigation">
+  <script defer src="/app.js?v=ui-audit-5"></script>
 </head>
 <body class="product-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -32,13 +32,15 @@
       <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
       <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="main-nav"><span></span><span></span></button>
       <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
-        <a href="/projects/">Проекты</a>
+        <a href="/">Главная</a>
         <a href="/about/">О Ventry</a>
-        <a class="nav-contact" href="/contact/">Связаться <span class="arrow" aria-hidden="true"></span></a>
+        <a href="/approach/">Подход</a>
+        <a href="/projects/" aria-current="location">Проекты</a>
+        <a href="/contact/">Контакты</a>
       </nav>
     </div>
   </header>
-  <main id="main" itemscope itemtype="https://schema.org/SoftwareApplication" itemid="https://ventrylab.top/projects/raschet/#software">
+  <main id="main" tabindex="-1" itemscope itemtype="https://schema.org/SoftwareApplication" itemid="https://ventrylab.top/projects/raschet/#software">
     <meta itemprop="applicationCategory" content="BusinessApplication">
     <meta itemprop="operatingSystem" content="Android">
     <link itemprop="url" href="https://ventrylab.top/projects/raschet/">
@@ -68,6 +70,14 @@
         <figcaption id="hero-screen-caption">Долговая книга <span>Экран Android-сборки · нажмите, чтобы увеличить</span></figcaption>
       </figure>
     </section>
+    <nav class="product-section-nav content-width" aria-label="На странице приложения">
+      <span>На странице</span>
+      <a href="#android-features-title">Возможности</a>
+      <a href="#gallery-title">Интерфейс</a>
+      <a href="#possibilities-title">Демо</a>
+      <a href="#next-title">Получение</a>
+      <a href="#faq-title">Вопросы</a>
+    </nav>
     <section class="android-features content-width" aria-labelledby="android-features-title">
       <div class="feature-intro"><p class="section-kicker">В Android-приложении</p><h2 id="android-features-title">Не только остаток. Вся история долга.</h2><p>Для магазина, где покупатели возвращают деньги частями, а записи нужно быстро находить и сверять.</p></div>
       <dl class="android-feature-list">
@@ -110,8 +120,23 @@
         <div><dt>Открыть статистику</dt><dd>Выберите период, изучите показатели магазина и клиента, динамику и рейтинги.</dd></div>
       </dl>
     </section>
+    <section class="demo-boundary content-width" aria-labelledby="demo-boundary-title">
+      <h2 id="demo-boundary-title">Демо и Android-версия</h2>
+      <div class="demo-boundary-grid">
+        <article>
+          <h3>Демо в браузере</h3>
+          <p>Проверьте сценарии долгов, оплат, календаря и статистики на тестовых записях. Установка и регистрация не нужны; после перезагрузки изменения сбрасываются.</p>
+          <a class="primary-button" href="/raschet/?demo=1">Попробовать демо <span class="arrow" aria-hidden="true"></span></a>
+        </article>
+        <article>
+          <h3>Приложение для Android</h3>
+          <p>Предназначено для реального учёта. Это отдельное приложение, а не аккаунт на сайте. Доступность сборки и условия получения уточняются напрямую у Ventry.</p>
+          <a class="text-link" href="/contact/?topic=raschet#request">Запросить Android-версию <span class="arrow" aria-hidden="true"></span></a>
+        </article>
+      </div>
+    </section>
     <section class="product-next content-width" aria-labelledby="next-title">
-      <div><p class="section-kicker">Расчёт для Android</p><h2 id="next-title">Подходит вашему магазину?</h2><p>Сначала попробуйте демо. Если приложение подходит вашему магазину, напишите нам, чтобы уточнить доступность Android-версии и условия получения.</p></div>
+      <div><p class="section-kicker">Расчёт для Android</p><h2 id="next-title">Подходит вашему магазину?</h2><p>Есть вопросы по работе с долгами или получению приложения? Выберите удобный способ знакомства с «Расчётом».</p></div>
       <div class="product-next-actions"><a class="primary-button" href="/raschet/?demo=1">Открыть демо</a><a class="quiet-button" href="/contact/?topic=raschet#request">Запросить Android-версию</a></div>
     </section>
     <section class="product-faq content-width" aria-labelledby="faq-title">

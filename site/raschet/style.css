@@ -487,3 +487,13 @@ h1,.view-title{font-family:var(--ventry-sans);font-weight:650;letter-spacing:-.7
 }
 
 @media screen and (max-width:700px){html{scroll-padding-bottom:calc(88px + env(safe-area-inset-bottom));scroll-padding-top:12px}main button,main input,main select{scroll-margin-block:12px}}
+
+/* Website-level links; demo navigation and ledger behavior are unchanged. */
+@media screen{
+ .demo-site-route{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding:9px 0;border-bottom:1px solid var(--line)}
+ .demo-site-route p{margin:0;color:var(--muted);font-size:12px;line-height:1.4;max-width:48ch}
+ .demo-site-route>div{display:flex;flex-wrap:wrap;gap:4px 16px}
+ .demo-site-route a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:600}
+}
+@media screen and (max-width:700px){.demo-site-route{padding:7px 0 3px;gap:0}.demo-site-route p{flex-basis:100%}.demo-site-route>div{width:100%;justify-content:space-between;gap:8px}}
+@media print{.demo-site-route{display:none!important}}

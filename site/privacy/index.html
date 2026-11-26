@@ -22,8 +22,8 @@
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=amoled-1">
-  <script defer src="/app.js?v=ui-audit-2"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-4-navigation">
+  <script defer src="/app.js?v=ui-audit-5"></script>
 </head>
 <body class="document-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -31,12 +31,16 @@
     <div class="header-inner content-width">
       <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
       <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
-      <nav id="main-nav" class="site-nav" aria-label="Основная навигация">
-        <a href="/about/">Компания</a><a href="/projects/">Проекты</a><a href="/contact/">Контакты</a>
+      <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
+        <a href="/">Главная</a>
+        <a href="/about/">О Ventry</a>
+        <a href="/approach/">Подход</a>
+        <a href="/projects/">Проекты</a>
+        <a href="/contact/">Контакты</a>
       </nav>
     </div>
   </header>
-  <main id="main" class="legal-main">
+  <main id="main" tabindex="-1" class="legal-main">
     <div class="content-width legal-intro">
       <p class="legal-kicker">Ventry / Документы</p>
       <h1>Политика обработки персональных данных</h1>
