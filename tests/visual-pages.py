@@ -130,14 +130,28 @@ try:
 
         product = load("/projects/raschet/", width, height)
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
-        assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 350 ₽"
+        assert js("return document.querySelector('.hero-screen').naturalWidth") == 540
+        assert js("return document.querySelector('.hero-screen').naturalHeight") == 1200
+        assert js("return document.querySelector('.screen-dialog').open") is False
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
+        assert js("""const schema=JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);return schema['@type']==='SoftwareApplication' && schema.name==='Расчёт' && schema.operatingSystem==='Android'""")
         assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
         screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
         assert len(screenshots) == 3
         js("document.querySelectorAll('.android-gallery-grid img').forEach(img => img.loading = 'eager')")
         wait.until(lambda _: js("return [...document.querySelectorAll('.android-gallery-grid img')].every(img => img.complete && img.naturalWidth === 540 && img.naturalHeight === 1200)"))
         assert js("return [...document.querySelectorAll('.android-gallery-grid a')].every(a => a.getAttribute('href') === a.querySelector('img').getAttribute('src'))")
+        assert js("return document.querySelectorAll('[data-screen-preview]').length") == 4
+        driver.find_element(By.CSS_SELECTOR, ".hero-screen-link").click()
+        wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
+        assert "Долговая книга" in js("return document.querySelector('#screen-dialog-image').alt")
+        driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+        wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
+        driver.find_element(By.CSS_SELECTOR, ".android-gallery-grid a[data-screen-preview]").click()
+        wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
+        assert "Долговая книга" in js("return document.querySelector('#screen-dialog-caption').textContent")
+        driver.find_element(By.CSS_SELECTOR, ".screen-dialog-close").click()
+        wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
         assert js("return document.documentElement.scrollWidth <= innerWidth")
         assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
         assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
