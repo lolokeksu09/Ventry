@@ -78,4 +78,17 @@ for route in ('index.html', 'projects/raschet/index.html', 'legal/index.html', '
 
 assert 'Google (Gmail)' in (ROOT / 'privacy/index.html').read_text(), 'Privacy policy must disclose mail provider'
 
-print(f'PASS: {len(pages)} pages; routes, fragments, canonical URLs, sitemap and legal links')
+# Product help routes are stable, real links (including without JavaScript).
+product = pages[(ROOT / 'projects/raschet/index.html').resolve()]
+docs = pages[(ROOT / 'docs/index.html').resolve()]
+support = pages[(ROOT / 'support/index.html').resolve()]
+for anchor in ('get-android', 'android-compatibility', 'demo-data', 'demo-reset',
+               'backup-json', 'restore-csv', 'transfer-phone', 'update-error', 'report-error'):
+    assert anchor in support.ids, f'Missing support answer: {anchor}'
+for page in (product, docs):
+    assert '/support/#restore-csv' in page.refs, f'{page.path}: missing recovery help'
+    assert '/support/#update-error' in page.refs, f'{page.path}: missing update help'
+assert '/support/#demo-data' in product.refs, 'Product demo boundary must link to help'
+assert '/docs/#backup' in support.refs, 'Support must link to safe backup instructions'
+
+print(f'PASS: {len(pages)} pages; routes, fragments, canonical URLs, sitemap, legal links and product help')
