@@ -45,14 +45,21 @@ SECTION_ROUTES = {"about": "/about/", "method": "/approach/", "projects": "/proj
 
 def open_home_section(section, width):
     route = SECTION_ROUTES[section]
-    scope = ".rail-links"
-    if width <= 930:
-        driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
-        assert js("return document.querySelector('.mobile-nav').open")
-        scope = ".mobile-nav nav"
-    driver.find_element(By.CSS_SELECTOR, f'{scope} a[href="{route}"]').click()
+    scope = ".rail-links" if width > 930 else ".mobile-nav nav"
+    if section == "method":
+        # Approach is a child page of Company, not another top-level destination.
+        driver.find_element(By.CSS_SELECTOR, 'main a[href="/approach/"]').click()
+    elif section == "contact":
+        driver.find_element(By.CSS_SELECTOR, '.ventry-footer-group a[href="/contact/"]').click()
+    else:
+        if width <= 930:
+            driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
+            assert js("return document.querySelector('.mobile-nav').open")
+        driver.find_element(By.CSS_SELECTOR, f'{scope} a[href="{route}"]').click()
     wait.until(lambda _: js("return location.pathname") == route)
-    assert driver.find_element(By.CSS_SELECTOR, f'{scope} a[aria-current="page"]').get_attribute("href") == BASE + route
+    current = "/about/" if section in ("method","contact") else route
+    state = "location" if section in ("method","contact") else "page"
+    assert driver.find_element(By.CSS_SELECTOR, f'{scope} a[aria-current="{state}"]').get_attribute("href") == BASE + current
     assert driver.find_element(By.CSS_SELECTOR, "main h1").is_displayed()
     if section == "about":
         assert len(driver.find_elements(By.CSS_SELECTOR, ".about-details article")) == 2
@@ -98,7 +105,9 @@ try:
         if width <= 620:
             assert js("return document.querySelector('.work-detail').getBoundingClientRect().width >= document.querySelector('.work-item').getBoundingClientRect().width - 40")
         assert js("return document.querySelectorAll('.ventry-footer a[href=\"/explore/\"]').length") == 1
-        assert js("return [...document.querySelectorAll('.rail-links a')].map(a=>a.pathname)") == ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/", "/explore/"]
+        assert js("return [...document.querySelectorAll('.rail-links a')].map(a=>a.pathname)") == ["/projects/", "/releases/", "/docs/", "/support/", "/about/"]
+        assert driver.find_element(By.CSS_SELECTOR, header_selector+" .header-search").is_displayed()
+        assert js("return document.querySelectorAll('header .header-search[href=\"/explore/\"]').length") == 2
         assert js("""return [...document.querySelectorAll('main > section')].map(s => s.id)""") == [
             "start", "projects", "about", "method", "contact"
         ]
@@ -212,7 +221,7 @@ try:
         assert js("return document.querySelector('#next-title').closest('.demo-boundary') !== null")
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
-        expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/", "/explore/"]
+        expected_navigation = ["/projects/", "/releases/", "/docs/", "/support/", "/about/"]
         assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
         assert js("return document.querySelector('#main-nav [aria-current=location]').pathname") == "/projects/"
         assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#next-title", "#faq-title"]
@@ -257,8 +266,11 @@ try:
         for route in ("/releases/", "/docs/", "/support/", "/status/"):
             resource = load(route, width, height)
             assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
-            assert js("return [...document.querySelectorAll('.resource-tabs a')].map(a=>a.pathname)") == ["/releases/", "/docs/", "/support/", "/status/"]
-            assert js("return document.querySelector('.resource-tabs [aria-current=page]').pathname") == route
+            assert not js("return !!document.querySelector('.resource-tabs')")
+            current = "/support/" if route == "/status/" else route
+            state = "location" if route == "/status/" else "page"
+            assert js("return document.querySelector('#main-nav [aria-current="+state+"]').pathname") == current
+            assert driver.find_element(By.CSS_SELECTOR,"header .header-search").is_displayed()
             if route == "/releases/":
                 assert js("return document.querySelectorAll('.release-entry a').length") == 0
                 assert js("return !document.body.innerText.toLowerCase().includes('github')")
@@ -290,6 +302,7 @@ try:
         assert js("return document.querySelectorAll('.directory-entry').length") == 24
         assert js("return document.querySelectorAll('.ventry-footer-group').length") == 3
         assert driver.find_element(By.ID, "directory-search").is_displayed()
+        assert driver.find_element(By.CSS_SELECTOR,'header .header-search[aria-current="page"]').is_displayed()
         if width in (390,1440):
             capture(f"ui-{label}-explore.png")
         report[label] = {"home": page, "product": product}
@@ -369,7 +382,10 @@ try:
     reset.click()
     assert js("return document.querySelectorAll('[data-knowledge-item]:not([hidden])').length") == 9
     report["knowledge_search"] = "PASS"
-    load("/explore/", 390, 844)
+    load("/",390,844)
+    driver.find_element(By.CSS_SELECTOR,".mobile-top .header-search").click()
+    wait.until(lambda _: js("return location.pathname") == "/explore/")
+    assert driver.find_element(By.ID,"directory-search").is_displayed()
     directory = driver.find_element(By.ID, "directory-search")
     directory.send_keys("резервная копия")
     assert js("return document.querySelectorAll('.directory-entry:not([hidden])').length") == 1
@@ -432,7 +448,8 @@ try:
     assert not driver.find_element(By.ID, "request-controls").is_displayed()
     assert len(driver.find_elements(By.CSS_SELECTOR, ".contact-topics li a")) == 3
     driver.get(BASE + "/projects/raschet/")
-    assert driver.find_element(By.CSS_SELECTOR, '#main-nav a[href="/approach/"]').is_displayed()
+    assert driver.find_element(By.CSS_SELECTOR, '#main-nav a[href="/about/"]').is_displayed()
+    assert driver.find_element(By.CSS_SELECTOR, 'header .header-search[href="/explore/"]').is_displayed()
     assert driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]').is_displayed()
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": False})
 
