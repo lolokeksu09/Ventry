@@ -1,15 +1,37 @@
-function localDay(value) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const d = new Date(value);
-  return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+function localDay(value){if(/^\d{4}-\d{2}-\d{2}$/.test(value))return value;const d=new Date(value);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+
+export function shiftDay(day,n){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+
+export function periodRange(preset,day,entries,custom=null){
+  const d=new Date(day+'T12:00:00Z');
+  if(preset==='custom'){if(!custom?.from||!custom?.to||custom.from>custom.to||custom.to>day)throw Error('Укажите корректный период без будущих дат.');return {from:custom.from,to:custom.to}}
+  if(preset==='week')d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
+  if(['month','quarter','year'].includes(preset))d.setUTCDate(1);
+  if(preset==='quarter')d.setUTCMonth(Math.floor(d.getUTCMonth()/3)*3);
+  if(preset==='year')d.setUTCMonth(0);
+  return {from:preset==='all'?entries.map(e=>localDay(e.date)).filter(x=>x<=day).sort()[0]||day:d.toISOString().slice(0,10),to:day};
 }
 
-export function periodRange(preset, day, entries) {
-  const d = new Date(day+'T12:00:00Z');
-  if (preset === 'week') d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
-  if (preset === 'month') d.setUTCDate(1);
-  const from = preset === 'all' ? entries.map(e=>localDay(e.date)).filter(x=>x<=day).sort()[0] || day : d.toISOString().slice(0,10);
-  return {from,to:day};
+export function previousRange(preset,range){
+  if(preset==='all')return null;
+  const elapsed=Math.round((Date.parse(range.to)-Date.parse(range.from))/86400000);
+  let from;
+  if(['custom','today','week'].includes(preset))from=shiftDay(range.from,preset==='week'?-7:-elapsed-1);
+  else{const d=new Date(range.from+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()-({month:1,quarter:3,year:12}[preset]));from=d.toISOString().slice(0,10)}
+  return {from,to:[shiftDay(from,elapsed),shiftDay(range.from,-1)].sort()[0]};
+}
+
+export function bookDays(book,kind){
+  const reversed=new Set(book.entries.filter(e=>e.type==='reversal').map(e=>e.reverses)),groups=new Map();
+  for(const e of book.entries.filter(e=>e.type===kind)){const day=localDay(e.date),g=groups.get(day)||{day,entries:[],total:0};g.entries.push(e);if(!reversed.has(e.id))g.total+=e.amount;groups.set(day,g)}
+  return [...groups.values()].sort((a,b)=>b.day.localeCompare(a.day));
+}
+
+export function calendarDays(month){
+  const start=month+'-01',d=new Date(start+'T12:00:00Z'),offset=(d.getUTCDay()+6)%7;
+  d.setUTCMonth(d.getUTCMonth()+1);
+  const count=Math.round((d-Date.parse(start+'T12:00:00Z'))/86400000);
+  return [...Array(offset).fill(null),...Array.from({length:count},(_,i)=>shiftDay(start,i))];
 }
 
 export function projectDemo(book, {from,to}, clientId='') {
