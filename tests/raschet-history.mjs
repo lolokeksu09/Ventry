@@ -59,3 +59,36 @@ test('movement includes cancelled operations, effective counts do not',()=>{
   assert.equal(p.days.at(-1).cancelDebt,5000);
   assert.equal(projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-05'}).totals.newBorrowers,1);
 });
+
+import { analyticsBuckets, analyticsRankValue, collectionRows } from '../site/raschet/demo-analytics.js';
+test('exact history scope is independent of name and combines with dates',()=>{
+  assert.deepEqual(ids({clientId:'a',from:'2026-11-02',to:'2026-11-02'}),['payment']);
+  assert.deepEqual(ids({clientId:'b',query:'Анна'}),[]);
+});
+test('book filters retain global cancellation and inclusive dates',()=>{
+  const groups=bookDays(analyticsBook,'debt',{clientId:'b',from:'2026-11-04',to:'2026-11-04'});
+  assert.equal(groups.length,1);assert.equal(groups[0].total,0);assert.equal(groups[0].entries[0].id,'3');
+  assert.deepEqual(bookDays(analyticsBook,'debt',{from:'2026-11-05'}),[]);
+});
+test('interactive chart partitions every day and reconciles balance and movement',()=>{
+  const range={from:'2026-11-01',to:'2026-11-30'},data=projectDemo(analyticsBook,range);
+  const buckets=analyticsBuckets(data,range,4);
+  assert.equal(buckets.length,4);assert.equal(buckets[0].from,range.from);assert.equal(buckets.at(-1).to,range.to);
+  assert.equal(buckets.at(-1).closing,data.totals.end);
+  assert.equal(buckets.reduce((n,b)=>n+b.debt,0),data.totals.movementDebt);
+  assert.equal(buckets.reduce((n,b)=>n+b.cancelDebt,0),data.totals.cancelDebt);
+  assert.ok(buckets.slice(1).every((b,i)=>b.opening===buckets[i].closing));
+  assert.equal(analyticsBuckets(projectDemo(analyticsBook,{from:'2026-11-30',to:'2026-11-30'}),{from:'2026-11-30',to:'2026-11-30'}).length,1);
+});
+test('new and settled rankings use amounts rather than boolean flags',()=>{
+  const range={from:'2026-11-01',to:'2026-11-30'};
+  assert.equal(analyticsRankValue({firstDebt:'2026-11-02',debt:1200},'new',null,range),1200);
+  assert.equal(analyticsRankValue({start:2000,end:0},'settled',null,range),2000);
+  assert.equal(analyticsRankValue({firstDebt:'2026-10-01',debt:1200},'new',null,range),0);
+});
+test('collections prioritize overdue, then upcoming and exclude closed customers',()=>{
+  const items=[{id:'a',name:'А',balance:900,overdue:0,soon:0},{id:'b',name:'Б',balance:50,overdue:50,soon:0},{id:'c',name:'В',balance:200,overdue:0,soon:200},{id:'d',name:'Г',balance:0,overdue:0,soon:0}];
+  assert.deepEqual(collectionRows(items).map(c=>c.id),['b','c','a']);
+  assert.deepEqual(collectionRows(items,'','urgent').map(c=>c.id),['b','c']);
+  assert.deepEqual(collectionRows(items,'в','soon').map(c=>c.id),['c']);
+});
