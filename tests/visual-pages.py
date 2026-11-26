@@ -131,8 +131,7 @@ try:
 
         product = load("/projects/raschet/", width, height)
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
-        assert js("return document.querySelector('.hero-screen').naturalWidth") == 540
-        assert js("return document.querySelector('.hero-screen').naturalHeight") == 1200
+        wait.until(lambda _: js("return document.querySelector('.hero-screen').complete && document.querySelector('.hero-screen').naturalWidth === 540 && document.querySelector('.hero-screen').naturalHeight === 1200"))
         assert js("return document.querySelector('.screen-dialog').open") is False
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         assert js("""const app=document.querySelector('main[itemtype="https://schema.org/SoftwareApplication"]');return !!app && app.querySelector('[itemprop="name"]').textContent==='Расчёт' && app.querySelector('[itemprop="operatingSystem"]').content==='Android'""")
