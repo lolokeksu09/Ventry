@@ -195,7 +195,7 @@ function render(){
   $('#overdue').textContent = total('overdue');
   $('#due-soon').textContent = total('soon');
   $('#active-count').textContent = `Клиентов с долгом: ${items.filter(client => client.balance > 0).length}`;
-  $('#paid-month').textContent=rub(activeEntries(book).filter(e=>{const d=new Date(e.date),n=new Date();return e.type==='payment'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((n,e)=>n+e.amount,0));
+  $$('#paid-month').textContent=rub(activeEntries(book).filter(e=>{const d=new Date(e.date),n=new Date();return e.type==='payment'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((n,e)=>n+e.amount,0));
   $('#client-count').textContent = book.clients.length;
   $$('[data-filter]').forEach(button => {
     const selected = filter === button.dataset.filter;
@@ -213,7 +213,7 @@ function render(){
   const shown = items.filter(c => `${c.name} ${c.phone}`.toLowerCase().includes(q) && matches[filter](c))
     .sort((a, b) => (filter === 'soon' ? a.soonDate.localeCompare(b.soonDate) : b.overdue - a.overdue)
       || b.balance - a.balance || a.name.localeCompare(b.name, 'ru'));
-  $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.balance)}<small>${c.balance?'остаток долга':'всё оплачено'}</small>${deadlineNote(c)}</div><div class="status ${c.overdue?'late':''}">${c.overdue?'◷ Срок прошёл':c.balance?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.balance?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
+  $$('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.balance)}<small>${c.balance?'остаток долга':'всё оплачено'}</small>${deadlineNote(c)}</div><div class="status ${c.overdue?'late':''}">${c.overdue?'◷ Срок прошёл':c.balance?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.balance?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
   renderHistory();
   renderStats();
@@ -235,7 +235,7 @@ function renderDates(){
   const panel=$('#date-entries'),opened=new Set([...panel.querySelectorAll('details[open]')].map(x=>x.dataset.date));
   if(dateMode==='calendar'){const g=groups.find(g=>g.day===dateSelected);panel.innerHTML='<h3>'+dateText(dateSelected)+'</h3><p>Действительные записи: '+rub(g?.total||0)+'</p>'+historyRows(g?.entries||[])}
   else panel.innerHTML=groups.length?groups.map(g=>'<details class="date-group" data-date="'+g.day+'" '+(opened.has(g.day)?'open':'')+'><summary><span>'+dateText(g.day)+' · '+g.entries.length+' зап.</span><strong>'+rub(g.total)+'</strong></summary>'+historyRows(g.entries)+'</details>').join(''):'<p>Нет записей.</p>';
-  $('[data-day]').forEach(b=>b.onclick=()=>{dateSelected=b.dataset.day;renderDates();$('[data-day]').find(x=>x.dataset.day===dateSelected)?.focus()});
+  $$('[data-day]').forEach(b=>b.onclick=()=>{dateSelected=b.dataset.day;renderDates();$$('[data-day]').find(x=>x.dataset.day===dateSelected)?.focus()});
 }
 function moveMonth(delta){const d=new Date(dateMonth+'-01T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+delta);dateMonth=d.toISOString().slice(0,7);dateSelected=dateMonth+'-01';renderDates()}
 $('#dates-debt').onclick=()=>{dateKind='debt';renderDates()};
