@@ -69,3 +69,35 @@ if (copyButton && copyStatus && copyFallback) {
     }
   });
 }
+
+
+// Native, keyboard-accessible screenshot viewer. Links remain usable without JavaScript.
+const screenDialog = document.querySelector('#screen-dialog');
+if (screenDialog && typeof screenDialog.showModal === 'function') {
+  const screenImage = screenDialog.querySelector('#screen-dialog-image');
+  const screenCaption = screenDialog.querySelector('#screen-dialog-caption');
+
+  document.querySelectorAll('[data-screen-preview]').forEach(link => {
+    link.addEventListener('click', event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const sourceImage = link.querySelector('img');
+      if (!sourceImage) return;
+      event.preventDefault();
+      screenImage.src = link.href;
+      screenImage.alt = sourceImage.alt;
+      const figure = link.closest('figure');
+      const caption = figure && figure.querySelector('figcaption');
+      screenCaption.textContent = caption ? caption.innerText.replace(/\\s+/g, ' ').trim() : sourceImage.alt;
+      screenDialog.showModal();
+    });
+  });
+
+  screenDialog.addEventListener('click', event => {
+    if (event.target === screenDialog) screenDialog.close();
+  });
+  screenDialog.addEventListener('close', () => {
+    screenImage.removeAttribute('src');
+    screenImage.alt = '';
+    screenCaption.textContent = '';
+  });
+}

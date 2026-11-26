@@ -54,6 +54,14 @@ def open_home_section(section, width):
     wait.until(lambda _: js("return location.pathname") == route)
     assert driver.find_element(By.CSS_SELECTOR, f'{scope} a[aria-current="page"]').get_attribute("href") == BASE + route
     assert driver.find_element(By.CSS_SELECTOR, "main h1").is_displayed()
+    if section == "about":
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".about-details article")) == 2
+        assert js("return document.querySelector('.about-details a').pathname") == "/projects/raschet/"
+        assert js("return document.querySelector('.about-actions .hero-primary').pathname") == "/raschet/"
+    if section == "method":
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 4
+        assert js("return document.querySelector('.method-next .hero-primary').pathname") == "/projects/raschet/"
+        assert js("return document.querySelector('.method-next .hero-secondary').pathname") == "/raschet/"
     assert js("return document.documentElement.scrollWidth <= innerWidth")
     if width <= 930:
         assert not js("return document.querySelector('.mobile-nav').open")
@@ -92,6 +100,7 @@ try:
         assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 3
         assert js("return document.querySelector('.opening-actions a.hero-primary').pathname") == "/projects/"
         assert js("return !!document.querySelector('#projects .demo-note')")
+        assert js("""const org=document.querySelector('footer[itemtype="https://schema.org/Organization"]');return !!org && org.querySelector('[itemprop="name"]').textContent==='Ventry' && org.querySelector('[itemprop="email"]').href.startsWith('mailto:')""")
         assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/about/"
         assert js("return document.querySelector('#projects .work-actions a.hero-primary').pathname") == "/raschet/"
         assert len(driver.find_elements(By.CSS_SELECTOR, "#projects .work-features li")) == 3
@@ -117,7 +126,7 @@ try:
             open_home_section(section, width)
             if section == "method":
                 principles = driver.find_elements(By.CSS_SELECTOR, ".principle-list li p")
-                assert len(principles) == 3 and all(p.is_displayed() for p in principles)
+                assert len(principles) == 4 and all(p.is_displayed() for p in principles)
             if section == "projects":
                 wait.until(lambda _: js("""return document.querySelector('#projects img').naturalWidth > 0"""))
                 assert js("""return document.querySelector('#projects .work-item a[href="/projects/raschet/"]').pathname""") == "/projects/raschet/"
@@ -130,14 +139,27 @@ try:
 
         product = load("/projects/raschet/", width, height)
         assert not js("return !!document.querySelector('.product-faq .all-projects')"), "Duplicate Projects backlink"
-        assert js("""return document.querySelector('.ledger-balance dd').textContent.trim()""") == "2 350 ₽"
+        wait.until(lambda _: js("return document.querySelector('.hero-screen').complete && document.querySelector('.hero-screen').naturalWidth === 540 && document.querySelector('.hero-screen').naturalHeight === 1200"))
+        assert js("return document.querySelector('.screen-dialog').open") is False
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
+        assert js("""const app=document.querySelector('main[itemtype="https://schema.org/SoftwareApplication"]');return !!app && app.querySelector('[itemprop="name"]').textContent==='Расчёт' && app.querySelector('[itemprop="operatingSystem"]').content==='Android'""")
         assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
         screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
         assert len(screenshots) == 3
         js("document.querySelectorAll('.android-gallery-grid img').forEach(img => img.loading = 'eager')")
         wait.until(lambda _: js("return [...document.querySelectorAll('.android-gallery-grid img')].every(img => img.complete && img.naturalWidth === 540 && img.naturalHeight === 1200)"))
         assert js("return [...document.querySelectorAll('.android-gallery-grid a')].every(a => a.getAttribute('href') === a.querySelector('img').getAttribute('src'))")
+        assert js("return document.querySelectorAll('[data-screen-preview]').length") == 4
+        driver.find_element(By.CSS_SELECTOR, ".hero-screen-link").click()
+        wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
+        assert "долговая книга" in js("return document.querySelector('#screen-dialog-image').alt").lower()
+        driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+        wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
+        driver.find_element(By.CSS_SELECTOR, ".android-gallery-grid a[data-screen-preview]").click()
+        wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
+        assert "Долговая книга" in js("return document.querySelector('#screen-dialog-caption').textContent")
+        driver.find_element(By.CSS_SELECTOR, ".screen-dialog-close").click()
+        wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
         assert js("return document.documentElement.scrollWidth <= innerWidth")
         assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
         assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0

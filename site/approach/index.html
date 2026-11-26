@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050907">
   <title>Как мы делаем продукты — Ventry</title>
-  <meta name="description" content="Как Ventry проектирует сценарии работы, структуру интерфейса и сообщения об ошибках.">
+  <meta name="description" content="Как Ventry превращает задачи малого бизнеса в цифровые продукты: сценарии, модель данных, интерфейс и проверка.">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta name="twitter:card" content="summary_large_image">
   <meta property="og:title" content="Как мы делаем продукты — Ventry">
-  <meta property="og:description" content="Как Ventry проектирует сценарии работы, структуру интерфейса и сообщения об ошибках.">
+  <meta property="og:description" content="От рабочего сценария и модели данных до интерфейса и проверки граничных случаев.">
   <meta property="og:url" content="https://ventrylab.top/approach/">
   <meta property="og:image" content="https://ventrylab.top/ventry-brand-cover.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -17,7 +19,7 @@
   <link rel="canonical" href="https://ventrylab.top/approach/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/brand.css">
-  <link rel="stylesheet" href="/home-company.css?v=product-discovery-1">
+  <link rel="stylesheet" href="/home-company.css?v=company-pages-2">
   <script defer src="/company-nav.js?v=pages-1"></script>
 </head>
 <body class="ventry-amoled section-page">
@@ -57,13 +59,19 @@
     <section class="frame method" id="method" aria-labelledby="method-title" tabindex="-1">
       <div class="method-grid">
         <div>
-          <h1 id="method-title">Как мы делаем продукты</h1>
-          <p class="method-description">Проектируем интерфейс вокруг того, что нужно сделать пользователю.</p>
+          <h1 id="method-title">От рабочей задачи к понятному продукту</h1>
+          <p class="method-description">Сначала разбираем, что нужно сделать человеку. Затем проектируем данные, интерфейс и проверяем весь сценарий — включая нестандартные ситуации.</p>
+          <div class="method-next">
+            <p>Пример такого подхода — «Расчёт».</p>
+            <a class="hero-primary" href="/projects/raschet/">Посмотреть продукт <span aria-hidden="true">↗</span></a>
+            <a class="hero-secondary" href="/raschet/?demo=1">Открыть демо</a>
+          </div>
         </div>
         <ol class="principle-list" aria-label="Этапы разработки">
-          <li><h3>Сценарии работы</h3><p>Определяем, какие записи и действия нужны пользователю. Например, как записать покупку в долг и затем принять частичную оплату.</p></li>
-          <li><h3>Записи и разделы</h3><p>Располагаем данные так, чтобы можно было быстро найти клиента, историю операции и остаток долга.</p></li>
-          <li><h3>Ошибки и состояния</h3><p>Проектируем проверку ввода, обратную связь и сценарии восстановления после ошибки.</p></li>
+          <li><h3>Разобрать сценарий</h3><p>Определяем последовательность действий: найти клиента, записать покупку в долг, принять частичную оплату и проверить остаток.</p></li>
+          <li><h3>Собрать модель данных</h3><p>Связываем клиентов, операции, даты и суммы так, чтобы история долга оставалась согласованной после оплат и отмен.</p></li>
+          <li><h3>Спроектировать интерфейс</h3><p>Выводим важные показатели на видное место, разделяем долги и оплаты, делаем состояния и обратную связь понятными.</p></li>
+          <li><h3>Проверить граничные случаи</h3><p>Проверяем частичные оплаты, отмены операций, фильтры, большие списки и восстановление данных. Не ограничиваемся косметической проверкой экрана.</p></li>
         </ol>
       </div>
     </section>
