@@ -18,9 +18,9 @@
   <meta property="og:image:height" content="675">
   <link rel="canonical" href="https://ventrylab.top/contact/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/brand.css?v=ventry-shared-header">
   <link rel="stylesheet" href="/home-company.css?v=ventry-4-navigation">
-  <script defer src="/company-nav.js?v=ventry-3-5"></script>
+  <script defer src="/company-nav.js?v=ventry-shared-header"></script>
 </head>
 <body class="ventry-amoled section-page">
   <svg xmlns="http://www.w3.org/2000/svg" class="brand-sprite" aria-hidden="true" focusable="false" width="0" height="0">
@@ -31,40 +31,23 @@
     </symbol>
   </svg>
   <a class="skip" href="#main">Перейти к содержимому</a>
-  <header class="mobile-top">
-    <a class="mobile-brand" href="/" aria-label="Ventry — на главную"><svg class="brand-logo" width="38" height="38" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#ventry-brand-logo"/></svg><span>Ventry</span></a>
-    <!-- SEARCH:START -->
-        <a class="header-search" href="/explore/">Поиск</a>
-        <!-- SEARCH:END -->
-    <details class="mobile-nav">
-      <summary><span>Меню</span><span class="menu-glyph" aria-hidden="true"><i></i><i></i></span></summary>
-      <nav aria-label="Мобильная навигация">
-        <!-- MENU:START -->
+  <!-- HEADER:START -->
+  <header class="ventry-header" id="top">
+    <div class="ventry-header-inner">
+      <a class="ventry-header-brand" href="/" aria-label="Ventry — на главную"><img src="/images/ventry-mark.webp" width="36" height="36" alt=""><span>Ventry</span></a>
+      <a class="header-search" href="/explore/">Поиск</a>
+      <button class="ventry-menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+      <nav class="ventry-nav" id="main-nav" aria-label="Основная навигация">
         <a href="/projects/">Продукты</a>
         <a href="/releases/">Обновления</a>
         <a href="/docs/">Документация</a>
         <a href="/support/">Поддержка</a>
         <a href="/about/" aria-current="location">Компания</a>
-        <!-- MENU:END -->
       </nav>
-    </details>
+      <a class="ventry-header-contact" href="/contact/#request">Написать нам</a>
+    </div>
   </header>
-  <header class="rail">
-    <a class="rail-brand" href="/" aria-label="Ventry — на главную"><svg class="brand-logo" width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#ventry-brand-logo"/></svg><span>Ventry</span></a>
-    <nav class="rail-links" aria-label="Основная навигация">
-        <!-- MENU:START -->
-        <a href="/projects/">Продукты</a>
-        <a href="/releases/">Обновления</a>
-        <a href="/docs/">Документация</a>
-        <a href="/support/">Поддержка</a>
-        <a href="/about/" aria-current="location">Компания</a>
-        <!-- MENU:END -->
-      </nav>
-    <!-- SEARCH:START -->
-        <a class="header-search" href="/explore/">Поиск</a>
-        <!-- SEARCH:END -->
-    <a class="header-mail" href="/contact/#request">Написать нам <svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 12 4M6 4h6v6"/></svg></a>
-  </header>
+  <!-- HEADER:END -->
   <main class="frames" id="main" tabindex="-1">
     <section class="frame reach" id="contact" aria-labelledby="contact-title" tabindex="-1">
       <div class="contact-inner">
