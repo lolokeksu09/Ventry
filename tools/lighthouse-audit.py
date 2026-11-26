@@ -2,7 +2,7 @@
 """Lighthouse lab evidence: complete page coverage and same-runner baseline.
 
 No public telemetry, no production requests. Scores are diagnostic on first run;
-execution failures and new accessibility regressions on matched pages fail CI.
+execution failures and any automated accessibility findings fail CI.
 """
 import argparse
 from contextlib import contextmanager
@@ -112,7 +112,9 @@ def main():
     (output/"summary.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     if regressions:
         raise SystemExit("FAIL: new automated accessibility findings on baseline-matched routes")
-    print("PASS: reports collected; inspect remaining findings and manual checks",flush=True)
+    if report["review_required"]:
+        raise SystemExit("FAIL: automated accessibility findings remain; inspect summary.json")
+    print("PASS: automated accessibility checks; manual checks still required",flush=True)
 
 if __name__ == "__main__":
     main()

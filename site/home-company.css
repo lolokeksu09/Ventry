@@ -147,7 +147,7 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .principle-list{list-style:none;counter-reset:principle;margin:0;padding:0;border-top:1px solid #344a3b}
 .principle-list li{counter-increment:principle;display:grid;grid-template-columns:2.1rem minmax(0,1fr);column-gap:12px;row-gap:6px;padding:17px 0;border-bottom:1px solid #344a3b}
 .principle-list li::before{content:counter(principle,decimal-leading-zero);color:#9ab9a5;font-size:13px;grid-row:1 / span 2;line-height:1.6;font-variant-numeric:tabular-nums}
-.principle-list h3{font:600 16px/1.4 var(--ventry-sans);letter-spacing:0}
+.principle-list :is(h2,h3){font:600 16px/1.4 var(--ventry-sans);letter-spacing:0}
 .principle-list p{grid-column:2;color:#afc2b5;font-size:14px;line-height:1.6;max-width:60ch}
 .work-detail .demo-note{font-size:13px;color:#a6b6ab;line-height:1.55;margin-top:12px;max-width:62ch}
 .contact-topics{margin-top:clamp(30px,5vw,64px);max-width:720px}

@@ -265,9 +265,18 @@ function renderDates(){
   const monday=new Date(dateSelected+'T12:00:00Z');monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()+6)%7);
   const week=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
   $('#calendar-next').disabled=dateMode==='calendar'?dateMonth>=today().slice(0,7):week.at(-1)>=today();
-  $('#week-grid').innerHTML=week.map((day,i)=>'<button type="button" class="calendar-day week-day" data-day="'+day+'" aria-label="'+dateText(day)+', записей: '+(counts.get(day)||0)+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'><small>'+['пн','вт','ср','чт','пт','сб','вс'][i]+'</small><strong>'+Number(day.slice(-2))+'</strong><small>'+(counts.get(day)||'—')+'</small></button>').join('');
+  const weekdays=['пн','вт','ср','чт','пт','сб','вс'];
+  const dateDescription=(day,id)=>'<span hidden id="'+id+'">'+dateText(day)+', записей: '+(counts.get(day)||0)+'</span>';
+  $('#week-grid').innerHTML=week.map((day,i)=>{
+    const number=Number(day.slice(-2)),count=counts.get(day)||'—',id='week-date-description-'+day;
+    return '<button type="button" class="calendar-day week-day" data-day="'+day+'" aria-describedby="'+id+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'><small>'+weekdays[i]+'</small> <strong>'+number+'</strong> <small>'+count+'</small>'+dateDescription(day,id)+'</button>';
+  }).join('');
   $('#calendar-grid').innerHTML=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>'<span class="calendar-weekday">'+x+'</span>').join('')+
-    calendarDays(dateMonth).map(day=>day?'<button type="button" class="calendar-day" data-day="'+day+'" aria-label="'+dateText(day)+', записей: '+(counts.get(day)||0)+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'>'+Number(day.slice(-2))+(counts.has(day)?'<small>'+counts.get(day)+'</small>':'')+'</button>':'<span></span>').join('');
+    calendarDays(dateMonth).map(day=>{
+      if(!day)return '<span></span>';
+      const number=Number(day.slice(-2)),count=counts.get(day),id='month-date-description-'+day;
+      return '<button type="button" class="calendar-day" data-day="'+day+'" aria-describedby="'+id+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'>'+number+(counts.has(day)?' <small>'+count+'</small>':'')+dateDescription(day,id)+'</button>';
+    }).join('');
   const panel=$('#date-entries'),opened=new Set([...panel.querySelectorAll('details[open]')].map(x=>x.dataset.date));
   if(dateMode==='calendar'||dateMode==='day'){const g=groups.find(g=>g.day===dateSelected);panel.innerHTML='<h3>'+dateText(dateSelected)+'</h3><p>Действительные записи: '+rub(g?.total||0)+'</p>'+historyRows(g?.entries||[])}
   else panel.innerHTML=groups.length?groups.map(g=>'<details class="date-group" data-date="'+g.day+'" '+(opened.has(g.day)?'open':'')+'><summary><span>'+dateText(g.day)+' · '+g.entries.length+' зап.</span><strong>'+rub(g.total)+'</strong></summary>'+historyRows(g.entries)+'</details>').join(''):'<p>Нет записей.</p>';
