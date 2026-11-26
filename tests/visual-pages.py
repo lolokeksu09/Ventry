@@ -345,13 +345,20 @@ try:
                 footer_baseline = footer_signature
             assert footer_signature == footer_baseline, (width,route,footer_signature,footer_baseline)
             skip = driver.find_element(By.CSS_SELECTOR, ".ventry-skip")
+            assert js("return document.querySelector('.ventry-skip').getBoundingClientRect().bottom <= 0"), (width,route,"skip not hidden")
             js("document.querySelector('.ventry-skip').focus()")
-            skip_signature = js("""const e=document.activeElement,r=e.getBoundingClientRect(),c=getComputedStyle(e);
+            wait.until(lambda _: js("""const e=document.querySelector('.ventry-skip');
+                return document.activeElement===e && Math.round(e.getBoundingClientRect().top)===12 &&
+                    getComputedStyle(e).transitionDuration.split(',').every(t=>parseFloat(t)===0)"""))
+            skip_signature = js("""const e=document.querySelector('.ventry-skip'),r=e.getBoundingClientRect(),c=getComputedStyle(e);
                 return {x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),
                     font:c.fontFamily,bg:c.backgroundColor,radius:c.borderRadius};""")
             if skip_baseline is None:
                 skip_baseline = skip_signature
             assert skip_signature == skip_baseline, (width,route,skip_signature,skip_baseline)
+            skip.send_keys(Keys.ENTER)
+            wait.until(lambda _: js("return location.hash==='#main' && document.activeElement===document.querySelector('#main')"))
+            assert js("return document.querySelector('.ventry-skip').getBoundingClientRect().bottom <= 0"), (width,route,"skip still visible")
     report["shared_header_cross_page"] = "PASS"
     report["shared_footer_and_skip_cross_page"] = "PASS"
 

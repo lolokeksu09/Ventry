@@ -100,5 +100,6 @@ html:has(.ventry-header){scroll-padding-top:88px;scrollbar-gutter:stable}
 
 /* Skip link and footer are owned exclusively by the shared corporate shell. */
 .ventry-skip{position:fixed;top:-100px;left:var(--ventry-shell-gutter);z-index:200;max-width:calc(100% - 2 * var(--ventry-shell-gutter));padding:12px 18px;background:var(--ventry-primary);color:var(--ventry-on-primary);border-radius:5px;font:500 14px/1.5 var(--ventry-sans);text-decoration:none}
+.ventry-skip{transition:none!important;animation:none!important}
 .ventry-skip:focus{top:12px;outline:2px solid var(--ventry-focus);outline-offset:3px}
 .ventry-footer :is(a,button):focus-visible{outline:2px solid var(--ventry-focus);outline-offset:3px}
