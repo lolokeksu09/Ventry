@@ -93,6 +93,9 @@ try:
         page = load("/", width, height)
         header_selector = ".mobile-top" if width <= 930 else ".rail"
         assert driver.find_element(By.CSS_SELECTOR, header_selector).is_displayed()
+        assert js("return document.querySelectorAll('.ventry-footer-group').length") == 3
+        assert js("return document.querySelectorAll('.ventry-footer a[href=\"/explore/\"]').length") == 1
+        assert js("return [...document.querySelectorAll('.rail-links a')].map(a=>a.pathname)") == ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/", "/explore/"]
         assert js("""return [...document.querySelectorAll('main > section')].map(s => s.id)""") == [
             "start", "projects", "about", "method", "contact"
         ]
@@ -202,7 +205,7 @@ try:
         assert js("return document.querySelector('.product-next a.quiet-button').search") == "?topic=raschet"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
-        expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/"]
+        expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/", "/explore/"]
         assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
         assert js("return document.querySelector('#main-nav [aria-current=location]').pathname") == "/projects/"
         assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#next-title", "#faq-title"]
@@ -273,6 +276,13 @@ try:
                 js("window.scrollTo(0,0)")
                 capture(f"ui-{label}-{route.strip('/')}.png")
 
+        load("/explore/", width, height)
+        assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
+        assert js("return document.querySelectorAll('.directory-entry').length") == 24
+        assert js("return document.querySelectorAll('.ventry-footer-group').length") == 3
+        assert driver.find_element(By.ID, "directory-search").is_displayed()
+        if width in (390,1440):
+            capture(f"ui-{label}-explore.png")
         report[label] = {"home": page, "product": product}
 
     load("/", 390, 844)
@@ -349,6 +359,29 @@ try:
     reset.click()
     assert js("return document.querySelectorAll('[data-knowledge-item]:not([hidden])').length") == 9
     report["knowledge_search"] = "PASS"
+    load("/explore/", 390, 844)
+    directory = driver.find_element(By.ID, "directory-search")
+    directory.send_keys("резервная копия")
+    assert js("return document.querySelectorAll('.directory-entry:not([hidden])').length") == 1
+    assert js("return document.querySelector('.directory-entry:not([hidden]) a').hash") == "#backup"
+    directory.clear()
+    directory.send_keys("неизвестный-запрос-123")
+    assert js("return document.querySelectorAll('.directory-entry:not([hidden])').length") == 0
+    assert js("return !document.querySelector('[data-knowledge-empty]').hidden")
+    reset = driver.find_element(By.CSS_SELECTOR, "[data-knowledge-reset]")
+    driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})", reset)
+    reset.click()
+    demo_filter = driver.find_element(By.CSS_SELECTOR, '[data-knowledge-filter="demo"]')
+    driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})",demo_filter)
+    demo_filter.click()
+    assert js("return document.querySelectorAll('.directory-entry:not([hidden])').length") == 7
+    assert js("return [...document.querySelectorAll('.directory-entry:not([hidden])')].every(e=>e.dataset.knowledgeItem==='demo')")
+    stats = driver.find_element(By.CSS_SELECTOR, '.directory-entry a[href*="scenario=statistics"]')
+    driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})", stats)
+    stats.click()
+    wait.until(lambda _: js("return location.pathname") == "/raschet/")
+    wait.until(lambda _: js("return location.hash") == "#statistics")
+    report["directory_search_and_scenario"] = "PASS"
 
     # Actual HTTP responses in the local preview, then a browser network error and recovery.
     load("/status/",390,844)
@@ -368,6 +401,9 @@ try:
     report["availability_success_failure_retry"] = "PASS"
 
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+    driver.get(BASE + "/explore/")
+    assert len(driver.find_elements(By.CSS_SELECTOR, ".directory-entry")) == 24
+    assert not driver.find_element(By.CSS_SELECTOR, "[data-knowledge-controls]").is_displayed()
     driver.get(BASE + "/status/")
     assert driver.find_element(By.ID, "availability-summary").text == "Проверка ещё не выполнена."
     assert not driver.find_element(By.ID, "availability-refresh").is_displayed()
@@ -544,6 +580,6 @@ try:
     (OUTPUT / "browser-performance.json").write_text(json.dumps({"environment":"local preview, cold browser cache, no network/CPU throttling; timings diagnostic only","samples":samples},ensure_ascii=False,indent=2),encoding="utf-8")
     report["browser_payload_budget"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("PASS: 9 viewports, 12 corporate pages, resource centers, availability, browser payload budgets, demo routes, history, focus, clipboard and no-JS",flush=True)
+    print("PASS: 9 viewports, 13 corporate pages, resource centers, availability, browser payload budgets, demo routes, history, focus, clipboard and no-JS",flush=True)
 finally:
     driver.quit()

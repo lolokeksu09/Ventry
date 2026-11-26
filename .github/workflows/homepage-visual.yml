@@ -23,6 +23,9 @@ on:
       - 'site/docs/**'
       - 'site/support/**'
       - 'site/status/**'
+      - 'site/explore/**'
+      - 'data/navigation.json'
+      - 'tools/build-navigation.py'
       - 'tools/verify-performance.py'
       - 'tests/serve-preview.py'
       - 'site/styles.css'
@@ -47,6 +50,7 @@ jobs:
         run: |
           node --check site/company-nav.js
           python3 tools/verify-site.py
+          python3 tools/build-navigation.py --check
           python3 tools/build-catalog.py --check
           python3 -m unittest discover -s tests -p test_catalog.py
           python3 - <<'PY'
@@ -76,7 +80,7 @@ jobs:
           for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
               encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
               css = css.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
-          for rel, mime in [('images/raschet/android-book.webp','image/webp'), ('images/raschet-icon.svg','image/svg+xml')]:
+          for rel, mime in [('images/raschet/android-book.webp','image/webp'), ('images/raschet-icon.svg','image/svg+xml'), ('images/ventry-mark.webp','image/webp')]:
               encoded = base64.b64encode((root/rel).read_bytes()).decode('ascii')
               html = html.replace('src="/'+rel+'"', 'src="data:'+mime+';base64,'+encoded+'"')
           brand = (root/'brand.css').read_text(encoding='utf-8')
@@ -92,7 +96,7 @@ jobs:
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           for route, anchor in {'/':'#start','/about/':'#about','/approach/':'#method','/projects/':'#projects','/contact/':'#contact'}.items():
               html = html.replace('href="'+route+'"','href="'+anchor+'"')
-          for route in ('/projects/raschet/','/legal/','/privacy/','/releases/','/docs/','/support/','/status/'):
+          for route in ('/projects/raschet/','/legal/','/privacy/','/releases/','/docs/','/support/','/status/','/explore/'):
               html = html.replace('href="'+route+'"','href="https://ventrylab.top'+route+'"')
           assert css_count == js_count == 1
           assert 'src="/images/raschet/android-book.webp"' not in html
