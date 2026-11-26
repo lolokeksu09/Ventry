@@ -26,3 +26,14 @@ test('finds notes and keeps reversals visible in the audit trail', () => {
   assert.deepEqual(ids({ query: 'Анна' }), ['debt', 'payment', 'reversal']);
   assert.deepEqual(ids({ query: 'нет совпадений' }), []);
 });
+
+import { periodRange, projectDemo } from '../site/raschet/demo-analytics.js';
+const analyticsBook={"clients":[{"id":"a","name":"А"},{"id":"b","name":"Б"}],"entries":[{"id":"1","clientId":"a","type":"debt","amount":10000,"date":"2026-11-01"},{"id":"2","clientId":"a","type":"payment","amount":3000,"date":"2026-11-03"},{"id":"3","clientId":"b","type":"debt","amount":5000,"date":"2026-11-04"},{"id":"4","clientId":"b","type":"reversal","reverses":"3","amount":5000,"date":"2026-11-06"}]};
+test('analytics respects historical cutoffs, cancellation and client scope', () => {
+  const a=projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-05'}).totals;
+  assert.deepEqual([a.start,a.end,a.debt,a.payment,a.debtors],[10000,12000,5000,3000,2]);
+  const b=projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-06'}).totals;
+  assert.deepEqual([b.end,b.debt,b.debtCount,b.cancelDebt,b.debtors],[7000,0,0,5000,1]);
+  assert.equal(projectDemo(analyticsBook,{from:'2026-11-01',to:'2026-11-06'},'a').totals.debtCount,1);
+  assert.equal(periodRange('week','2026-11-26',analyticsBook.entries).from,'2026-11-23');
+});
