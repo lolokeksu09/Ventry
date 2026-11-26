@@ -1,8 +1,8 @@
 'use strict';
 
-const mobileMenu = document.querySelector('.mobile-nav');
+(() => {
 const year = document.querySelector('#year');
-year.textContent = String(new Date().getFullYear());
+if (year) year.textContent = String(new Date().getFullYear());
 
 // Recover the retired modal links in HTML that can still be cached on mobile.
 if (document.getElementById('section-dialog')) {
@@ -18,24 +18,38 @@ if (document.getElementById('section-dialog')) {
   openSectionPage();
 }
 
-// Close the native menu when switching to the desktop layout.
-window.matchMedia('(min-width: 931px)').addEventListener('change', event => {
-  if (event.matches) mobileMenu.open = false;
-});
-mobileMenu.querySelector('nav').addEventListener('click', event => {
-  if (event.target.closest('a') && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-    mobileMenu.open = false;
-  }
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && mobileMenu.open) {
-    mobileMenu.open = false;
-    mobileMenu.querySelector('summary').focus();
-  }
-});
-document.addEventListener('click', event => {
-  if (mobileMenu.open && !mobileMenu.contains(event.target)) mobileMenu.open = false;
-});
+// One responsive corporate menu; plain links remain available without JavaScript.
+const header = document.querySelector('.ventry-header');
+if (header) {
+  const button = header.querySelector('.ventry-menu-toggle');
+  const nav = header.querySelector('#main-nav');
+  const desktop = window.matchMedia('(min-width: 931px)');
+  const setOpen = open => {
+    nav.classList.toggle('is-open', open);
+    button.setAttribute('aria-expanded', String(open));
+    button.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+  };
+  const close = () => setOpen(false);
+  header.classList.add('has-menu');
+  button.addEventListener('click', () => setOpen(!nav.classList.contains('is-open')));
+  desktop.addEventListener('change', close);
+  nav.addEventListener('click', event => {
+    if (event.target.closest('a') && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && nav.classList.contains('is-open')) {
+      close();
+      button.focus();
+    }
+  });
+  document.addEventListener('click', event => {
+    if (!nav.contains(event.target) && !button.contains(event.target)) close();
+  });
+  header.addEventListener('focusout', () => requestAnimationFrame(() => {
+    if (!header.contains(document.activeElement)) close();
+  }));
+  window.addEventListener('pageshow', close);
+}
 
 const copyEmailButton = document.querySelector('[data-copy-email]');
 const copyEmailStatus = document.querySelector('#copy-email-status');
@@ -157,3 +171,5 @@ if (requestControls) {
   refresh();
   requestControls.hidden = false;
 }
+
+})();

@@ -66,6 +66,21 @@ def anchor(url,title,route,menu=False):
         current = ' aria-current="location"'
     return f'<a href="{escape(url)}"{current}>{escape(title)}</a>'
 
+def header(data,route):
+    links = "\n".join("        "+anchor(u,t,route,True) for u,t in data["menu"])
+    search = anchor(*data["search"],route).replace("<a ",'<a class="header-search" ',1)
+    return f'''<header class="ventry-header" id="top">
+    <div class="ventry-header-inner">
+      <a class="ventry-header-brand" href="/" aria-label="Ventry — на главную"><img src="/images/ventry-mark.webp" width="36" height="36" alt=""><span>Ventry</span></a>
+      {search}
+      <button class="ventry-menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+      <nav class="ventry-nav" id="main-nav" aria-label="Основная навигация">
+{links}
+      </nav>
+      <a class="ventry-header-contact" href="/contact/#request">Написать нам</a>
+    </div>
+  </header>'''
+
 def footer(data,route):
     groups = "\n".join(
         f'      <nav class="ventry-footer-group" aria-label="{escape(g["title"])}"><h2>{escape(g["title"])}</h2>'
@@ -97,11 +112,7 @@ def block(text,key,content,prefix,expected):
     return re.sub(pattern,lambda _:start+"\n"+content+"\n"+prefix+end,text)
 
 def render(text,data,route):
-    menu = "\n".join("        "+anchor(u,t,route,True) for u,t in data["menu"])
-    expected = 2 if route in ("/","/about/","/approach/","/projects/","/contact/") else 1
-    text = block(text,"MENU",menu,"        ",expected)
-    search = "        "+anchor(*data["search"],route).replace("<a ",'<a class="header-search" ',1)
-    text = block(text,"SEARCH",search,"        ",expected)
+    text = block(text,"HEADER","  "+header(data,route),"  ",1)
     text = block(text,"FOOTER","  "+footer(data,route),"  ",1)
     if route == "/explore/":
         text = block(text,"DIRECTORY",directory(data),"        ",1)

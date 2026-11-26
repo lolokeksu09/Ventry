@@ -18,31 +18,31 @@
   <meta property="og:image:height" content="675">
   <link rel="canonical" href="https://ventrylab.top/docs/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/brand.css?v=ventry-shared-header">
   <link rel="stylesheet" href="/styles.css?v=ventry-3-5">
   <link rel="stylesheet" href="/inner-pages.css?v=ventry-4-navigation">
-  <script defer src="/app.js?v=ventry-3-5"></script>
+  <script defer src="/company-nav.js?v=ventry-shared-header"></script>
+  <script defer src="/app.js?v=ventry-shared-header"></script>
 </head>
 <body class="document-page resource-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
-  <header class="site-header" id="top">
-    <div class="header-inner content-width">
-      <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
-      <!-- SEARCH:START -->
-        <a class="header-search" href="/explore/">Поиск</a>
-        <!-- SEARCH:END -->
-      <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
-      <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
-        <!-- MENU:START -->
+  <!-- HEADER:START -->
+  <header class="ventry-header" id="top">
+    <div class="ventry-header-inner">
+      <a class="ventry-header-brand" href="/" aria-label="Ventry — на главную"><img src="/images/ventry-mark.webp" width="36" height="36" alt=""><span>Ventry</span></a>
+      <a class="header-search" href="/explore/">Поиск</a>
+      <button class="ventry-menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+      <nav class="ventry-nav" id="main-nav" aria-label="Основная навигация">
         <a href="/projects/">Продукты</a>
         <a href="/releases/">Обновления</a>
         <a href="/docs/" aria-current="page">Документация</a>
         <a href="/support/">Поддержка</a>
         <a href="/about/">Компания</a>
-        <!-- MENU:END -->
       </nav>
+      <a class="ventry-header-contact" href="/contact/#request">Написать нам</a>
     </div>
   </header>
+  <!-- HEADER:END -->
   <main id="main" class="legal-main" tabindex="-1">
     <div class="content-width resource-heading">
       <nav class="resource-breadcrumb" aria-label="Хлебные крошки"><a href="/">Ventry</a><span aria-hidden="true">/</span><span>Документация</span></nav>
