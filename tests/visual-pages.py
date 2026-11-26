@@ -165,7 +165,7 @@ try:
         assert js("return document.querySelector('.screen-dialog').open") is False
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         assert js("""const app=document.querySelector('main[itemtype="https://schema.org/SoftwareApplication"]');return !!app && app.querySelector('[itemprop="name"]').textContent==='Расчёт' && app.querySelector('[itemprop="operatingSystem"]').content==='Android'""")
-        assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
+        assert js("return [...document.querySelectorAll(\'.android-feature-list dt\')].map(e=>e.textContent)") == ["Книга клиентов", "Возврат долгов", "Статистика магазина", "Статистика клиента", "Отчёты", "Сохранность книги"]
         assert js("return [...document.querySelectorAll('.scenario-grid a')].map(a=>new URL(a.href).searchParams.get('scenario'))") == ["debt","payment","deadlines","history","calendar","statistics"]
         screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
         assert len(screenshots) == 3
@@ -359,6 +359,15 @@ try:
     driver.refresh()
     assert js("return document.querySelector('#request-device').value") == ""
     report["structured_local_draft"] = "PASS"
+    load("/contact/?topic=raschet#request",390,844)
+    assert js("return !document.querySelector(\'#request-purpose-group\').hidden")
+    js("document.querySelector(\'#request-purpose\').value=\'update\';document.querySelector(\'#request-purpose\').dispatchEvent(new Event(\'change\'))")
+    assert js("""return new URLSearchParams(document.querySelector(\'#request-mail\').getAttribute(\'href\').split(\'?\')[1]).get(\'body\')===\'Цель обращения: Обновление установленного приложения\'""")
+    for other in ("support", "partner"):
+        driver.execute_script("document.querySelector(\'#request-topic\').value=arguments[0];document.querySelector(\'#request-topic\').dispatchEvent(new Event(\'change\'))", other)
+        assert js("return document.querySelector(\'#request-purpose-group\').hidden")
+        assert js("""return new URLSearchParams(document.querySelector(\'#request-mail\').getAttribute(\'href\').split(\'?\')[1]).get(\'body\')===\'\'""")
+    report["apk_request_purpose"] = "PASS"
 
     load("/docs/",390,844)
     search = driver.find_element(By.ID,"docs-search")
@@ -381,7 +390,15 @@ try:
     driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})",reset)
     reset.click()
     assert js("return document.querySelectorAll('[data-knowledge-item]:not([hidden])').length") == 9
+    load("/support/#restore-csv",390,844)
+    wait.until(lambda _: js("return document.querySelector(\'#restore-csv\').open"))
+    js("document.querySelector(\'[data-knowledge-filter=demo]\').click()")
+    assert js("return document.querySelector(\'#update-error\').hidden")
+    js("location.hash=\'update-error\'")
+    wait.until(lambda _: js("return document.querySelector(\'#update-error\').open && !document.querySelector(\'#update-error\').hidden"))
+    assert js("return document.querySelector(\'[data-knowledge-filter=all]\').getAttribute(\'aria-pressed\')") == "true"
     report["knowledge_search"] = "PASS"
+    report["contextual_help"] = "PASS"
     load("/",390,844)
     driver.find_element(By.CSS_SELECTOR,".mobile-top .header-search").click()
     wait.until(lambda _: js("return location.pathname") == "/explore/")
