@@ -7,6 +7,8 @@
   <title>Расчёт — цифровая долговая книга | Ventry</title>
   <meta name="description" content="Android-приложение Ventry для учёта долгов и оплат. Попробуйте интерактивное демо с вымышленными данными.">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta name="twitter:card" content="summary_large_image">
   <meta property="og:title" content="Расчёт — цифровая долговая книга | Ventry">
   <meta property="og:description" content="Android-приложение Ventry для учёта долгов и оплат. Попробуйте интерактивное демо с вымышленными данными.">
   <meta property="og:url" content="https://ventrylab.top/projects/raschet/">
@@ -20,8 +22,20 @@
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=emerald-1">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-2-product">
-  <script defer src="/app.js?v=ui-audit-2"></script>
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-2-screen-gallery">
+  <script defer src="/app.js?v=ui-audit-3"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Расчёт",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Android",
+    "description": "Приложение для учёта долгов, частичных оплат и истории клиентов небольшого магазина.",
+    "url": "https://ventrylab.top/projects/raschet/",
+    "publisher": { "@id": "https://ventrylab.top/#organization" }
+  }
+  </script>
 </head>
 <body class="product-page">
   <a class="skip-link" href="#main">Перейти к содержимому</a>
@@ -56,16 +70,11 @@
         <p class="share-status" role="status" aria-live="polite" data-copy-status></p>
         <div class="copy-fallback" hidden><label for="project-url">Скопируйте адрес вручную</label><input id="project-url" type="url" readonly value="https://ventrylab.top/projects/raschet/"></div>
       </div>
-      <figure class="ledger-stage" aria-labelledby="ledger-caption">
-        <div class="ledger-sheet">
-          <figcaption id="ledger-caption">Пример сценария учёта</figcaption>
-          <dl>
-            <div><dt>Остаток до оплаты</dt><dd>3 350 ₽</dd></div>
-            <div><dt>Частичная оплата</dt><dd>−1 000 ₽</dd></div>
-            <div class="ledger-balance"><dt>Остаток долга</dt><dd>2 350 ₽</dd></div>
-          </dl>
-          <p>В демо эта оплата появится в истории.</p>
-        </div>
+      <figure class="ledger-stage" aria-labelledby="hero-screen-caption">
+        <a class="hero-screen-link" href="/images/raschet/android-book.webp" data-screen-preview aria-haspopup="dialog" aria-label="Увеличить экран долговой книги">
+          <img class="hero-screen" src="/images/raschet/android-book.webp" width="540" height="1200" alt="Настоящий экран Android-приложения «Расчёт»: долговая книга, остаток и календарь" decoding="async" fetchpriority="high">
+        </a>
+        <figcaption id="hero-screen-caption">Долговая книга <span>Экран Android-сборки · нажмите, чтобы увеличить</span></figcaption>
       </figure>
     </section>
     <section class="android-features content-width" aria-labelledby="android-features-title">
@@ -81,11 +90,17 @@
     <section class="android-gallery content-width" aria-labelledby="gallery-title">
       <div class="gallery-intro"><p class="section-kicker">Интерфейс Android</p><h2 id="gallery-title">Настоящие экраны «Расчёта»</h2><p>Снимки тестовой Android-сборки от 25 ноября 2026 года. Все суммы и имена на экранах — тестовые, а не данные покупателей.</p></div>
       <div class="android-gallery-grid">
-        <figure><a href="/images/raschet/android-book.webp" aria-label="Увеличить снимок долговой книги"><img src="/images/raschet/android-book.webp" width="540" height="1200" alt="Долговая книга на Android: текущий остаток, действия и календарь" loading="lazy" decoding="async"></a><figcaption><strong>Долговая книга</strong><span>Общий остаток, быстрые действия и календарь записей.</span></figcaption></figure>
-        <figure><a href="/images/raschet/android-statistics.webp" aria-label="Увеличить снимок статистики магазина"><img src="/images/raschet/android-statistics.webp" width="540" height="1200" alt="Статистика магазина на Android: периоды, долг, должники и операции" loading="lazy" decoding="async"></a><figcaption><strong>Статистика магазина</strong><span>Должники, просрочки, суммы и операции за период.</span></figcaption></figure>
-        <figure><a href="/images/raschet/android-client-statistics.webp" aria-label="Увеличить снимок статистики клиента"><img src="/images/raschet/android-client-statistics.webp" width="540" height="1200" alt="Персональная статистика клиента на Android: остаток, долги и оплаты" loading="lazy" decoding="async"></a><figcaption><strong>Статистика клиента</strong><span>Динамика задолженности и персональная история.</span></figcaption></figure>
+        <figure><a href="/images/raschet/android-book.webp" data-screen-preview aria-haspopup="dialog" aria-label="Увеличить снимок долговой книги"><img src="/images/raschet/android-book.webp" width="540" height="1200" alt="Долговая книга на Android: текущий остаток, действия и календарь" loading="lazy" decoding="async"></a><figcaption><strong>Долговая книга</strong><span>Общий остаток, быстрые действия и календарь записей.</span></figcaption></figure>
+        <figure><a href="/images/raschet/android-statistics.webp" data-screen-preview aria-haspopup="dialog" aria-label="Увеличить снимок статистики магазина"><img src="/images/raschet/android-statistics.webp" width="540" height="1200" alt="Статистика магазина на Android: периоды, долг, должники и операции" loading="lazy" decoding="async"></a><figcaption><strong>Статистика магазина</strong><span>Должники, просрочки, суммы и операции за период.</span></figcaption></figure>
+        <figure><a href="/images/raschet/android-client-statistics.webp" data-screen-preview aria-haspopup="dialog" aria-label="Увеличить снимок статистики клиента"><img src="/images/raschet/android-client-statistics.webp" width="540" height="1200" alt="Персональная статистика клиента на Android: остаток, долги и оплаты" loading="lazy" decoding="async"></a><figcaption><strong>Статистика клиента</strong><span>Динамика задолженности и персональная история.</span></figcaption></figure>
       </div>
     </section>
+    <dialog class="screen-dialog" id="screen-dialog" aria-label="Просмотр экрана приложения">
+      <div class="screen-dialog-panel">
+        <form method="dialog"><button class="screen-dialog-close" type="submit" aria-label="Закрыть просмотр">×</button></form>
+        <figure><img id="screen-dialog-image" alt=""><figcaption id="screen-dialog-caption"></figcaption></figure>
+      </div>
+    </dialog>
     <section class="product-scope content-width" id="possibilities" aria-labelledby="possibilities-title">
       <p class="section-kicker">Интерактивный пример</p><h2 id="possibilities-title">Попробуйте основные сценарии</h2>
       <dl class="scope-list">
