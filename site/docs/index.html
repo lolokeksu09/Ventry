@@ -20,7 +20,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=ventry-3-5">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-layout">
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-4-navigation">
   <script defer src="/app.js?v=ventry-3-5"></script>
 </head>
 <body class="document-page resource-page">
@@ -28,16 +28,17 @@
   <header class="site-header" id="top">
     <div class="header-inner content-width">
       <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
+      <!-- SEARCH:START -->
+        <a class="header-search" href="/explore/">Поиск</a>
+        <!-- SEARCH:END -->
       <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
       <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
         <!-- MENU:START -->
-        <a href="/">Главная</a>
-        <a href="/about/">О Ventry</a>
-        <a href="/approach/">Подход</a>
-        <a href="/projects/">Проекты</a>
-        <a href="/support/" aria-current="location">Поддержка</a>
-        <a href="/contact/">Контакты</a>
-        <a href="/explore/">Поиск</a>
+        <a href="/projects/">Продукты</a>
+        <a href="/releases/">Обновления</a>
+        <a href="/docs/" aria-current="page">Документация</a>
+        <a href="/support/">Поддержка</a>
+        <a href="/about/">Компания</a>
         <!-- MENU:END -->
       </nav>
     </div>
@@ -47,12 +48,6 @@
       <nav class="resource-breadcrumb" aria-label="Хлебные крошки"><a href="/">Ventry</a><span aria-hidden="true">/</span><span>Документация</span></nav>
       <h1>Документация</h1>
       <p>Практические инструкции для знакомства с «Расчётом» и безопасной работы с отдельным Android-приложением.</p>
-      <nav class="resource-tabs" aria-label="Ресурсы Ventry">
-        <a href="/releases/">Релизы</a>
-        <a href="/docs/" aria-current="page">Документация</a>
-        <a href="/support/">Поддержка</a>
-        <a href="/status/">Доступность</a>
-      </nav>
     </div>
     <div class="content-width resource-content knowledge-layout" data-knowledge>
       <div class="knowledge-controls" id="docs-controls" data-knowledge-controls hidden>

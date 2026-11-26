@@ -22,7 +22,7 @@
   <link rel="preload" href="/fonts/golos-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=ventry-3-5">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-6">
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-4-navigation">
   <script defer src="/app.js?v=ventry-3-5"></script>
 </head>
 <body class="document-page">
@@ -30,16 +30,17 @@
   <header class="site-header" id="top">
     <div class="header-inner content-width">
       <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
+      <!-- SEARCH:START -->
+        <a class="header-search" href="/explore/">Поиск</a>
+        <!-- SEARCH:END -->
       <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
       <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
         <!-- MENU:START -->
-        <a href="/">Главная</a>
-        <a href="/about/">О Ventry</a>
-        <a href="/approach/">Подход</a>
-        <a href="/projects/">Проекты</a>
+        <a href="/projects/">Продукты</a>
+        <a href="/releases/">Обновления</a>
+        <a href="/docs/">Документация</a>
         <a href="/support/">Поддержка</a>
-        <a href="/contact/">Контакты</a>
-        <a href="/explore/">Поиск</a>
+        <a href="/about/" aria-current="location">Компания</a>
         <!-- MENU:END -->
       </nav>
     </div>
