@@ -56,3 +56,43 @@
 /* Search remains visible independently of the collapsed primary navigation. */
 .header-search{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;white-space:nowrap;font:500 13px/1.3 var(--ventry-sans);color:var(--ventry-muted);text-decoration:none}
 .header-search:hover,.header-search[aria-current=page]{color:var(--ventry-text);text-decoration:underline;text-underline-offset:5px}
+
+/* One corporate header, independent of page-specific layout. */
+html:has(.ventry-header){scroll-padding-top:88px}
+.ventry-header{position:sticky;top:0;z-index:35;flex:none;background:var(--ventry-header);border-bottom:1px solid var(--ventry-line);font:500 14px/1.4 var(--ventry-sans);color:var(--ventry-text)}
+.ventry-header-inner{--header-gutter:clamp(20px,4vw,48px);width:min(1240px,calc(100% - 2 * var(--header-gutter)));min-height:72px;margin-inline:auto;display:flex;align-items:center;gap:clamp(12px,1.8vw,26px)}
+.ventry-header-brand{display:inline-flex;align-items:center;gap:10px;flex:none;min-height:44px;color:var(--ventry-text);font:600 24px/1 var(--ventry-sans);letter-spacing:-.03em;white-space:nowrap;text-decoration:none}
+.ventry-header-brand img{display:block;width:36px;height:36px;border-radius:8px;flex:none}
+.ventry-header .header-search{order:2;flex:none;font:500 14px/1.4 var(--ventry-sans)}
+.ventry-nav{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);margin-left:auto}
+.ventry-nav a{display:flex;align-items:center;min-height:44px;font:500 14px/1.4 var(--ventry-sans);color:var(--ventry-muted);text-decoration:none;white-space:nowrap;border-bottom:1px solid transparent}
+.ventry-nav a:hover,.ventry-nav a[aria-current]{color:var(--ventry-text);border-color:var(--ventry-green)}
+.ventry-header-contact{order:3;display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid #49664d;border-radius:7px;white-space:nowrap;color:var(--ventry-text);font:500 13px/1.4 var(--ventry-sans);text-decoration:none}
+.ventry-header-contact:hover{border-color:var(--ventry-green)}
+.ventry-menu-toggle{display:none}
+.ventry-header :is(a,button):focus-visible{outline:2px solid var(--ventry-focus);outline-offset:3px}
+@media(min-width:931px) and (max-width:1100px){
+ .ventry-header-inner{gap:12px}
+ .ventry-nav{gap:12px}
+ .ventry-nav a{font-size:13px}
+}
+@media(max-width:930px){
+ .ventry-header:not(.has-menu){position:relative}
+ .ventry-header-inner{min-height:72px;gap:12px;flex-wrap:wrap}
+ .ventry-header .header-search{order:0;margin-left:auto}
+ .ventry-header-contact{display:none}
+ .ventry-nav{width:100%;margin:0;flex-wrap:wrap;padding-bottom:8px;gap:0 16px}
+ .ventry-header.has-menu .ventry-header-inner{flex-wrap:nowrap}
+ .ventry-header.has-menu .ventry-menu-toggle{display:grid;place-content:center;flex:none;gap:4px;width:44px;height:44px;padding:0;border:1px solid #49664d;border-radius:7px;background:#101f16;color:var(--ventry-text);cursor:pointer}
+ .ventry-menu-toggle span{display:block;width:20px;height:2px;background:currentColor;border-radius:1px}
+ .ventry-menu-toggle[aria-expanded=true] span:first-child{transform:translateY(6px) rotate(45deg)}
+ .ventry-menu-toggle[aria-expanded=true] span:nth-child(2){opacity:0}
+ .ventry-menu-toggle[aria-expanded=true] span:last-child{transform:translateY(-6px) rotate(-45deg)}
+ .ventry-header.has-menu .ventry-nav{display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);width:min(1240px,calc(100% - 2 * var(--header-gutter)));max-height:calc(100vh - 88px);max-height:calc(100svh - 88px);overflow:auto;overscroll-behavior:contain;padding:8px 17px;border:1px solid #45604a;border-radius:8px;background:#101e15;box-shadow:0 20px 50px #0008;gap:0}
+ .ventry-header.has-menu .ventry-nav.is-open{display:grid}
+ .ventry-header.has-menu .ventry-nav a{min-height:49px;font-size:15px;white-space:normal;border-bottom:1px solid var(--ventry-line)}
+ .ventry-header.has-menu .ventry-nav a:last-child:not([aria-current]){border-color:transparent}
+ .ventry-header.has-menu .ventry-nav a[aria-current]{border-color:var(--ventry-green);color:var(--ventry-text)}
+}
+@media(max-width:360px){.ventry-header-inner{gap:8px}.ventry-header-brand{gap:7px;font-size:22px}}
+@media(prefers-reduced-motion:no-preference){.ventry-menu-toggle span{transition:transform .16s ease,opacity .16s ease}}
