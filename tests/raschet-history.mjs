@@ -37,3 +37,17 @@ test('analytics respects historical cutoffs, cancellation and client scope', () 
   assert.equal(projectDemo(analyticsBook,{from:'2026-11-01',to:'2026-11-06'},'a').totals.debtCount,1);
   assert.equal(periodRange('week','2026-11-26',analyticsBook.entries).from,'2026-11-23');
 });
+
+import { previousRange, bookDays, calendarDays } from '../site/raschet/demo-analytics.js';
+test('calendar handles Monday start and leap years',()=>{
+  assert.equal(calendarDays('2026-02').length,34);
+  assert.equal(calendarDays('2024-02').at(-1),'2024-02-29');
+  assert.equal(bookDays(analyticsBook,'debt')[0].total,0);
+  assert.equal(bookDays(analyticsBook,'debt')[0].entries.length,1);
+});
+test('comparison matches Android calendar policy',()=>{
+  assert.deepEqual(previousRange('month',periodRange('month','2026-03-31',[])),{from:'2026-02-01',to:'2026-02-28'});
+  assert.deepEqual(previousRange('custom',{from:'2026-11-03',to:'2026-11-05'}),{from:'2026-10-31',to:'2026-11-02'});
+  assert.equal(periodRange('quarter','2026-11-26',[]).from,'2026-10-01');
+  assert.equal(previousRange('all',{from:'2026-01-01',to:'2026-11-26'}),null);
+});
