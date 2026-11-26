@@ -68,7 +68,7 @@ grep -Eiq "^x-content-type-options: nosniff" "$tmp/headers-clean"
 grep -Eiq "^x-frame-options: DENY" "$tmp/headers-clean"
 if grep -Eiq "^server:" "$tmp/headers-clean"; then echo "FAIL: Server header exposed"; exit 1; fi
 
-for path in '/' '/index.html' '/projects/raschet/' '/legal/' '/privacy/'; do
+for path in '/' '/index.html' '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/support/'; do
   curl --fail --silent --show-error --max-time 5 --head "$base$path" > "$tmp/page-headers"
   grep -Eiq '^cache-control: no-cache[[:space:]]*$' "$tmp/page-headers" || {
     echo "FAIL: HTML cache revalidation missing for $path"; exit 1;
@@ -87,7 +87,7 @@ for path in \
   fi
 done
 
-for path in '/projects/raschet/' '/legal/' '/privacy/' '/app.js' \
+for path in '/projects/raschet/' '/legal/' '/privacy/' '/releases/' '/docs/' '/support/' '/app.js' \
   '/styles.css' '/favicon.svg' '/sitemap.xml' \
   '/google9048871eda96ab4a.html' '/fonts/OFL.txt' '/raschet/' '/raschet/app.js'; do
   status="$(curl --silent --show-error --max-time 5 \

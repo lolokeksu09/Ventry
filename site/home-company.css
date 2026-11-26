@@ -258,3 +258,8 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .mobile-nav nav{max-height:calc(100vh - 88px);max-height:calc(100svh - 88px);overflow:auto}
 .header-mail{min-height:44px}
 @media(max-width:930px){.mobile-nav nav{max-width:calc(100vw - 2 * var(--gutter))}}
+
+/* Product resources, not a second catalog. */
+.work-resource-links{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:9px}
+.work-resource-links a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+@media(min-width:931px) and (max-width:1200px){.rail{gap:16px}.rail-links{gap:12px}.header-mail{padding-inline:10px}}
