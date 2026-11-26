@@ -16,6 +16,9 @@ on:
       - 'site/contact/index.html'
       - 'site/legal/index.html'
       - 'site/privacy/index.html'
+      - 'site/releases/**'
+      - 'site/docs/**'
+      - 'site/support/**'
       - 'site/styles.css'
       - 'site/brand.css'
       - 'site/raschet/**'
@@ -81,7 +84,7 @@ jobs:
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           for route, anchor in {'/':'#start','/about/':'#about','/approach/':'#method','/projects/':'#projects','/contact/':'#contact'}.items():
               html = html.replace('href="'+route+'"','href="'+anchor+'"')
-          for route in ('/projects/raschet/','/legal/','/privacy/'):
+          for route in ('/projects/raschet/','/legal/','/privacy/','/releases/','/docs/','/support/'):
               html = html.replace('href="'+route+'"','href="https://ventrylab.top'+route+'"')
           assert css_count == js_count == 1
           assert 'src="/images/raschet/android-book.webp"' not in html

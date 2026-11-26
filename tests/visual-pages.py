@@ -200,7 +200,7 @@ try:
         assert js("return document.querySelector('.product-next a.quiet-button').search") == "?topic=raschet"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
-        expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/contact/"]
+        expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/support/", "/contact/"]
         assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
         assert js("return document.querySelector('#main-nav [aria-current=location]').pathname") == "/projects/"
         assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#next-title", "#faq-title"]
@@ -239,6 +239,27 @@ try:
             wait.until(lambda _: js("const h=document.getElementById(location.hash.slice(1)).getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))
             assert js("""return document.querySelector('h1').innerText.length>10""")
             if width in (390, 1440):
+                js("window.scrollTo(0,0)")
+                capture(f"ui-{label}-{route.strip('/')}.png")
+
+        for route in ("/releases/", "/docs/", "/support/"):
+            resource = load(route, width, height)
+            assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
+            assert js("return [...document.querySelectorAll('.resource-tabs a')].map(a=>a.pathname)") == ["/releases/", "/docs/", "/support/"]
+            assert js("return document.querySelector('.resource-tabs [aria-current=page]').pathname") == route
+            if route == "/releases/":
+                assert js("return [...document.querySelectorAll('.release-entry a')].every(a=>a.href.startsWith('https://github.com/lolokeksu09/dolg-book/releases/tag/'))")
+                assert js("return document.querySelector('.release-list').innerText.length > 10")
+            elif route == "/docs/":
+                assert js("return document.querySelectorAll('.guide-steps li').length") == 4
+                assert js("return document.querySelector('#backup').textContent.includes('копии')")
+            else:
+                assert js("return document.querySelectorAll('.resource-route-grid article').length") == 3
+                faq = driver.find_element(By.CSS_SELECTOR, ".resource-faq summary")
+                driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})", faq)
+                faq.click()
+                assert js("return document.querySelector('.resource-faq details').open")
+            if width in (390,1440):
                 js("window.scrollTo(0,0)")
                 capture(f"ui-{label}-{route.strip('/')}.png")
 
@@ -387,6 +408,6 @@ try:
     report["demo_only_and_legacy_preservation"] = "PASS"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("PASS: 9 viewports, 8 corporate pages, product sections, demo routes, history, focus, clipboard and no-JS",flush=True)
+    print("PASS: 9 viewports, 11 corporate pages, resource centers, demo routes, history, focus, clipboard and no-JS",flush=True)
 finally:
     driver.quit()

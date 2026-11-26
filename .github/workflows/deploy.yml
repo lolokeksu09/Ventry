@@ -56,6 +56,8 @@ jobs:
           node --test tests/raschet-backup-encryption.mjs
           node --test tests/raschet-deadlines.mjs
           python3 tools/verify-site.py
+          python3 tools/sync-releases.py --check
+          python3 -m unittest discover -s tests -p test_release_sync.py
           python3 tools/verify-security.py
           test -s site/index.html
           test -s site/styles.css
@@ -174,7 +176,7 @@ jobs:
             curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-asset" "$url/$path"
             cmp "$file" "$RUNNER_TEMP/ventry-asset"
           done < <(find site -type f ! -name index.html ! -name version.json | sort)
-          for page in about approach projects contact projects/raschet raschet legal privacy; do
+          for page in about approach projects contact projects/raschet raschet legal privacy releases docs support; do
             curl --fail --silent --show-error --max-time 15 --output "$RUNNER_TEMP/ventry-page.html" "$url/$page/"
             cmp "site/$page/index.html" "$RUNNER_TEMP/ventry-page.html"
           done
