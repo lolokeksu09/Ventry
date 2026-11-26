@@ -31,6 +31,30 @@ for path in (
     assert not blocked.search(path), f"Public URL incorrectly blocked: {path}"
 
 assert "respond @sensitive 404" in caddy, "Sensitive matcher is not enforced"
+manifest_match = re.search(r"^\s*@unpublished not path (.+)$", caddy, re.M)
+assert manifest_match, "Missing explicit publication manifest"
+manifest = manifest_match.group(1).split()
+assert len(manifest) == len(set(manifest)), "Duplicate publication paths"
+assert all("*" not in path and path.startswith("/") for path in manifest), "Manifest must use exact paths"
+expected = {"/version.json"}
+for path in SITE.rglob("*"):
+    assert not path.is_symlink(), f"Unexpected site symlink: {path}"
+    if not path.is_file():
+        continue
+    public = "/" + path.relative_to(SITE).as_posix()
+    assert not blocked.search(public), f"Sensitive file in publication tree: {public}"
+    expected.add(public)
+    if path.name == "index.html":
+        parent = public[:-len("/index.html")]
+        expected.add(parent + "/")
+        if parent:
+            expected.add(parent)
+assert set(manifest) == expected, f"Publication manifest mismatch: missing={expected-set(manifest)}, stale={set(manifest)-expected}"
+assert "respond @unpublished 404" in caddy
+assert "@nonread not method GET HEAD" in caddy and "respond @nonread 405" in caddy
+assert 'header @nonread Allow "GET, HEAD"' in caddy
+assert re.search(r"^\s*-Server\s*$", caddy, re.M), "Server header must be removed"
+print(f"PASS: explicit publication manifest ({len(manifest)} public URLs), read-only method policy")
 
 csp_match = re.search(r'^\s*Content-Security-Policy "([^"]+)"$', caddy, re.M)
 assert csp_match, "CSP header missing"

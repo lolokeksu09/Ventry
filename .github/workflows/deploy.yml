@@ -144,6 +144,10 @@ jobs:
           grep -Fiq "content-security-policy: default-src 'none'; script-src 'self'; style-src 'self';" "$RUNNER_TEMP/ventry-headers"
           grep -iq '^x-content-type-options: nosniff' "$RUNNER_TEMP/ventry-headers"
           grep -iq '^x-frame-options: DENY' "$RUNNER_TEMP/ventry-headers"
+          if grep -iq '^server:' "$RUNNER_TEMP/ventry-headers"; then echo 'Unexpected Server header'; exit 1; fi
+          status="$(curl --silent --show-error --max-time 15 --request POST --dump-header "$RUNNER_TEMP/ventry-method" --output /dev/null --write-out '%{http_code}' "$url/")"
+          test "$status" = 405
+          grep -Eiq '^allow: GET, HEAD[[:space:]]*$' "$RUNNER_TEMP/ventry-method"
           grep -Eiq '^cache-control: no-cache[[:space:]]*$' "$RUNNER_TEMP/ventry-headers"
           curl --fail --silent --show-error --head --max-time 15 "$url/index.html" > "$RUNNER_TEMP/ventry-index-headers"
           grep -Eiq '^cache-control: no-cache[[:space:]]*$' "$RUNNER_TEMP/ventry-index-headers"

@@ -72,3 +72,11 @@ Automated runs: `Deploy Ventry` on pull requests/main; `Ventry dependency securi
 - Caddy request matchers: https://caddyserver.com/docs/caddyfile/matchers
 - Gitleaks official: https://github.com/gitleaks/gitleaks
 - Trivy official: https://trivy.dev/docs/latest/ecosystem/cicd/
+
+## 2026-11-26 — public reconnaissance surface hardening
+
+- HTTP response Server header removed on configured site routes and explicit IP redirect. This reduces one fingerprint signal; it does not hide the server from network or TLS fingerprinting.
+- Only GET and HEAD are accepted by the static HTTPS site; other methods receive 405 and Allow. ACME and automatic HTTPS redirects remain unchanged.
+- Explicit exact-path publication manifest: 63 URLs from the tracked site tree, page aliases and generated version.json. Files accidentally left behind by the existing copy-based deployment are not served unless listed. The source guard fails on mismatch or symlink; updating public assets requires updating the manifest deliberately. Tests create only synthetic unpublished files.
+- Runtime regression tests assert allowed paths, denied existing synthetic files, blocked methods and absence of Server header. Main deployment additionally checks the new response policy. CI is required before production rollout.
+- Host firewall, SSH daemon exposure, network DDoS protection and actual live TCP/UDP listeners remain separate host-level checks; no external port scan is performed by this patch.
