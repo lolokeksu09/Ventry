@@ -188,7 +188,10 @@ try:
         assert js("return document.querySelector('#main-nav [aria-current=location]').pathname") == "/projects/"
         assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#next-title", "#faq-title"]
         assert js("return document.querySelectorAll('.demo-boundary-grid article').length") == 2
-        driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]').click()
+        gallery_link = driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]')
+        driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", gallery_link)
+        assert driver.execute_script("""const a=arguments[0],r=a.getBoundingClientRect(),h=document.querySelector('.site-header').getBoundingClientRect();return r.top>=h.bottom && a.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))""", gallery_link)
+        gallery_link.click()
         wait.until(lambda _: js("return location.hash") == "#gallery-title")
         wait.until(lambda _: js("const h=document.querySelector('#gallery-title').getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))
         js("window.scrollTo(0,0)")
@@ -212,6 +215,8 @@ try:
             links = js("""return [...document.querySelectorAll('.document-toc a')].map(a=>a.getAttribute('href').slice(1))""")
             assert links == headings, (route, links)
             first = driver.find_element(By.CSS_SELECTOR, ".document-toc a")
+            driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", first)
+            assert driver.execute_script("return arguments[0].getBoundingClientRect().top >= document.querySelector('.site-header').getBoundingClientRect().bottom", first)
             first.click()
             assert js("return location.hash") == "#" + headings[0]
             wait.until(lambda _: js("const h=document.getElementById(location.hash.slice(1)).getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))

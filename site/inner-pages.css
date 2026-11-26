@@ -187,7 +187,13 @@ body.product-page,body.document-page{
 
 /* Shared navigation and product reading path. */
 .product-page .site-nav a[aria-current="location"]{color:var(--ventry-text);border-bottom:1px solid var(--ventry-green)}
-.product-page main[id],.document-page main[id],.product-page main h2[id],.document-page main h2[id]{scroll-margin-top:68px}
+/* Reserve the sticky header's height for all scroll-to-target operations. */
+html{scroll-padding-top:88px}
+.product-page main[id],.document-page main[id],.product-page main h2[id],.document-page main h2[id]{scroll-margin-top:4px}
+.document-page .legal-section{scroll-margin-top:4px}
+@media(max-width:930px){
+ html:not(.js) .product-page .site-header,html:not(.js) .document-page .site-header{position:relative}
+}
 .product-page .product-section-nav{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--line)}
 .product-page .product-section-nav>span{font-size:12px;color:var(--ventry-muted);margin-right:8px}
 .product-page .product-section-nav>a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;color:var(--ventry-text);text-decoration:underline;text-underline-offset:4px;text-decoration-color:#557662}
