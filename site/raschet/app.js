@@ -193,6 +193,7 @@ $('#demo-return').onclick = () => {
   demoOperation.focus();
 };
 function renderDemoGuide(clients) {
+  demoGuide.hidden = false;
   demoCustomer = clients.find(client => client.id === 'demo-0' && client.balance > 1)
     ?? clients.find(client => client.balance > 1);
   const copy = $('#demo-guide-description');
