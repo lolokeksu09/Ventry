@@ -179,3 +179,62 @@ if (knowledge) {
   controls.hidden = false;
   refresh();
 }
+
+
+// Public availability: one bounded check per visit or explicit retry, no polling.
+const availability = document.querySelector('[data-availability]');
+if (availability) {
+  const button = availability.querySelector('#availability-refresh');
+  const summary = availability.querySelector('#availability-summary');
+  const time = availability.querySelector('#availability-time');
+  const services = [
+    {key: 'health', path: '/healthz', method: 'GET', validate: async response => (await response.text()).trim() === 'ok'},
+    {key: 'home', path: '/', method: 'HEAD'},
+    {key: 'demo', path: '/raschet/', method: 'HEAD'},
+  ];
+  let running = false;
+  function show(service, state, message) {
+    const row = availability.querySelector('[data-service="' + service.key + '"]');
+    const label = row.querySelector('.availability-state');
+    label.dataset.state = state;
+    label.textContent = message;
+  }
+  async function check(service) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    try {
+      const response = await fetch(service.path, {method: service.method, credentials:'omit', cache:'no-store', redirect:'error', signal:controller.signal});
+      if (!response.ok) {
+        show(service,'warning','HTTP ' + response.status);
+        return false;
+      }
+      if (service.validate && !(await service.validate(response))) {
+        show(service,'warning','Неожиданный ответ');
+        return false;
+      }
+      show(service,'available','Доступно');
+      return true;
+    } catch {
+      show(service,'unknown','Не удалось проверить');
+      return false;
+    } finally {clearTimeout(timeout);}
+  }
+  async function run() {
+    if (running) return;
+    running = true;
+    button.disabled = true;
+    summary.textContent = 'Проверяем публичные адреса…';
+    for (const service of services) show(service,'checking','Проверяем…');
+    const results = await Promise.all(services.map(check));
+    const passed = results.filter(Boolean).length;
+    summary.textContent = passed === services.length
+      ? 'Все три публичных адреса ответили успешно.'
+      : 'Успешных ответов: ' + passed + ' из ' + services.length + '. Остальные адреса требуют повторной проверки.';
+    time.textContent = 'Последняя проверка: ' + new Intl.DateTimeFormat('ru-RU',{dateStyle:'short',timeStyle:'medium'}).format(new Date()) + ' (местное время)';
+    button.disabled = false;
+    running = false;
+  }
+  button.hidden = false;
+  button.addEventListener('click',run);
+  run();
+}
