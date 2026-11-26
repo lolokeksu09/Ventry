@@ -153,6 +153,14 @@ try:
         js("document.querySelectorAll('.android-gallery-grid img').forEach(img => img.loading = 'eager')")
         wait.until(lambda _: js("return [...document.querySelectorAll('.android-gallery-grid img')].every(img => img.complete && img.naturalWidth === 540 && img.naturalHeight === 1200)"))
         assert js("return [...document.querySelectorAll('.android-gallery-grid a')].every(a => a.getAttribute('href') === a.querySelector('img').getAttribute('src'))")
+        # All three screenshots must stay compact, side by side and fully inside the viewport.
+        gallery_rects = js("""return [...document.querySelectorAll('.android-gallery-grid a')].map(a=>{const r=a.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right}})""")
+        assert len(gallery_rects) == 3
+        assert max(r["y"] for r in gallery_rects) - min(r["y"] for r in gallery_rects) < 1, (width, gallery_rects)
+        assert all(44 <= r["w"] <= 220 and r["x"] >= 0 and r["right"] <= width for r in gallery_rects), (width, gallery_rects)
+        assert all(a["right"] <= b["x"] for a,b in zip(gallery_rects,gallery_rects[1:])), (width,gallery_rects)
+        if width <= 620:
+            assert max(r["w"] for r in gallery_rects) <= width / 3, (width,gallery_rects)
         assert js("return document.querySelectorAll('[data-screen-preview]').length") == 4
         driver.find_element(By.CSS_SELECTOR, ".hero-screen-link").click()
         wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
@@ -173,8 +181,17 @@ try:
         driver.find_element(By.CSS_SELECTOR, ".android-gallery-grid a[data-screen-preview]").click()
         wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
         assert "Долговая книга" in js("return document.querySelector('#screen-dialog-caption').textContent")
+        assert "Общий остаток" in js("return document.querySelector('#screen-dialog-caption').textContent")
         driver.find_element(By.CSS_SELECTOR, ".screen-dialog-close").click()
         wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
+        if width <= 620:
+            third_preview = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid a[data-screen-preview]")[2]
+            driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})", third_preview)
+            third_preview.click()
+            wait.until(lambda _: js("return document.querySelector('#screen-dialog').open"))
+            assert js("return document.querySelector('#screen-dialog-position').textContent") == "Экран 3 из 3"
+            driver.find_element(By.CSS_SELECTOR, ".screen-dialog-close").click()
+            wait.until(lambda _: not js("return document.querySelector('#screen-dialog').open"))
         assert js("return document.documentElement.scrollWidth <= innerWidth")
         assert driver.find_element(By.CSS_SELECTOR, ".preview-note").is_displayed()
         assert len(driver.find_elements(By.CSS_SELECTOR, ".work-summary")) == 0
