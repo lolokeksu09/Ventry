@@ -1,6 +1,20 @@
 name: Ventry release snapshot monitor
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-snapshot.yml'
+      - 'tools/sync-releases.py'
+      - 'data/raschet-releases.json'
+      - 'data/raschet-release-notes.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-snapshot.yml'
+      - 'tools/sync-releases.py'
+      - 'data/raschet-releases.json'
+      - 'data/raschet-release-notes.json'
   schedule:
     - cron: '37 5 * * *'
   workflow_dispatch:

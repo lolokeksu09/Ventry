@@ -438,6 +438,27 @@ try:
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
     driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
     assert js("return location.hash") == "#projects"
+    # The mobile bottom navigation hides its desktop text, but retains accessible names.
+    for width, height in ((320,760),(390,844),(1440,900)):
+        driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
+            "width":width,"height":height,"deviceScaleFactor":1,"mobile":width<800
+        })
+        driver.get(BASE + "/raschet/?demo=1")
+        wait.until(lambda _: js("return location.hash") == "#book")
+        for view, name in (("book","Книга"),("clients","Клиенты"),("history","История"),("settings","Настройки")):
+            button=driver.find_element(By.CSS_SELECTOR, f'.sidebar [data-view="{view}"]')
+            assert button.accessible_name == name, (width,view,button.accessible_name)
+        driver.find_element(By.TAG_NAME,"body").send_keys(Keys.TAB)
+        assert js("return document.activeElement.classList.contains('demo-skip')")
+        driver.switch_to.active_element.send_keys(Keys.ENTER)
+        assert js("return document.activeElement.id") == "demo-main"
+        for dialog_id in ("client-dialog","detail-dialog","reverse-dialog"):
+            assert js("return !!document.querySelector('#"+dialog_id+"').getAttribute('aria-labelledby')")
+            assert js("return !!document.getElementById(document.querySelector('#"+dialog_id+"').getAttribute('aria-labelledby'))")
+    driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
+        "width":390,"height":844,"deviceScaleFactor":1,"mobile":True
+    })
+    report["demo_accessible_navigation"] = "PASS"
     # Every public scenario is an explicit, safe entry into the demo.
     for scenario, view in (("debt","book"),("payment","book"),("deadlines","clients"),("history","history"),("calendar","book"),("statistics","statistics")):
         driver.get(BASE + "/raschet/?demo=1&scenario=" + scenario)

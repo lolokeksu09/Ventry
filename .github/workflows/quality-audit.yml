@@ -1,0 +1,58 @@
+name: Ventry quality audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'tests/serve-preview.py'
+      - 'tools/lighthouse-audit.py'
+      - '.github/workflows/quality-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ventry-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [mobile-core, mobile-resources, desktop-core]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Lighthouse and check browser
+        run: |
+          npm install --global --ignore-scripts --no-audit --no-fund lighthouse@13.4.1
+          lighthouse --version
+          google-chrome --version
+      - name: Compare baseline and audit candidate
+        env:
+          AUDIT_GROUP: ${{ matrix.group }}
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          python3 tools/lighthouse-audit.py --group "$AUDIT_GROUP" --baseline baseline --output "quality-artifacts/$AUDIT_GROUP"
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ventry-quality-${{ matrix.group }}
+          path: quality-artifacts/
+          retention-days: 14
+          if-no-files-found: warn

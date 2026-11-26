@@ -116,3 +116,7 @@ VENTRY_CADDY_IMAGE=ventry-caddy:patched-test bash tests/security-http.sh
 ### Общая навигация и поиск
 
 `data/navigation.json` содержит проверенные маршруты меню, футера и поискового каталога `/explore/`. После редактирования выполнить `python3 tools/build-navigation.py --write`; CI проверяет `--check`. Поиск работает локально по названиям и описаниям каталога, с фильтрами и статическим fallback без JavaScript. Не индексирует данные пользователей.
+
+### Аудит качества Ventry 3.0
+
+Workflow `quality-audit.yml` запускает Lighthouse 13.4.1 на локальном preview и прикладывает JSON-отчёты по всем мобильным страницам и трём ключевым desktop-маршрутам. Для трёх маршрутов записывается сравнение с базовым SHA. Баллы и оставшиеся замечания нужно читать из артефактов; это не подтверждение WCAG и не полевая статистика. Чек-лист коммерческой готовности: [RASCHET-DISTRIBUTION-READINESS.md](docs/RASCHET-DISTRIBUTION-READINESS.md).
