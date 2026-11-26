@@ -78,6 +78,17 @@ for route in ('index.html', 'projects/raschet/index.html', 'legal/index.html', '
 
 assert 'Google (Gmail)' in (ROOT / 'privacy/index.html').read_text(), 'Privacy policy must disclose mail provider'
 
+# Every corporate page uses the same shell and early progressive-enhancement script.
+for path in pages:
+    if path == (ROOT / 'raschet/index.html').resolve():
+        continue
+    content = path.read_text(encoding='utf-8')
+    assert content.count('class="ventry-header"') == 1, f'{path}: duplicate/missing header'
+    assert content.count('class="ventry-skip"') == 1, f'{path}: duplicate/missing skip link'
+    assert content.count('class="site-footer ventry-footer"') == 1, f'{path}: duplicate/missing footer'
+    assert '<script src="/company-nav.js?v=ventry-audit-4"></script>' in content.split('</head>')[0], f'{path}: missing early shell initialization'
+    assert not any(token in content for token in ('class="mobile-top"', 'class="rail"', 'class="site-header"', 'class="skip-link"')), f'{path}: legacy shell'
+
 # Product help routes are stable, real links (including without JavaScript).
 product = pages[(ROOT / 'projects/raschet/index.html').resolve()]
 docs = pages[(ROOT / 'docs/index.html').resolve()]
