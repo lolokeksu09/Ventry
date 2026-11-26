@@ -54,6 +54,14 @@ def open_home_section(section, width):
     wait.until(lambda _: js("return location.pathname") == route)
     assert driver.find_element(By.CSS_SELECTOR, f'{scope} a[aria-current="page"]').get_attribute("href") == BASE + route
     assert driver.find_element(By.CSS_SELECTOR, "main h1").is_displayed()
+    if section == "about":
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".about-details article")) == 2
+        assert js("return document.querySelector('.about-details a').pathname") == "/projects/raschet/"
+        assert js("return document.querySelector('.about-actions .hero-primary').pathname") == "/raschet/"
+    if section == "method":
+        assert len(driver.find_elements(By.CSS_SELECTOR, ".principle-list li")) == 4
+        assert js("return document.querySelector('.method-next .hero-primary').pathname") == "/projects/raschet/"
+        assert js("return document.querySelector('.method-next .hero-secondary').pathname") == "/raschet/"
     assert js("return document.documentElement.scrollWidth <= innerWidth")
     if width <= 930:
         assert not js("return document.querySelector('.mobile-nav').open")
