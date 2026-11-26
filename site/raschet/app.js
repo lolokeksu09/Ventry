@@ -37,7 +37,7 @@ function resetDemo() {
   $('#search').value = '';
   historyForm.reset();
   $('#stats-period').value='month';
-  $('#stats-client').value='';
+  $('#stats-client').value='';$('#stats-rank').value='balance';
   $('#stats-from').value=today();$('#stats-to').value=today();
   dateKind='debt';dateMode='list';dateSelected=today();dateMonth=dateSelected.slice(0,7);
   currentHistoryPage = 0;
@@ -252,29 +252,34 @@ function renderStats(){
   select.innerHTML='<option value="">Весь магазин</option>'+book.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join('');
   select.value=book.clients.some(c=>c.id===selected)?selected:'';
   const scope=select.value,preset=$('#stats-period').value;
-  $('#stats-custom').hidden=preset!=='custom';
+  $('#stats-custom').hidden=preset!=='custom';$('#stats-ranking-controls').hidden=!!scope;
+  $('#stats-csv').disabled=true;$('#stats-print').disabled=true;
   let range;
   try{range=periodRange(preset,today(),book.entries,{from:$('#stats-from').value,to:$('#stats-to').value})}catch(error){$('#stats-content').textContent=error.message;return}
   const previous=previousRange(preset,range);
   const data=projectDemo(book,range,scope),t=data.totals;
+  $('#stats-csv').disabled=false;$('#stats-print').disabled=false;
   const current=[...debtOverview(book)].filter(([id])=>!scope||id===scope).map(([,x])=>x);
   const metric=(label,value)=>'<div class="stats-value"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>';
   const group=(title,items)=>'<section class="card"><h3>'+title+'</h3><div class="stats-grid">'+items.join('')+'</div></section>';
   const sum=key=>current.reduce((n,x)=>n+x[key],0);
-  const rank=data.customers.filter(c=>c.debtCount||c.paymentCount||c.end>0).sort((a,b)=>b.end-a.end||b.debt-a.debt);
-  const ranking=scope?'': '<section class="card"><h3>Клиенты по остатку на конец периода</h3>'+ (rank.length?rank.map(c=>'<button type="button" class="stats-ranking" data-stats-client="'+esc(c.id)+'"><span>'+esc(c.name)+'<small>Долгов: '+c.debtCount+' · '+rub(c.debt)+'</small></span><strong>'+rub(c.end)+' ›</strong></button>').join(''):'<p>Нет записей за период.</p>')+'</section>';
+  const mode=$('#stats-rank').value,balances=debtOverview(book);
+  const rankValue=c=>['balance','overdue'].includes(mode)?balances.get(c.id)[mode]:c[mode];
+  const rank=data.customers.filter(c=>rankValue(c)>0).sort((a,b)=>rankValue(b)-rankValue(a)||a.name.localeCompare(b.name,'ru'));
+  const ranking=scope?'':'<section class="card"><h3>Рейтинг клиентов · '+esc($('#stats-rank').selectedOptions[0].textContent)+'</h3>'+(rank.length?rank.map(c=>'<button type="button" class="stats-ranking" data-stats-client="'+esc(c.id)+'"><span>'+esc(c.name)+'<small>Долгов за период: '+c.debtCount+' · '+rub(c.debt)+'</small></span><strong>'+(mode==='debtCount'?rankValue(c)+' зап.':rub(rankValue(c)))+' ›</strong></button>').join(''):'<p>Нет клиентов с таким показателем.</p>')+'</section>';
   const daily='<section class="card"><h3>Долги и оплаты по дням</h3>'+ (data.days.length?data.days.map(d=>'<div class="stats-day"><strong>'+dateText(d.day)+'</strong><span>Долги '+rub(d.debt)+'</span><span>Оплаты '+rub(d.payment)+'</span></div>').join(''):'<p>Нет действительных операций.</p>')+'</section>';
   const prior=previous?projectDemo(book,previous,scope).totals:null;
   const compare=prior?group('Сравнение · '+dateText(previous.from)+' — '+dateText(previous.to),['debt','payment','end'].map((key,i)=>metric(['Долги: изменение','Оплаты: изменение','Остаток: изменение'][i],rub(t[key]-prior[key])))):'';
   const max=Math.max(1,...data.days.flatMap(d=>[d.debt,d.payment]));
   const chart=data.days.length?'<section class="card"><h3>Динамика операций</h3><p>Долги (янтарный) и оплаты (зелёный). Максимум: '+rub(max)+'</p><svg class="stats-chart" viewBox="0 0 320 120" role="img" aria-label="Динамика долгов и оплат по дням">'+data.days.map((d,i)=>{const w=300/data.days.length,x=10+i*w;return '<rect x="'+x+'" y="'+(110-100*d.debt/max)+'" width="'+w*.4+'" height="'+100*d.debt/max+'" fill="#d9a35e"><title>'+dateText(d.day)+': долг '+rub(d.debt)+'</title></rect><rect x="'+(x+w*.45)+'" y="'+(110-100*d.payment/max)+'" width="'+w*.4+'" height="'+100*d.payment/max+'" fill="#80bd9b"><title>'+dateText(d.day)+': оплата '+rub(d.payment)+'</title></rect>'}).join('')+'</svg></section>':'';
-  $('#stats-content').innerHTML=group('На сегодня',[metric('Остаток',rub(sum('balance'))),metric('Просрочено',rub(sum('overdue'))),metric('Должников',String(current.filter(x=>x.balance>0).length))])+
+  $('#stats-content').innerHTML='<p class="footnote">ДЕМО · '+esc(scope?book.clients.find(c=>c.id===scope).name:'Весь магазин')+'</p>'+group('На сегодня',[metric('Остаток',rub(sum('balance'))),metric('Просрочено',rub(sum('overdue'))),metric('Должников',String(current.filter(x=>x.balance>0).length))])+
     group('За период · '+dateText(range.from)+' — '+dateText(range.to),[metric('Остаток на начало',rub(t.start)),metric('Остаток на конец',rub(t.end)),metric('Изменение остатка',rub(t.end-t.start)),metric('Записано долгов',rub(t.debt)),metric('Записей долга',String(t.debtCount)),metric('Получено оплат',rub(t.payment)),metric('Записей оплаты',String(t.paymentCount)),metric('Средний долг',t.debtCount?rub(Math.round(t.debt/t.debtCount)):'Нет данных'),metric('Максимальный долг',t.debtCount?rub(t.maxDebt):'Нет данных'),metric('Отменено долгов',rub(t.cancelDebt)),metric('Отменено оплат',rub(t.cancelPayment))])+
     '<p class="footnote">Суммы действительных долгов и оплат не включают записи, отменённые к концу периода. Остаток учитывает движение и отмены.</p>'+compare+chart+ranking+daily;
   $('[data-stats-client]').forEach(b=>b.onclick=()=>{select.value=b.dataset.statsClient;renderStats();select.focus();});
 }
 $('#stats-period').onchange=renderStats;
 $('#stats-client').onchange=renderStats;
+$('#stats-rank').onchange=renderStats;
 $('#stats-from').onchange=renderStats;$('#stats-to').onchange=renderStats;
 
 function openClient(clientId=''){
@@ -413,6 +418,15 @@ function openDetail(clientId){
   $('#detail-content').innerHTML=`<p>${esc(prefs.shop)} · ${esc(c.phone)} · Выписка на ${dateText(today())}${mode==='demo'?' · ДЕМО':''}</p><p class="muted">Долги и оплаты из книги магазина. Не является кассовым чеком.</p><div class="detail-balance">Остаток: ${rub(balance(book,clientId))}</div>${historyRows(book.entries.filter(e=>e.clientId===clientId))}`;
   $('#detail-reverse').disabled=!last;$('#detail-dialog').showModal();
 }
+$('#detail-statistics').onclick=()=>{if(writing)return;$('#detail-dialog').close();$('#stats-client').value=detailId;switchView('statistics');renderStats();$('#stats-client').focus()};
+$('#stats-csv').onclick=()=>{
+  const scope=$('#stats-client').value,preset=$('#stats-period').value;
+  const range=periodRange(preset,today(),book.entries,{from:$('#stats-from').value,to:$('#stats-to').value}),t=projectDemo(book,range,scope).totals;
+  const rows=[['ДЕМО','Вымышленные данные'],['Клиент',scope?book.clients.find(c=>c.id===scope).name:'Весь магазин'],['Начало периода',range.from],['Конец периода',range.to],['Остаток на начало, ₽',t.start/100],['Остаток на конец, ₽',t.end/100],['Долги, ₽',t.debt/100],['Записей долга',t.debtCount],['Оплаты, ₽',t.payment/100],['Записей оплаты',t.paymentCount],['Отменено долгов, ₽',t.cancelDebt/100],['Отменено оплат, ₽',t.cancelPayment/100]];
+  const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(';')).join('\r\n');
+  download('raschet-demo-statistics-'+range.to+'.csv',csv,'text/csv;charset=utf-8');
+};
+$('#stats-print').onclick=()=>{document.body.classList.add('print-stats');try{window.print()}finally{document.body.classList.remove('print-stats')}};
 $('#detail-reverse').onclick=()=>{
   const e=activeEntries(book).filter(e=>e.clientId===detailId).at(-1);if(!e)return;
   reverseEntryId=e.id;$('#detail-dialog').close();$('#reverse-form').reset();$('#reverse-dialog .dialog-error').hidden=true;
