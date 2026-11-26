@@ -1,6 +1,7 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,debtOverview,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
 import { filterHistory, historyPage, HISTORY_PAGE_SIZE } from './history.js';
 import { listBackups } from './backups.js';
+import { periodRange, projectDemo } from './demo-analytics.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
@@ -25,7 +26,7 @@ async function save(next) {
     render();
   } finally { writing = false; }
 }
-function switchView(view){if(!['book','history','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshLegacyBackups();}
+function switchView(view){if(!['book','history','statistics','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshLegacyBackups();}
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
@@ -35,6 +36,8 @@ function resetDemo() {
   filter = 'all';
   $('#search').value = '';
   historyForm.reset();
+  $('#stats-period').value='month';
+  $('#stats-client').value='';
   currentHistoryPage = 0;
   load();
   switchView('book');
@@ -211,8 +214,31 @@ function render(){
   $('#clients').innerHTML=shown.length?shown.map(c=>`<div class="client-row"><button class="client-person" data-detail="${esc(c.id)}"><span class="avatar">${esc(c.name.split(/\s+/).slice(0,2).map(n=>n[0]).join(''))}</span><span><strong>${esc(c.name)}</strong><small>${esc(c.phone||'Открыть историю клиента')}</small></span></button><div class="balance">${rub(c.balance)}<small>${c.balance?'остаток долга':'всё оплачено'}</small>${deadlineNote(c)}</div><div class="status ${c.overdue?'late':''}">${c.overdue?'◷ Срок прошёл':c.balance?'Ведём учёт':'✓ Расчёт закрыт'}</div><div class="row-actions"><button class="debt" data-entry="debt" data-client="${esc(c.id)}">＋ В долг</button><button class="pay" data-entry="payment" data-client="${esc(c.id)}" ${c.balance?'':'disabled'}>Принять оплату</button></div></div>`).join(''):`<div class="empty"><div class="empty-symbol">д.</div><h3>${book.clients.length?'Ничего не найдено':'Начните с первого клиента'}</h3><p>${book.clients.length?'Попробуйте другое имя или измените фильтр.':'Добавьте имя, запишите сумму — остаток посчитается автоматически.'}</p>${book.clients.length?'':'<button class="secondary" id="empty-add">＋ Добавить клиента</button>'}</div>`;
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
   renderHistory();
+  renderStats();
   $('#book-note').textContent='Это интерактивный пример Android-приложения. Изменения живут только до перезагрузки страницы; реальные данные не вводятся.';
 }
+
+function renderStats(){
+  const select=$('#stats-client'), selected=select.value;
+  select.innerHTML='<option value="">Весь магазин</option>'+book.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join('');
+  select.value=book.clients.some(c=>c.id===selected)?selected:'';
+  const scope=select.value, range=periodRange($('#stats-period').value,today(),book.entries);
+  const data=projectDemo(book,range,scope),t=data.totals;
+  const current=[...debtOverview(book)].filter(([id])=>!scope||id===scope).map(([,x])=>x);
+  const metric=(label,value)=>'<div class="stats-value"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>';
+  const group=(title,items)=>'<section class="card"><h3>'+title+'</h3><div class="stats-grid">'+items.join('')+'</div></section>';
+  const sum=key=>current.reduce((n,x)=>n+x[key],0);
+  const rank=data.customers.filter(c=>c.debtCount||c.paymentCount||c.end>0).sort((a,b)=>b.end-a.end||b.debt-a.debt);
+  const ranking=scope?'': '<section class="card"><h3>Клиенты по остатку на конец периода</h3>'+ (rank.length?rank.map(c=>'<button type="button" class="stats-ranking" data-stats-client="'+esc(c.id)+'"><span>'+esc(c.name)+'<small>Долгов: '+c.debtCount+' · '+rub(c.debt)+'</small></span><strong>'+rub(c.end)+' ›</strong></button>').join(''):'<p>Нет записей за период.</p>')+'</section>';
+  const daily='<section class="card"><h3>Долги и оплаты по дням</h3>'+ (data.days.length?data.days.map(d=>'<div class="stats-day"><strong>'+dateText(d.day)+'</strong><span>Долги '+rub(d.debt)+'</span><span>Оплаты '+rub(d.payment)+'</span></div>').join(''):'<p>Нет действительных операций.</p>')+'</section>';
+  $('#stats-content').innerHTML=group('На сегодня',[metric('Остаток',rub(sum('balance'))),metric('Просрочено',rub(sum('overdue'))),metric('Должников',String(current.filter(x=>x.balance>0).length))])+
+    group('За период · '+dateText(range.from)+' — '+dateText(range.to),[metric('Остаток на начало',rub(t.start)),metric('Остаток на конец',rub(t.end)),metric('Изменение остатка',rub(t.end-t.start)),metric('Записано долгов',rub(t.debt)),metric('Записей долга',String(t.debtCount)),metric('Получено оплат',rub(t.payment)),metric('Записей оплаты',String(t.paymentCount)),metric('Средний долг',t.debtCount?rub(Math.round(t.debt/t.debtCount)):'Нет данных'),metric('Максимальный долг',t.debtCount?rub(t.maxDebt):'Нет данных'),metric('Отменено долгов',rub(t.cancelDebt)),metric('Отменено оплат',rub(t.cancelPayment))])+
+    '<p class="footnote">Суммы действительных долгов и оплат не включают записи, отменённые к концу периода. Остаток учитывает движение и отмены.</p>'+ranking+daily;
+  $('[data-stats-client]').forEach(b=>b.onclick=()=>{select.value=b.dataset.statsClient;renderStats();select.focus();});
+}
+$('#stats-period').onchange=renderStats;
+$('#stats-client').onchange=renderStats;
+
 function openClient(clientId=''){
   if(loadBlocked)return toast('Восстановите книгу в разделе «Данные и копии».');
   if(writing)return;
