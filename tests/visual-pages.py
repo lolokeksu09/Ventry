@@ -103,6 +103,7 @@ try:
         assert js("""const org=document.querySelector('footer[itemtype="https://schema.org/Organization"]');return !!org && org.querySelector('[itemprop="name"]').textContent==='Ventry' && org.querySelector('[itemprop="email"]').href.startsWith('mailto:')""")
         assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/about/"
         assert js("return document.querySelector('#projects .work-actions a.hero-primary').pathname") == "/raschet/"
+        assert js("return document.querySelector('#projects .work-item').dataset.product") == "raschet"
         assert len(driver.find_elements(By.CSS_SELECTOR, "#projects .work-features li")) == 3
         js("document.querySelector('#projects .work-preview img').loading='eager'")
         wait.until(lambda _: js("return document.querySelector('#projects .work-preview img').naturalWidth === 540"))
@@ -148,6 +149,7 @@ try:
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         assert js("""const app=document.querySelector('main[itemtype="https://schema.org/SoftwareApplication"]');return !!app && app.querySelector('[itemprop="name"]').textContent==='Расчёт' && app.querySelector('[itemprop="operatingSystem"]').content==='Android'""")
         assert len(driver.find_elements(By.CSS_SELECTOR, ".android-feature-list dt")) == 4
+        assert js("return [...document.querySelectorAll('.scenario-grid a')].map(a=>new URL(a.href).searchParams.get('scenario'))") == ["debt","payment","deadlines","history","calendar","statistics"]
         screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
         assert len(screenshots) == 3
         js("document.querySelectorAll('.android-gallery-grid img').forEach(img => img.loading = 'eager')")
@@ -327,6 +329,33 @@ try:
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
     driver.find_element(By.CSS_SELECTOR, ".hero-primary").click()
     assert js("return location.hash") == "#projects"
+    # Every public scenario is an explicit, safe entry into the demo.
+    for scenario, view in (("debt","book"),("payment","book"),("deadlines","clients"),("history","history"),("calendar","book"),("statistics","statistics")):
+        driver.get(BASE + "/raschet/?demo=1&scenario=" + scenario)
+        wait.until(lambda _: js("return !document.querySelector('#scenario-panel').hidden"))
+        assert js("return location.hash") == "#" + view
+        assert js("return !document.querySelector('dialog[open]')")
+        assert js("return document.querySelector('#client-count').textContent") == "4"
+        assert js("return document.documentElement.scrollWidth <= innerWidth")
+        click_visible("scenario-action")
+        if scenario in ("debt","payment"):
+            dialog = "#quick-dialog" if scenario == "debt" else "#entry-dialog"
+            wait.until(lambda _: js("return document.querySelector(" + json.dumps(dialog) + ").open"))
+            driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+            wait.until(lambda _: not js("return document.querySelector(" + json.dumps(dialog) + ").open"))
+        elif scenario == "deadlines":
+            assert js("return document.querySelector('[data-filter=soon]').getAttribute('aria-pressed')") == "true"
+        elif scenario == "calendar":
+            assert js("return !document.querySelector('#calendar-panel').hidden")
+        elif scenario == "statistics":
+            assert js("return document.activeElement.id") == "stats-period"
+        click_visible("scenario-dismiss")
+        assert js("return document.querySelector('#scenario-panel').hidden")
+        assert not js("return new URLSearchParams(location.search).has('scenario')")
+    driver.get(BASE + "/raschet/?demo=1&scenario=invalid&scenario=payment")
+    wait.until(lambda _: js("return location.hash") == "#book")
+    assert js("return document.querySelector('#scenario-panel').hidden && !document.querySelector('dialog[open]')")
+    report["demo_scenarios"] = "PASS"
     # The public preview must never load or mutate legacy personal records.
     driver.get(BASE + "/raschet/")
     assert js("return [...document.querySelectorAll('.demo-site-route a')].map(a=>a.pathname)") == ["/projects/raschet/", "/contact/"]

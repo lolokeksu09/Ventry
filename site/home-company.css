@@ -263,3 +263,7 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 .work-resource-links{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:9px}
 .work-resource-links a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-size:13px;text-decoration:underline;text-underline-offset:3px}
 @media(min-width:931px) and (max-width:1200px){.rail{gap:16px}.rail-links{gap:12px}.header-mail{padding-inline:10px}}
+
+/* Catalog cards remain static and accessible; generated from reviewed metadata. */
+.work-detail .work-category{font-size:11px;letter-spacing:.045em;color:var(--ventry-green);margin:0 0 7px}
+.work-item+.work-item{margin-top:20px}

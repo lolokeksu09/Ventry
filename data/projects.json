@@ -1,0 +1,25 @@
+[
+  {
+    "id": "raschet",
+    "name": "Расчёт",
+    "category": "Учёт для малого бизнеса",
+    "platform": "Приложение для Android · демо в браузере",
+    "description": "Долги клиентов, частичные оплаты и остатки — в одной книге.",
+    "features": [
+      "Книга клиентов и календарь операций",
+      "История покупок в долг и оплат",
+      "Статистика магазина и отдельного клиента"
+    ],
+    "product": "/projects/raschet/",
+    "demo": "/raschet/?demo=1",
+    "icon": "/images/raschet-icon.svg",
+    "image": "/images/raschet/android-book.webp",
+    "image_alt": "Долговая книга Расчёт на Android: остаток, быстрые действия и календарь",
+    "image_width": 540,
+    "image_height": 1200,
+    "gallery": "/projects/raschet/#gallery-title",
+    "releases": "/releases/",
+    "docs": "/docs/",
+    "featured": true
+  }
+]
