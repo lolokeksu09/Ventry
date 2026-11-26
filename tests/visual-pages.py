@@ -229,6 +229,9 @@ try:
     js("document.querySelector('#stats-client').value='';document.querySelector('#stats-client').dispatchEvent(new Event('change'))")
     js("document.querySelector('#stats-rank').value='debtCount';document.querySelector('#stats-rank').dispatchEvent(new Event('change'))")
     assert js("return document.querySelectorAll('[data-stats-client]').length") >= 1
+    assert js("return !!document.querySelector('.chart-balance')")
+    assert "Активность клиентов" in driver.find_element(By.ID, "stats-content").text
+    assert js("return document.documentElement.scrollWidth <= innerWidth")
     capture("ui-390-demo-statistics.png")
     report["demo_statistics"] = "PASS"
     js("document.querySelector('[data-view=dates]').click()")
