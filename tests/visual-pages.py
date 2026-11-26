@@ -449,12 +449,16 @@ try:
         for view, name in (("book","Книга"),("clients","Клиенты"),("history","История"),("settings","Настройки")):
             button=driver.find_element(By.CSS_SELECTOR, f'.sidebar [data-view="{view}"]')
             assert button.accessible_name == name, (width,view,button.accessible_name)
-        assert driver.find_element(By.CSS_SELECTOR, ".sidebar .brand").accessible_name.startswith("Расчёт Ventry")
+        brand = driver.find_element(By.CSS_SELECTOR, ".sidebar .brand")
+        assert "Расчёт" in brand.accessible_name and "Ventry" in brand.accessible_name
+        assert brand.get_dom_attribute("aria-label") is None
         for day in driver.find_elements(By.CSS_SELECTOR, "#week-grid button.calendar-day"):
-            visible = " ".join(day.get_attribute("textContent").split())
-            # The calendar includes the visible weekday, number and count in the name.
-            parts = [child.get_attribute("textContent") for child in day.find_elements(By.XPATH, "./*")]
-            assert day.accessible_name.startswith(" ".join(parts)), (width, day.accessible_name, visible)
+            parts = [child.get_attribute("textContent") for child in day.find_elements(By.XPATH, "./small|./strong")]
+            name = " ".join(day.accessible_name.split())
+            assert all(part in name for part in parts), (width, name, parts)
+            assert day.get_dom_attribute("aria-label") is None
+            desc = driver.find_element(By.ID, day.get_dom_attribute("aria-describedby"))
+            assert "записей:" in desc.get_attribute("textContent")
         driver.find_element(By.TAG_NAME,"body").send_keys(Keys.TAB)
         assert js("return document.activeElement.classList.contains('demo-skip')")
         driver.switch_to.active_element.send_keys(Keys.ENTER)
