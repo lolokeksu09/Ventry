@@ -225,6 +225,10 @@ try:
     js("document.querySelector('[data-stats-client=demo-0]').click()")
     assert js("return document.querySelector('#stats-client').value") == "demo-0"
     assert "2 350" in driver.find_element(By.ID, "stats-content").text.replace("\xa0", " ").replace("\u202f", " ")
+    assert js("return !document.querySelector('#stats-csv').disabled")
+    js("document.querySelector('#stats-client').value='';document.querySelector('#stats-client').dispatchEvent(new Event('change'))")
+    js("document.querySelector('#stats-rank').value='debtCount';document.querySelector('#stats-rank').dispatchEvent(new Event('change'))")
+    assert js("return document.querySelectorAll('[data-stats-client]').length") >= 1
     capture("ui-390-demo-statistics.png")
     report["demo_statistics"] = "PASS"
     js("document.querySelector('[data-view=dates]').click()")
