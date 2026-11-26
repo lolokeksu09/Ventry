@@ -312,6 +312,17 @@ try:
     driver.refresh()
     assert js("return document.querySelector('#request-message').value") == ""
     report["local_email_draft"] = "PASS"
+    # Optional device information is included only for product/support drafts.
+    load("/contact/?topic=support#request", 390, 844)
+    for field, value in (("request-device", "Test & model"), ("request-android", "15"), ("request-version", "0.29")):
+        driver.find_element(By.ID, field).send_keys(value)
+    assert js("""const q=new URLSearchParams(document.querySelector('#request-mail').getAttribute('href').split('?')[1]);return q.get('body')==='Модель: Test & model\\r\\nAndroid: 15\\r\\nВерсия приложения: 0.29'""")
+    js("document.querySelector('#request-topic').value='partner';document.querySelector('#request-topic').dispatchEvent(new Event('change'))")
+    assert js("return document.querySelector('#request-context').hidden")
+    assert js("""return new URLSearchParams(document.querySelector('#request-mail').getAttribute('href').split('?')[1]).get('body')===''""")
+    driver.refresh()
+    assert js("return document.querySelector('#request-device').value") == ""
+    report["structured_local_draft"] = "PASS"
 
     load("/docs/",390,844)
     search = driver.find_element(By.ID,"docs-search")
