@@ -248,7 +248,10 @@ try:
             assert js("return [...document.querySelectorAll('.resource-tabs a')].map(a=>a.pathname)") == ["/releases/", "/docs/", "/support/"]
             assert js("return document.querySelector('.resource-tabs [aria-current=page]').pathname") == route
             if route == "/releases/":
-                assert js("return [...document.querySelectorAll('.release-entry a')].every(a=>a.href.startsWith('https://github.com/lolokeksu09/dolg-book/releases/tag/'))")
+                assert js("return document.querySelectorAll('.release-entry a').length") == 0
+                assert js("return !document.body.innerText.toLowerCase().includes('github')")
+                assert js("return document.querySelectorAll('.release-changes li').length") >= 5
+                assert js("return document.querySelector('.release-changes').innerText.includes('CSV и PDF')")
                 assert js("return document.querySelector('.release-list').innerText.length > 10")
             elif route == "/docs/":
                 assert js("return document.querySelectorAll('.guide-steps li').length") == 4

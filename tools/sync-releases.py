@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data/raschet-releases.json"
 PAGE = ROOT / "site/releases/index.html"
 API = "https://api.github.com/repos/lolokeksu09/dolg-book/releases?per_page=100"
-RELEASE_BASE = "https://github.com/lolokeksu09/dolg-book/releases/tag/"
+NOTES = ROOT / "data/raschet-release-notes.json"
 START = "        <!-- RELEASES:START -->"
 END = "        <!-- RELEASES:END -->"
 TAG = re.compile(r"raschet-v[0-9][A-Za-z0-9._-]{0,100}")
@@ -65,33 +65,61 @@ def verify_snapshot(data):
         raise ValueError("Noncanonical or invalid release snapshot")
     return data
 
-def render(data):
+def verify_notes(notes):
+    if not isinstance(notes, dict):
+        raise ValueError("Invalid reviewed release notes")
+    for tag, item in notes.items():
+        if not TAG.fullmatch(tag) or not isinstance(item, dict) or set(item) != {"title", "changes"}:
+            raise ValueError("Invalid release note record")
+        title, changes = item["title"], item["changes"]
+        if not isinstance(title, str) or not title.strip() or len(title) > 180:
+            raise ValueError("Invalid release title")
+        if not isinstance(changes, list) or not 1 <= len(changes) <= 30:
+            raise ValueError("Invalid release changes")
+        for value in [title, *changes]:
+            if not isinstance(value, str) or not value.strip() or len(value) > 500:
+                raise ValueError("Invalid release note text")
+            if re.search(r"https?://|github[.]com|www[.]", value, re.I):
+                raise ValueError("External URLs are not permitted in public release notes")
+    return notes
+
+def render(data, notes=None):
     data = verify_snapshot(data)
+    notes = verify_notes({} if notes is None else notes)
     lines = ['        <div class="release-list">']
     if not data:
         lines.append('          <p>Подтверждённых публичных релизов в сохранённом снимке нет.</p>')
     for item in data:
-        tag = html.escape(item["tag"])
-        name = html.escape(item["name"])
+        reviewed = notes.get(item["tag"])
+        # Unreviewed names and release bodies are not published verbatim.
+        name = html.escape(reviewed["title"] if reviewed else "Расчёт " + item["tag"].removeprefix("raschet-v"))
         date = item["published_at"]
         display = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").strftime("%d.%m.%Y")
         kind = "Предварительный релиз" if item["prerelease"] else "Опубликованный релиз"
         lines.extend([
             '          <article class="release-entry">',
             f'            <div class="release-entry-top"><h3>{name}</h3><span class="release-kind">{kind}</span></div>',
-            f'            <p class="release-meta"><code>{tag}</code><span>Дата публикации: <time datetime="{date}">{display} UTC</time></span></p>',
-            f'            <a class="resource-link" href="{RELEASE_BASE}{tag}" rel="noopener noreferrer">Запись релиза на GitHub <span aria-hidden="true">↗</span></a>',
-            '          </article>',
+            f'            <p class="release-meta"><span>Дата публикации: <time datetime="{date}">{display} UTC</time></span></p>',
         ])
+        if reviewed:
+            lines.extend([
+                '            <h4 class="release-changes-title">Что изменилось</h4>',
+                '            <ul class="release-changes">',
+            ])
+            lines.extend(f'              <li>{html.escape(change)}</li>' for change in reviewed["changes"])
+            lines.append('            </ul>')
+        else:
+            lines.append('            <p class="release-notes-pending">Описание изменений готовится.</p>')
+        lines.append('          </article>')
     lines.append('        </div>')
     return "\n".join(lines)
 
-def replace_block(page, data):
+def replace_block(page, data, notes=None):
     if page.count(START) != 1 or page.count(END) != 1:
         raise ValueError("Expected one generated release block")
     before, remaining = page.split(START)
     _, after = remaining.split(END)
-    return before + START + "\n" + render(data) + "\n" + END + after
+    return before + START + "\n" + render(data, notes) + "\n" + END + after
 
 def fetch():
     request = Request(API, headers={
@@ -112,14 +140,15 @@ def main():
     mode.add_argument("--refresh", action="store_true")
     args = parser.parse_args()
     page = PAGE.read_text(encoding="utf-8")
+    notes = verify_notes(json.loads(NOTES.read_text(encoding="utf-8")))
     if args.check:
         data = verify_snapshot(json.loads(SNAPSHOT.read_text(encoding="utf-8")))
-        if replace_block(page, data) != page:
+        if replace_block(page, data, notes) != page:
             raise SystemExit("FAIL: generated release list differs from reviewed snapshot")
         print(f"PASS: {len(data)} reviewed public release records")
     else:
         data = fetch()
-        generated = replace_block(page, data)
+        generated = replace_block(page, data, notes)
         SNAPSHOT.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         PAGE.write_text(generated, encoding="utf-8")
         print(f"Fetched {len(data)} public release records; inspect diff before publication")

@@ -278,3 +278,10 @@ html{scroll-padding-top:88px}
 .product-resource-links a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;text-decoration:underline;text-underline-offset:4px}
 .site-nav a[aria-current="page"],.site-nav a[aria-current="location"]{color:var(--ventry-text);border-bottom:1px solid var(--ventry-green)}
 @media(max-width:700px){.resource-route-grid{grid-template-columns:1fr;gap:8px}.resource-tabs{gap:4px 16px}.resource-tabs a{font-size:13px}.resource-block p{font-size:14px}.resource-actions>a.primary-button{width:100%}}
+
+/* Release notes are readable directly on Ventry, without repository links. */
+.release-changes-title{font-size:15px;font-weight:600;letter-spacing:0;margin:18px 0 8px}
+.release-changes{margin:0;padding-left:22px;color:var(--ventry-muted);font-size:15px;line-height:1.6}
+.release-changes li{padding:3px 0;overflow-wrap:anywhere}
+.release-changes li::marker{color:var(--ventry-green)}
+@media(max-width:620px){.release-changes{font-size:14px}}

@@ -33,12 +33,22 @@ class ReleaseTests(unittest.TestCase):
     def test_escape_and_ignore_external_assets(self):
         data = sync.normalize([release(name='<script>alert("x")</script>', html_url="https://invalid.test",
                                       assets=[{"browser_download_url": "https://invalid.test/file.apk"}])])
-        rendered = sync.render(data)
+        rendered = sync.render(data, {"raschet-v1.2.3": {"title": "Расчёт 1.2.3", "changes": ['<script>alert("x")</script>']}})
         self.assertNotIn("<script>", rendered)
         self.assertIn("&lt;script&gt;", rendered)
         self.assertNotIn("invalid.test", rendered)
         self.assertIn("Предварительный релиз", rendered)
-        self.assertIn(sync.RELEASE_BASE, rendered)
+        self.assertIn("Что изменилось", rendered)
+        self.assertNotIn("href=", rendered)
+        self.assertNotIn("github", rendered.lower())
+
+    def test_missing_notes_and_external_urls(self):
+        data = sync.normalize([release(name="https://invalid.test")])
+        rendered = sync.render(data)
+        self.assertIn("Описание изменений готовится", rendered)
+        self.assertNotIn("invalid.test", rendered)
+        with self.assertRaises(ValueError):
+            sync.render(data, {"raschet-v1.2.3": {"title": "Расчёт", "changes": ["https://github.com/example"]}})
 
     def test_empty_and_idempotent(self):
         template = "before\n" + sync.START + "\nold\n" + sync.END + "\nafter"
