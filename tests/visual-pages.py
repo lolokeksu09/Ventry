@@ -126,7 +126,7 @@ try:
             open_home_section(section, width)
             if section == "method":
                 principles = driver.find_elements(By.CSS_SELECTOR, ".principle-list li p")
-                assert len(principles) == 3 and all(p.is_displayed() for p in principles)
+                assert len(principles) == 4 and all(p.is_displayed() for p in principles)
             if section == "projects":
                 wait.until(lambda _: js("""return document.querySelector('#projects img').naturalWidth > 0"""))
                 assert js("""return document.querySelector('#projects .work-item a[href="/projects/raschet/"]').pathname""") == "/projects/raschet/"
