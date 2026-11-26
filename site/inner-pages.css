@@ -222,10 +222,6 @@ html{scroll-padding-top:88px}
 .resource-breadcrumb a{text-decoration:underline;text-underline-offset:3px}
 .resource-heading h1{font:400 clamp(36px,6vw,76px)/1.1 var(--ventry-display);letter-spacing:-.04em}
 .resource-heading>p{font-size:clamp(15px,1.8vw,20px);color:var(--ventry-muted);max-width:64ch;margin:16px 0 25px}
-.resource-tabs{display:flex;flex-wrap:wrap;gap:4px 24px;border-bottom:1px solid var(--line)}
-.resource-tabs a{min-height:48px;display:inline-flex;align-items:center;gap:5px;border-bottom:2px solid transparent;color:var(--ventry-muted);font-size:14px}
-.resource-tabs a[aria-current="page"]{color:var(--ventry-text);border-color:var(--ventry-green);font-weight:600}
-.resource-tabs a:hover{color:var(--ventry-text)}
 .resource-content{padding-bottom:18px}
 .resource-block{padding-block:clamp(24px,4vw,48px);border-bottom:1px solid var(--line)}
 .resource-block:last-child{border-bottom:0}
@@ -263,7 +259,7 @@ html{scroll-padding-top:88px}
 .product-resource-links{display:flex;flex-wrap:wrap;gap:4px 20px;align-items:center;margin-top:18px}
 .product-resource-links a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;text-decoration:underline;text-underline-offset:4px}
 .site-nav a[aria-current="page"],.site-nav a[aria-current="location"]{color:var(--ventry-text);border-bottom:1px solid var(--ventry-green)}
-@media(max-width:700px){.resource-route-grid{grid-template-columns:1fr;gap:8px}.resource-tabs{gap:4px 16px}.resource-tabs a{font-size:13px}.resource-block p{font-size:14px}.resource-actions>a.primary-button{width:100%}}
+@media(max-width:700px){.resource-route-grid{grid-template-columns:1fr;gap:8px}.resource-block p{font-size:14px}.resource-actions>a.primary-button{width:100%}}
 
 /* Release notes are readable directly on Ventry, without repository links. */
 .release-changes-title{font-size:15px;font-weight:600;letter-spacing:0;margin:18px 0 8px}
@@ -369,3 +365,7 @@ html{scroll-padding-top:88px}
  .product-page .hero-screen{max-height:460px}
  .product-page .android-features,.product-page .android-gallery,.product-page .demo-boundary{margin-top:24px;padding-top:22px}
 }
+
+.product-page .header-search,.document-page .header-search{flex:none}
+.resource-back{display:inline-flex;min-height:44px;align-items:center}
+@media(max-width:930px){.product-page .header-search,.document-page .header-search{margin-left:auto}}

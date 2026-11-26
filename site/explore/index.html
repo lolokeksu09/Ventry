@@ -20,7 +20,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/brand.css">
   <link rel="stylesheet" href="/styles.css?v=ventry-3-5">
-  <link rel="stylesheet" href="/inner-pages.css?v=ventry-3-layout">
+  <link rel="stylesheet" href="/inner-pages.css?v=ventry-4-navigation">
   <script defer src="/app.js?v=ventry-3-5"></script>
 </head>
 <body class="document-page resource-page">
@@ -28,16 +28,17 @@
   <header class="site-header" id="top">
     <div class="header-inner content-width">
       <a class="brand" href="/" aria-label="Ventry — на главную"><img class="brand-symbol" src="/images/ventry-mark.webp" width="40" height="40" alt=""><span>Ventry</span></a>
+      <!-- SEARCH:START -->
+        <a class="header-search" href="/explore/" aria-current="page">Поиск</a>
+        <!-- SEARCH:END -->
       <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
       <nav class="site-nav" id="main-nav" aria-label="Основная навигация">
         <!-- MENU:START -->
-        <a href="/">Главная</a>
-        <a href="/about/">О Ventry</a>
-        <a href="/approach/">Подход</a>
-        <a href="/projects/">Проекты</a>
+        <a href="/projects/">Продукты</a>
+        <a href="/releases/">Обновления</a>
+        <a href="/docs/">Документация</a>
         <a href="/support/">Поддержка</a>
-        <a href="/contact/">Контакты</a>
-        <a href="/explore/" aria-current="page">Поиск</a>
+        <a href="/about/">Компания</a>
         <!-- MENU:END -->
       </nav>
     </div>
@@ -70,10 +71,10 @@
         <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1">Интерактивное демо <span aria-hidden="true">↗</span></a></h2><p>Попробуйте книгу в браузере на вымышленных записях.</p></div></article>
         <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=debt">Записать долг <span aria-hidden="true">↗</span></a></h2><p>Добавление покупки в долг клиенту.</p></div></article>
         <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=payment">Принять оплату <span aria-hidden="true">↗</span></a></h2><p>Частичная оплата, погашение и остаток.</p></div></article>
-        <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=deadlines">Проверить просрочки <span aria-hidden="true">↗</span></a></h2><p>Сроки возврата и задолженность на ближайшие семь дней.</p></div></article>
+        <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=deadlines">Возврат долгов и просрочки <span aria-hidden="true">↗</span></a></h2><p>Рабочий список должников, приоритет просрочки, ближайшие семь дней и оплата.</p></div></article>
         <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=history">История операций <span aria-hidden="true">↗</span></a></h2><p>Поиск записи, фильтры по клиенту, дате и типу.</p></div></article>
-        <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=calendar">Календарь долгов и оплат <span aria-hidden="true">↗</span></a></h2><p>Записи по дням.</p></div></article>
-        <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=statistics">Статистика <span aria-hidden="true">↗</span></a></h2><p>Аналитика магазина и клиента, периоды, графики и рейтинги.</p></div></article>
+        <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=calendar">Календарь долгов и оплат <span aria-hidden="true">↗</span></a></h2><p>Календарь, записи по дням и фильтры книги по клиенту и датам.</p></div></article>
+        <article class="directory-entry" data-knowledge-item="demo"><div><p class="directory-category">Демо</p><h2><a href="/raschet/?demo=1&amp;scenario=statistics">Статистика <span aria-hidden="true">↗</span></a></h2><p>Сводка, подробности, интерактивные графики, рейтинги и отчёты магазина и клиента.</p></div></article>
         <article class="directory-entry" data-knowledge-item="help"><div><p class="directory-category">Помощь</p><h2><a href="/docs/">Документация <span aria-hidden="true">↗</span></a></h2><p>Инструкции по работе с книгой.</p></div></article>
         <article class="directory-entry" data-knowledge-item="help"><div><p class="directory-category">Помощь</p><h2><a href="/docs/#get-app">Получить приложение <span aria-hidden="true">↗</span></a></h2><p>Запрос APK, установка и системные требования.</p></div></article>
         <article class="directory-entry" data-knowledge-item="help"><div><p class="directory-category">Помощь</p><h2><a href="/docs/#daily-work">Работа с долговой книгой <span aria-hidden="true">↗</span></a></h2><p>Повседневные операции и сценарии.</p></div></article>
@@ -82,7 +83,7 @@
         <article class="directory-entry" data-knowledge-item="help"><div><p class="directory-category">Помощь</p><h2><a href="/support/#support-faq">Частые вопросы <span aria-hidden="true">↗</span></a></h2><p>Ошибки установки, демо, перенос данных.</p></div></article>
         <article class="directory-entry" data-knowledge-item="help"><div><p class="directory-category">Помощь</p><h2><a href="/contact/?topic=support#request">Сообщить о проблеме <span aria-hidden="true">↗</span></a></h2><p>Подготовить письмо в поддержку, указать устройство и версию.</p></div></article>
         <article class="directory-entry" data-knowledge-item="help"><div><p class="directory-category">Помощь</p><h2><a href="/status/">Доступность сервисов <span aria-hidden="true">↗</span></a></h2><p>Проверить ответы сайта и демо из браузера.</p></div></article>
-        <article class="directory-entry" data-knowledge-item="company"><div><p class="directory-category">Компания</p><h2><a href="/about/">О компании <span aria-hidden="true">↗</span></a></h2><p>Ventry и направление разработки.</p></div></article>
+        <article class="directory-entry" data-knowledge-item="company"><div><p class="directory-category">Компания</p><h2><a href="/about/">О компании <span aria-hidden="true">↗</span></a></h2><p>Ventry, направление разработки, подход и контакты.</p></div></article>
         <article class="directory-entry" data-knowledge-item="company"><div><p class="directory-category">Компания</p><h2><a href="/approach/">Подход к разработке <span aria-hidden="true">↗</span></a></h2><p>Принципы работы над приложениями.</p></div></article>
         <article class="directory-entry" data-knowledge-item="company"><div><p class="directory-category">Компания</p><h2><a href="/contact/">Контакты <span aria-hidden="true">↗</span></a></h2><p>Связаться с Ventry, сотрудничество.</p></div></article>
         <article class="directory-entry" data-knowledge-item="company"><div><p class="directory-category">Компания</p><h2><a href="/legal/">Правовая информация <span aria-hidden="true">↗</span></a></h2><p>Информация о сайте и условиях использования.</p></div></article>

@@ -33,7 +33,7 @@ def valid_url(url):
         raise ValueError("Missing navigation destination: "+url)
 
 def validate(data):
-    if set(data) != {"menu","groups","directory"}:
+    if set(data) != {"menu","search","groups","directory"}:
         raise ValueError("Unexpected navigation fields")
     def check_links(links):
         urls = set()
@@ -43,7 +43,7 @@ def validate(data):
             if url in urls:
                 raise ValueError("Duplicate link: "+url)
             urls.add(url)
-    check_links(data["menu"])
+    check_links([*data["menu"],data["search"]])
     for group in data["groups"]:
         if set(group) != {"title","links"}:
             raise ValueError("Invalid footer group")
@@ -61,7 +61,8 @@ def anchor(url,title,route,menu=False):
     if url == route:
         current = ' aria-current="page"'
     elif menu and ((url == "/projects/" and route == "/projects/raschet/") or
-                   (url == "/support/" and route in ("/releases/","/docs/","/status/"))):
+                   (url == "/support/" and route == "/status/") or
+                   (url == "/about/" and route in ("/approach/","/contact/","/legal/","/privacy/"))):
         current = ' aria-current="location"'
     return f'<a href="{escape(url)}"{current}>{escape(title)}</a>'
 
@@ -99,6 +100,8 @@ def render(text,data,route):
     menu = "\n".join("        "+anchor(u,t,route,True) for u,t in data["menu"])
     expected = 2 if route in ("/","/about/","/approach/","/projects/","/contact/") else 1
     text = block(text,"MENU",menu,"        ",expected)
+    search = "        "+anchor(*data["search"],route).replace("<a ",'<a class="header-search" ',1)
+    text = block(text,"SEARCH",search,"        ",expected)
     text = block(text,"FOOTER","  "+footer(data,route),"  ",1)
     if route == "/explore/":
         text = block(text,"DIRECTORY",directory(data),"        ",1)
