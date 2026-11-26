@@ -343,3 +343,29 @@ html{scroll-padding-top:88px}
 .directory-entry h2 a:hover{text-decoration:underline;text-underline-offset:4px}
 .directory-entry p{font-size:14px;line-height:1.5;color:var(--ventry-muted)}
 @media(max-width:800px){.directory-layout{display:block}.directory-sidebar{position:static;padding:0 0 20px}}
+
+/* Resource composition: search first, less repeated promotion, clear section rhythm. */
+.knowledge-layout{row-gap:0}
+.knowledge-layout>#docs-controls{grid-column:1/-1;width:100%;max-width:none;margin-top:0}
+.knowledge-layout .knowledge-index{padding-top:24px}
+.knowledge-layout .knowledge-main{padding-top:0}
+.resource-content>[data-knowledge]:first-child{padding-top:24px}
+.product-page .demo-boundary .section-kicker{margin-bottom:10px}
+.product-page .demo-boundary-grid article{border-radius:0}
+.product-page .demo-boundary-grid .primary-button{align-self:flex-start}
+.product-page .product-resource-links{margin-top:12px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.product-page .product-faq{margin-top:clamp(28px,4vw,48px)}
+@media(max-width:800px){
+ .knowledge-layout>.knowledge-index{padding:16px 0}
+ .knowledge-layout>.knowledge-index nav{gap:0 12px}
+ .resource-heading{padding-top:22px}
+ .resource-heading>p{margin:12px 0 16px}
+ .resource-content>[data-knowledge]:first-child{padding-top:18px}
+ .product-page .product-copy{padding:20px 16px}
+ .product-page .product-actions{gap:4px 14px}
+ .product-page .product-actions .primary-button{width:100%;justify-content:center}
+ .product-page .product-actions .quiet-button{font-size:13px}
+ .product-page .hero-screen-link{width:min(58vw,205px);max-height:460px}
+ .product-page .hero-screen{max-height:460px}
+ .product-page .android-features,.product-page .android-gallery,.product-page .demo-boundary{margin-top:24px;padding-top:22px}
+}
