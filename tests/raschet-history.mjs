@@ -51,3 +51,11 @@ test('comparison matches Android calendar policy',()=>{
   assert.equal(periodRange('quarter','2026-11-26',[]).from,'2026-10-01');
   assert.equal(previousRange('all',{from:'2026-01-01',to:'2026-11-26'}),null);
 });
+
+test('movement includes cancelled operations, effective counts do not',()=>{
+  const p=projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-06'}),t=p.totals;
+  assert.deepEqual([t.movementDebt,t.debt,t.active,t.borrowers,t.newBorrowers],[5000,0,2,0,0]);
+  assert.deepEqual(p.days.map(d=>d.closing),[7000,12000,7000]);
+  assert.equal(p.days.at(-1).cancelDebt,5000);
+  assert.equal(projectDemo(analyticsBook,{from:'2026-11-03',to:'2026-11-05'}).totals.newBorrowers,1);
+});
