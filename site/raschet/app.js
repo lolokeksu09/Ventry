@@ -44,6 +44,7 @@ window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
 function resetDemo() {
   if (writing) return;
   lastDemoPayment = null;
+  dismissScenario();
   filter = 'all';
   $('#search').value = '';
   historyForm.reset();
@@ -542,4 +543,65 @@ $('#confirm-import').onclick=()=>{$('#confirm-dialog').close();resetDemo();};
 let prefs={shop:'Демо-магазин',tablet:false};
 function applyPrefs(){document.body.classList.toggle('tablet-mode',prefs.tablet);$('#tablet-mode').setAttribute('aria-pressed',String(prefs.tablet));$('#tablet-mode').textContent=prefs.tablet?'Обычный режим':'Крупный режим';$('#shop-title').textContent=prefs.shop;}
 $('#tablet-mode').onclick=()=>{prefs.tablet=!prefs.tablet;applyPrefs();};
-applyPrefs();load();switchView(location.hash.slice(1)||'book');
+// Entry URLs are an allowlisted navigation hint, never a financial instruction.
+const scenarioDefinitions = new Map([
+  ['debt', {view:'book',title:"Записать долг",description:"Выберите вымышленного клиента и внесите сумму покупки. Остаток изменится только после подтверждения.",action:"Записать долг"}],
+  ['payment', {view:'book',title:"Отметить оплату",description:"Попробуйте частичный возврат долга с предложенной тестовой суммой.",action:"Попробовать оплату"}],
+  ['deadlines', {view:'clients',title:"Проверить сроки",description:"Открыты клиенты с просрочкой. Можно переключиться на ближайшие семь дней.",action:"Ближайшие 7 дней"}],
+  ['history', {view:'history',title:"Найти операцию",description:"Выберите клиента, период или тип операции в фильтрах истории.",action:"К фильтрам"}],
+  ['calendar', {view:'book',title:"Книга по датам",description:"Выберите день календаря, затем переключитесь между долгами и оплатами.",action:"К календарю"}],
+  ['statistics', {view:'statistics',title:"Открыть статистику",description:"Выберите период и клиента, изучите динамику и рейтинг должников.",action:"К показателям"}],
+]);
+let activeScenario = null;
+function dismissScenario(){
+  activeScenario = null;
+  $('#scenario-panel').hidden = true;
+  const url = new URL(location.href);
+  if(url.searchParams.has('scenario')){
+    url.searchParams.delete('scenario');
+    history.replaceState(history.state,'',url);
+  }
+}
+function scenarioFocus(selector){
+  const element=$(selector);
+  if(!element)return;
+  element.scrollIntoView({block:'center'});
+  element.focus({preventScroll:true});
+}
+function enterScenario(){
+  const url=new URL(location.href);
+  const values=url.searchParams.getAll('scenario');
+  const key=values.length===1?values[0]:'';
+  const config=scenarioDefinitions.get(key);
+  const requestedView=url.hash.slice(1);
+  if(!config || (requestedView && requestedView!==config.view)){
+    if(values.length)dismissScenario();
+    switchView(requestedView||'book');
+    return;
+  }
+  activeScenario=key;
+  if(key==='deadlines'){filter='overdue';$('#search').value='';render();}
+  if(key==='calendar'){dateMode='calendar';renderDates();}
+  url.hash=config.view;
+  history.replaceState(history.state,'',url);
+  switchView(config.view);
+  $('#scenario-title').textContent=config.title;
+  $('#scenario-description').textContent=config.description;
+  $('#scenario-action').textContent=config.action;
+  $('#scenario-panel').hidden=false;
+}
+$('#scenario-dismiss').onclick=()=>{dismissScenario();scenarioFocus('#switch-mode');};
+$('#scenario-action').onclick=()=>{
+  const config=scenarioDefinitions.get(activeScenario);
+  if(!config)return;
+  switchView(config.view);
+  switch(activeScenario){
+    case 'debt': if(!$('#quick-dialog').open)openQuick('debt'); break;
+    case 'payment': if(!$('#entry-dialog').open)demoPayment.click(); break;
+    case 'deadlines': filter='soon';$('#search').value='';render();scenarioFocus('#client-panel');break;
+    case 'history': scenarioFocus('#history-filters');break;
+    case 'calendar': dateMode='calendar';renderDates();scenarioFocus('#dates-calendar');if($('#dates-calendar').hidden)scenarioFocus('#calendar-today');break;
+    case 'statistics': scenarioFocus('#stats-period');break;
+  }
+};
+applyPrefs();load();enterScenario();

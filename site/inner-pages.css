@@ -285,3 +285,13 @@ html{scroll-padding-top:88px}
 .release-changes li{padding:3px 0;overflow-wrap:anywhere}
 .release-changes li::marker{color:var(--ventry-green)}
 @media(max-width:620px){.release-changes{font-size:14px}}
+
+/* Task-specific demo entry points. */
+.scenario-intro{max-width:65ch;color:var(--ventry-muted);margin:14px 0 24px;font-size:15px}
+.scenario-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 26px}
+.scenario-grid article{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:18px 0;border-top:1px solid var(--line)}
+.scenario-grid h3{font-size:18px;line-height:1.35;letter-spacing:-.02em}
+.scenario-grid p{flex:1;color:var(--ventry-muted);font-size:14px;line-height:1.55}
+.scenario-grid a{font-size:14px;color:var(--ventry-text)}
+@media(max-width:850px){.scenario-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.scenario-grid{grid-template-columns:1fr;gap:4px}}
