@@ -87,12 +87,12 @@ jobs:
           for name in ('golos-cyrillic.woff2','golos-latin.woff2'):
               encoded = base64.b64encode((root/'fonts'/name).read_bytes()).decode('ascii')
               brand = brand.replace("url('/fonts/"+name+"')", "url('data:font/woff2;base64,"+encoded+"')")
-          html = html.replace('<link rel="stylesheet" href="/brand.css?v=ventry-shared-header">','<style>'+brand+'</style>')
+          html = html.replace('<link rel="stylesheet" href="/brand.css?v=ventry-audit-4">','<style>'+brand+'</style>')
           favicon = base64.b64encode((root/'favicon.svg').read_bytes()).decode('ascii')
           html = html.replace('href="/favicon.svg"', 'href="data:image/svg+xml;base64,'+favicon+'"')
           html, css_count = re.subn(r'<link rel="stylesheet" href="/home-company\.css(?:\?[^"]*)?">', lambda _: '<style>\n'+css+'\n</style>', html)
           js = (root/'company-nav.js').read_text(encoding='utf-8')
-          html, js_count = re.subn(r'<script defer src="/company-nav\.js(?:\?[^"]*)?"></script>', '', html)
+          html, js_count = re.subn(r'<script src="/company-nav\.js(?:\?[^"]*)?"></script>', '', html)
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           for route, anchor in {'/':'#start','/about/':'#about','/approach/':'#method','/projects/':'#projects','/contact/':'#contact'}.items():
               html = html.replace('href="'+route+'"','href="'+anchor+'"')
