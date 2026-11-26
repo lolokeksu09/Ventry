@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050907">
   <title>Документация — Ventry</title>
-  <meta name="description" content="Инструкции по долговой книге «Расчёт»: работа с демо, долги и оплаты, статистика, резервные копии.">
+  <meta name="description" content="Инструкции по Расчёту: демо, Android-версия, долги, оплаты, история, отчёты, резервные копии JSON и безопасные обновления.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ru_RU">
   <meta name="twitter:card" content="summary_large_image">
   <meta property="og:title" content="Документация — Ventry">
-  <meta property="og:description" content="Инструкции по долговой книге «Расчёт»: работа с демо, долги и оплаты, статистика, резервные копии.">
+  <meta property="og:description" content="Инструкции по Расчёту: демо, Android-версия, долги, оплаты, история, отчёты, резервные копии JSON и безопасные обновления.">
   <meta property="og:url" content="https://ventrylab.top/docs/">
   <meta property="og:image" content="https://ventrylab.top/ventry-brand-cover.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -65,7 +65,7 @@
           <li><h3>Откройте демо</h3><p>Выберите «Книга». В примере уже есть вымышленные клиенты и долги.</p><a class="resource-link" href="/raschet/?demo=1">Перейти к книге ↗</a></li>
           <li><h3>Запишите долг или оплату</h3><p>Нажмите «Записать долг» или «Принять оплату», выберите вымышленного клиента и следуйте подсказкам. Проверьте остаток после операции.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=debt">Записать долг ↗</a><a class="resource-link" href="/raschet/?demo=1&amp;scenario=payment">Частичная оплата ↗</a></li>
           <li><h3>Сверьте историю</h3><p>Откройте историю операций и убедитесь, что долг и оплата отражены отдельно.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=history">Перейти к истории ↗</a></li>
-          <li><h3>Изучите статистику</h3><p>Откройте статистику из долговой книги, выберите период и посмотрите суммы долгов, оплат и динамику остатка.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=statistics">Открыть статистику ↗</a></li>
+          <li><h3>Изучите статистику</h3><p>Откройте статистику, выберите период. В сводке видны суммы и остатки; в подробностях — график и рейтинги, в отчётах — движение средств. Выбор интервала графика позволяет уточнить период.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=statistics">Открыть статистику ↗</a></li>
         </ol>
         <div class="resource-note"><strong>Важно</strong><p>Демо не хранит вашу рабочую книгу. Изменения исчезают после перезагрузки. Не вводите реальные данные клиентов.</p></div>
       </section>
@@ -84,9 +84,9 @@
         <div class="knowledge-task-list">
           <article><h3>Записать покупку в долг</h3><p>Выберите клиента, внесите сумму и при необходимости срок возврата. После подтверждения проверьте остаток.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=debt">Попробовать ↗</a></article>
           <article><h3>Принять частичную оплату</h3><p>Запишите полученную сумму отдельно от покупки. Остаток уменьшится, а первоначальная операция останется в истории.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=payment">Попробовать ↗</a></article>
-          <article><h3>Проверить просрочки</h3><p>Откройте список клиентов с просрочкой или сроком в ближайшие семь дней.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=deadlines">Попробовать ↗</a></article>
+          <article><h3>Проверить просрочки</h3><p>Откройте рабочий список возврата долгов. Найдите клиента по имени, проверьте срок и остаток, откройте его карточку или запишите оплату.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=deadlines">Попробовать ↗</a></article>
           <article><h3>Сверить календарь</h3><p>Выберите дату операции и вид записи: долг или оплата.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=calendar">Попробовать ↗</a></article>
-          <article><h3>Проанализировать статистику</h3><p>Выберите период отчёта, отдельно проверьте выданные долги, оплаты и текущую задолженность.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=statistics">Попробовать ↗</a></article>
+          <article><h3>Проанализировать статистику</h3><p>Выберите период отчёта, отдельно проверьте выданные долги, оплаты и текущую задолженность. Из раздела отчётов можно перейти к операциям периода, выгрузить CSV или открыть печать в PDF браузером.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=statistics">Попробовать ↗</a></article>
           <article><h3>Найти операцию</h3><p>Отфильтруйте историю по клиенту, дате и типу операции.</p><a class="resource-link" href="/raschet/?demo=1&amp;scenario=history">Попробовать ↗</a></article>
         </div>
       </section>
@@ -97,9 +97,9 @@
           <article><h3>Внешняя JSON-копия</h3><p>В настройках найдите «Внешняя копия книги» → «Скачать JSON-копию». Сохраните файл в выбранное место и перенесите защищённую копию за пределы телефона. JSON содержит имена, телефоны и суммы без шифрования.</p></article>
           <article><h3>Защищённые точки восстановления</h3><p>В настройках есть локальные зашифрованные точки восстановления. Они не заменяют внешнюю копию: после удаления приложения или сброса устройства восстановить их нельзя.</p></article>
           <article><h3>Восстановление из JSON</h3><p>«Экспорт и восстановление» → «Восстановить из JSON». Подтверждение полностью заменяет данные текущей книги. Сначала сохраните её отдельную внешнюю копию и убедитесь, что выбран нужный файл.</p></article>
-          <article><h3>CSV не заменяет JSON</h3><p>CSV — таблица операций для просмотра и анализа. Для восстановления книги используйте поддерживаемую JSON-копию, а не CSV.</p></article>
+          <article><h3>CSV не заменяет JSON</h3><p>CSV — таблица операций для просмотра и анализа. Для восстановления книги используйте поддерживаемую JSON-копию, а не CSV. <a href="/support/#restore-csv">Частые вопросы о восстановлении</a>.</p></article>
         </div>
-        <div class="resource-note"><strong>Не удаляйте приложение при ошибке установки</strong><p>Удаление или очистка данных может уничтожить локальную книгу. Сначала проверьте внешнюю копию и уточните совместимость. Не отправляйте JSON-файлы в поддержку.</p></div>
+        <div class="resource-note"><strong>Не удаляйте приложение при ошибке установки</strong><p>Удаление или очистка данных может уничтожить локальную книгу. Сначала проверьте внешнюю копию и уточните совместимость. Не отправляйте JSON-файлы в поддержку. <a href="/support/#update-error">Диагностика ошибок обновления</a>.</p></div>
         <a class="resource-link" href="/releases/">История версий ↗</a>
       </section>
       <section class="resource-block" data-knowledge-item="data" aria-labelledby="restore">

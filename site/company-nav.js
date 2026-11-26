@@ -89,6 +89,14 @@ if (requestControls) {
   const manual = document.querySelector('#request-text');
   const recipient = 'ventrybusinesswork@gmail.com';
   const context = document.querySelector('#request-context');
+  const purposeGroup = document.querySelector('#request-purpose-group');
+  const purpose = document.querySelector('#request-purpose');
+  const purposes = new Map([
+    ['first', 'Получение приложения впервые'],
+    ['update', 'Обновление установленного приложения'],
+    ['compatibility', 'Совместимость с устройством'],
+    ['terms', 'Условия получения и использования']
+  ]);
   const device = document.querySelector('#request-device');
   const android = document.querySelector('#request-android');
   const version = document.querySelector('#request-version');
@@ -101,6 +109,7 @@ if (requestControls) {
     const [subject, guidance] = topics.get(topic.value) || topics.get('raschet');
     const clean = (field, max) => field.value.slice(0, max).replace(/[\r\n\t]+/g, ' ').trim();
     const lines = [];
+    if (topic.value === 'raschet' && purposes.has(purpose.value)) lines.push('Цель обращения: ' + purposes.get(purpose.value));
     if (topic.value !== 'partner') {
       for (const [label, field, max] of [['Модель', device, 80], ['Android', android, 24], ['Версия приложения', version, 64]]) {
         const value = clean(field, max);
@@ -116,6 +125,7 @@ if (requestControls) {
     const value = draft();
     hint.textContent = value.guidance;
     context.hidden = topic.value === 'partner';
+    purposeGroup.hidden = topic.value !== 'raschet';
     limit.textContent = Math.min(message.value.length, 800) + ' / 800 символов';
     mail.href = 'mailto:' + recipient + '?subject=' + encode(value.subject) + '&body=' + encode(value.body);
     status.textContent = '';
@@ -123,6 +133,7 @@ if (requestControls) {
     manual.value = '';
   };
   topic.addEventListener('change', refresh);
+  purpose.addEventListener('change', refresh);
   message.addEventListener('input', refresh);
   [device, android, version].forEach(field => field.addEventListener('input', refresh));
   copy.addEventListener('click', async () => {

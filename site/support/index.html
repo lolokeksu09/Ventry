@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050907">
   <title>Центр поддержки — Ventry</title>
-  <meta name="description" content="Помощь с «Расчётом», демоверсией, обновлениями и обращениями в Ventry.">
+  <meta name="description" content="Помощь с Расчётом: получение APK, совместимость Android, демо, резервные копии, восстановление, перенос и ошибки обновления.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ru_RU">
   <meta name="twitter:card" content="summary_large_image">
   <meta property="og:title" content="Центр поддержки — Ventry">
-  <meta property="og:description" content="Помощь с «Расчётом», демоверсией, обновлениями и обращениями в Ventry.">
+  <meta property="og:description" content="Помощь с Расчётом: получение APK, совместимость Android, демо, резервные копии, восстановление, перенос и ошибки обновления.">
   <meta property="og:url" content="https://ventrylab.top/support/">
   <meta property="og:image" content="https://ventrylab.top/ventry-brand-cover.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -60,15 +60,15 @@
         <p data-knowledge-empty hidden>Ничего не найдено. Измените запрос или <a href="/contact/?topic=support#request">напишите в поддержку</a>.</p>
       </div>
         <div class="faq-list resource-faq knowledge-faq">
-          <details data-knowledge-item="start"><summary>Как получить Android-приложение?</summary><p>Напишите Ventry и уточните доступность сборки и условия получения. <a href="/docs/#get-app">Порядок получения</a>.</p></details>
-          <details data-knowledge-item="start"><summary>На каком Android работает «Расчёт»?</summary><p>Для проверенного кандидата 0.29.0-beta.1 RC 2 — Android 8.0 и новее. Проверьте версию устройства и уточните совместимость. <a href="/releases/">Версии приложения</a>.</p></details>
-          <details data-knowledge-item="demo"><summary>Можно ли пользоваться демо для реального учёта?</summary><p>Нет. Данные вымышлены, изменения сбрасываются. <a href="/docs/#start-title">Инструкция по демо</a>.</p></details>
-          <details data-knowledge-item="demo"><summary>Почему записи исчезли после обновления страницы?</summary><p>Для демо это нормальное поведение. Реальные записи в отдельном Android-приложении требуют отдельной диагностики. Не очищайте данные и не переустанавливайте приложение до проверки резервных копий.</p></details>
-          <details data-knowledge-item="data"><summary>Как сделать резервную копию книги?</summary><p>В проверенном кандидате откройте настройки и выберите «Скачать JSON-копию». Сохраните файл отдельно от устройства. <a href="/docs/#backup">Подробная инструкция</a>.</p></details>
-          <details data-knowledge-item="data"><summary>Можно ли восстановить книгу из CSV?</summary><p>CSV предназначен для просмотра операций. Для восстановления используйте совместимую JSON-копию. Восстановление заменяет текущую книгу после подтверждения. <a href="/docs/#backup">Безопасное восстановление</a>.</p></details>
-          <details data-knowledge-item="data"><summary>Что делать, если сменил телефон?</summary><p>Сначала сохраните внешнюю JSON-копию на старом устройстве. Проверьте совместимость новой версии, затем переносите записи. Не удаляйте старую книгу до проверки результата.</p></details>
-          <details data-knowledge-item="issue"><summary>APK не устанавливается или не обновляется</summary><p>Не удаляйте установленное приложение. Запишите точный текст ошибки, модель телефона, Android и версию приложения. Проверьте внешнюю резервную копию. <a href="/contact/?topic=support#request">Сообщить о проблеме</a>.</p></details>
-          <details data-knowledge-item="issue"><summary>Как передать информацию об ошибке?</summary><p>Опишите версию приложения, модель устройства, последовательность действий и ожидаемый результат. Не отправляйте имена клиентов, телефоны, пароли и резервные копии.</p></details>
+          <details id="get-android" data-knowledge-item="start"><summary>Как получить Android-приложение?</summary><p>Напишите Ventry и уточните доступность сборки и условия получения. <a href="/docs/#get-app">Порядок получения</a>.</p></details>
+          <details id="android-compatibility" data-knowledge-item="start"><summary>На каком Android работает «Расчёт»?</summary><p>Для проверенного кандидата 0.29.0-beta.1 RC 2 — Android 8.0 и новее. Проверьте версию устройства и уточните совместимость. <a href="/releases/">Версии приложения</a>.</p></details>
+          <details id="demo-data" data-knowledge-item="demo"><summary>Можно ли пользоваться демо для реального учёта?</summary><p>Нет. Данные вымышлены, изменения сбрасываются. Для рабочего учёта предназначена отдельная Android-версия. <a href="/docs/#start-title">Инструкция по демо</a>.</p></details>
+          <details id="demo-reset" data-knowledge-item="demo"><summary>Почему записи исчезли после обновления страницы?</summary><p>Для демо это нормальное поведение. Реальные записи в отдельном Android-приложении требуют отдельной диагностики. Не очищайте данные и не переустанавливайте приложение до проверки резервных копий.</p></details>
+          <details id="backup-json" data-knowledge-item="data"><summary>Как сделать резервную копию книги?</summary><p>В проверенном кандидате откройте настройки и выберите «Скачать JSON-копию». Сохраните файл отдельно от устройства. <a href="/docs/#backup">Подробная инструкция</a>.</p></details>
+          <details id="restore-csv" data-knowledge-item="data"><summary>Можно ли восстановить книгу из CSV?</summary><p>CSV предназначен для просмотра операций. Для восстановления используйте совместимую JSON-копию. Восстановление заменяет текущую книгу после подтверждения. <a href="/docs/#backup">Безопасное восстановление</a>.</p></details>
+          <details id="transfer-phone" data-knowledge-item="data"><summary>Что делать, если сменил телефон?</summary><p>Сначала сохраните внешнюю JSON-копию на старом устройстве. Проверьте совместимость новой версии, затем переносите записи. Не удаляйте старую книгу до проверки результата.</p></details>
+          <details id="update-error" data-knowledge-item="issue"><summary>APK не устанавливается или не обновляется</summary><p>Не удаляйте установленное приложение и не очищайте его данные. Сначала проверьте <a href="/docs/#backup">внешнюю JSON-копию</a>, затем запишите точный текст ошибки, модель телефона, Android и версию приложения. <a href="/contact/?topic=support#request">Сообщить о проблеме</a>.</p></details>
+          <details id="report-error" data-knowledge-item="issue"><summary>Как передать информацию об ошибке?</summary><p>Опишите версию приложения, модель устройства, последовательность действий и ожидаемый результат. Не отправляйте имена клиентов, телефоны, пароли и резервные копии.</p></details>
         </div>
       </section>
       <section class="resource-block" aria-labelledby="support-routes">
