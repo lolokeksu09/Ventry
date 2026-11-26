@@ -244,10 +244,10 @@ try:
                 js("window.scrollTo(0,0)")
                 capture(f"ui-{label}-{route.strip('/')}.png")
 
-        for route in ("/releases/", "/docs/", "/support/"):
+        for route in ("/releases/", "/docs/", "/support/", "/status/"):
             resource = load(route, width, height)
             assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
-            assert js("return [...document.querySelectorAll('.resource-tabs a')].map(a=>a.pathname)") == ["/releases/", "/docs/", "/support/"]
+            assert js("return [...document.querySelectorAll('.resource-tabs a')].map(a=>a.pathname)") == ["/releases/", "/docs/", "/support/", "/status/"]
             assert js("return document.querySelector('.resource-tabs [aria-current=page]').pathname") == route
             if route == "/releases/":
                 assert js("return document.querySelectorAll('.release-entry a').length") == 0
@@ -260,12 +260,15 @@ try:
                 assert js("return document.querySelectorAll('[data-knowledge-item]').length") == 5
                 assert driver.find_element(By.ID, "docs-search").is_displayed()
                 assert js("return document.querySelector('#backup').textContent.includes('копии')")
-            else:
+            elif route == "/support/":
                 assert js("return document.querySelectorAll('.resource-route-grid article').length") == 3
                 faq = driver.find_element(By.CSS_SELECTOR, ".resource-faq summary")
                 driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})", faq)
                 faq.click()
                 assert js("return document.querySelector('.resource-faq details').open")
+            else:
+                wait.until(lambda _: js("return document.querySelectorAll('.availability-state[data-state=available]').length") == 3)
+                assert js("return !document.querySelector('#availability-refresh').disabled")
             if width in (390,1440):
                 js("window.scrollTo(0,0)")
                 capture(f"ui-{label}-{route.strip('/')}.png")
@@ -347,7 +350,27 @@ try:
     assert js("return document.querySelectorAll('[data-knowledge-item]:not([hidden])').length") == 9
     report["knowledge_search"] = "PASS"
 
+    # Actual HTTP responses in the local preview, then a browser network error and recovery.
+    load("/status/",390,844)
+    wait.until(lambda _: js("return document.querySelectorAll('.availability-state[data-state=available]').length") == 3)
+    driver.execute_cdp_cmd("Network.enable", {})
+    try:
+        driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": [BASE + "/healthz"]})
+        click_visible("availability-refresh")
+        wait.until(lambda _: js("return !document.querySelector('#availability-refresh').disabled"))
+        assert js("return document.querySelector('[data-service=health] .availability-state').dataset.state") == "unknown"
+        assert js("return document.querySelectorAll('.availability-state[data-state=available]').length") == 2
+    finally:
+        driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": []})
+    click_visible("availability-refresh")
+    wait.until(lambda _: js("return document.querySelectorAll('.availability-state[data-state=available]').length") == 3)
+    assert js("return document.querySelector('#availability-time').textContent.includes('местное время')")
+    report["availability_success_failure_retry"] = "PASS"
+
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+    driver.get(BASE + "/status/")
+    assert driver.find_element(By.ID, "availability-summary").text == "Проверка ещё не выполнена."
+    assert not driver.find_element(By.ID, "availability-refresh").is_displayed()
     driver.get(BASE + "/docs/")
     assert driver.find_element(By.ID, "backup").is_displayed()
     assert not driver.find_element(By.ID, "docs-controls").is_displayed()
@@ -480,7 +503,47 @@ try:
     assert js("return localStorage.getItem('dolgbook-v1-demo')") == legacy
     report["demo_only_and_legacy_preservation"] = "PASS"
     report["navigation"] = "PASS"
+
+    # Cold-cache browser laboratory samples; not production Core Web Vitals.
+    observer = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": """
+      window.__ventryLab = {lcp_ms:null, layout_shift_sum:0};
+      if (PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')) {
+        new PerformanceObserver(list=>{for(const e of list.getEntries())window.__ventryLab.lcp_ms=e.startTime;}).observe({type:'largest-contentful-paint', buffered:true});
+      }
+      if (PerformanceObserver.supportedEntryTypes.includes('layout-shift')) {
+        new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.__ventryLab.layout_shift_sum+=e.value;}).observe({type:'layout-shift', buffered:true});
+      }
+    """})["identifier"]
+    samples = []
+    driver.execute_cdp_cmd("Network.setCacheDisabled", {"cacheDisabled": True})
+    try:
+        for width, height in ((390,844),(1440,900)):
+            for route in ("/","/projects/raschet/","/docs/","/raschet/"):
+                driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
+                    "width":width,"height":height,"deviceScaleFactor":1,"mobile":width<800
+                })
+                driver.get(BASE+route)
+                driver.execute_async_script("const done=arguments[0];document.fonts.ready.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(done,150))))")
+                sample = js("""
+                    const n=performance.getEntriesByType('navigation')[0];
+                    const r=performance.getEntriesByType('resource');
+                    return {route:location.pathname, width:innerWidth, requests:r.length+1,
+                      third_party:r.filter(e=>new URL(e.name).origin!==location.origin).map(e=>e.name),
+                      decoded_bytes:n.decodedBodySize+r.reduce((s,e)=>s+e.decodedBodySize,0),
+                      transferred_bytes:n.transferSize+r.reduce((s,e)=>s+e.transferSize,0),
+                      load_ms:n.loadEventEnd, fcp_ms:performance.getEntriesByName('first-contentful-paint')[0]?.startTime??null,
+                      ...window.__ventryLab};
+                """)
+                assert not sample["third_party"], sample
+                assert 0 < sample["decoded_bytes"] <= 300*1024, sample
+                assert sample["requests"] <= 24, sample
+                samples.append(sample)
+    finally:
+        driver.execute_cdp_cmd("Network.setCacheDisabled", {"cacheDisabled": False})
+        driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": observer})
+    (OUTPUT / "browser-performance.json").write_text(json.dumps({"environment":"local preview, cold browser cache, no network/CPU throttling; timings diagnostic only","samples":samples},ensure_ascii=False,indent=2),encoding="utf-8")
+    report["browser_payload_budget"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("PASS: 9 viewports, 11 corporate pages, resource centers, demo routes, history, focus, clipboard and no-JS",flush=True)
+    print("PASS: 9 viewports, 12 corporate pages, resource centers, availability, browser payload budgets, demo routes, history, focus, clipboard and no-JS",flush=True)
 finally:
     driver.quit()

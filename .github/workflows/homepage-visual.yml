@@ -22,6 +22,9 @@ on:
       - 'site/releases/**'
       - 'site/docs/**'
       - 'site/support/**'
+      - 'site/status/**'
+      - 'tools/verify-performance.py'
+      - 'tests/serve-preview.py'
       - 'site/styles.css'
       - 'site/brand.css'
       - 'site/raschet/**'
@@ -89,7 +92,7 @@ jobs:
           html = html.replace('</body>','<script>\n'+js+'\n</script>\n</body>')
           for route, anchor in {'/':'#start','/about/':'#about','/approach/':'#method','/projects/':'#projects','/contact/':'#contact'}.items():
               html = html.replace('href="'+route+'"','href="'+anchor+'"')
-          for route in ('/projects/raschet/','/legal/','/privacy/','/releases/','/docs/','/support/'):
+          for route in ('/projects/raschet/','/legal/','/privacy/','/releases/','/docs/','/support/','/status/'):
               html = html.replace('href="'+route+'"','href="https://ventrylab.top'+route+'"')
           assert css_count == js_count == 1
           assert 'src="/images/raschet/android-book.webp"' not in html
@@ -98,7 +101,8 @@ jobs:
           html = html.replace('href="/contact/#request"','href="https://ventrylab.top/contact/#request"')
           Path('artifacts/Ventry-ui-audit.html').write_text(html,encoding='utf-8')
           PY
-          python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview.log 2>&1 &
+          python3 tools/verify-performance.py --output artifacts/performance-budget.json
+          python3 tests/serve-preview.py >/tmp/ventry-preview.log 2>&1 &
           python3 tests/visual-pages.py
       - name: Upload previews
         if: always()
