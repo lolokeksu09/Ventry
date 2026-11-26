@@ -61,7 +61,21 @@ jobs:
           test -s site/styles.css
           test -s site/favicon.svg
       - name: Проверить Docker Compose
-        run: docker compose -f compose.yaml config --quiet
+        run: |
+          set -euo pipefail
+          docker compose -f compose.yaml config --format json > "$RUNNER_TEMP/ventry-compose.json"
+          python3 - "$RUNNER_TEMP/ventry-compose.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as stream:
+              web = json.load(stream)["services"]["web"]
+          assert web["read_only"] is True
+          assert web["cap_drop"] == ["ALL"]
+          assert web["cap_add"] == ["NET_BIND_SERVICE"]
+          assert "no-new-privileges:true" in web["security_opt"]
+          assert web["logging"]["driver"] == "json-file"
+          assert web["logging"]["options"] == {"max-size": "10m", "max-file": "3"}
+          assert not web.get("privileged", False)
+          PY
       - name: Подготовить Go 1.27.4 для исправленной сборки Caddy
         uses: actions/setup-go@v6
         with:
