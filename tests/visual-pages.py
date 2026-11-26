@@ -88,7 +88,7 @@ def load(route, width, height):
 
 
 try:
-    for width, height in ((320, 760), (360, 800), (390, 844), (430, 900), (768, 1000), (1440, 900)):
+    for width, height in ((320, 760), (360, 800), (390, 844), (430, 900), (768, 1000), (900, 600), (1024, 768), (1440, 900), (1920, 1080)):
         label = str(width)
         page = load("/", width, height)
         header_selector = ".mobile-top" if width <= 930 else ".rail"
@@ -183,7 +183,19 @@ try:
         assert js("return document.querySelector('.product-next a.quiet-button').search") == "?topic=raschet"
         js("""document.querySelector('.faq-list summary').click()""")
         assert js("""return document.querySelector('.faq-list details').open""")
-        if width <= 768:
+        expected_navigation = ["/", "/about/", "/approach/", "/projects/", "/contact/"]
+        assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
+        assert js("return document.querySelector('#main-nav [aria-current=location]').pathname") == "/projects/"
+        assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#next-title", "#faq-title"]
+        assert js("return document.querySelectorAll('.demo-boundary-grid article').length") == 2
+        gallery_link = driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]')
+        driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", gallery_link)
+        assert driver.execute_script("""const a=arguments[0],r=a.getBoundingClientRect(),h=document.querySelector('.site-header').getBoundingClientRect();return r.top>=h.bottom && a.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))""", gallery_link)
+        gallery_link.click()
+        wait.until(lambda _: js("return location.hash") == "#gallery-title")
+        wait.until(lambda _: js("const h=document.querySelector('#gallery-title').getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))
+        js("window.scrollTo(0,0)")
+        if width <= 930:
             driver.find_element(By.CSS_SELECTOR, ".menu-toggle").click()
             assert js("""return document.querySelector('#main-nav').classList.contains('is-open')""")
             driver.switch_to.active_element.send_keys(Keys.ESCAPE)
@@ -199,11 +211,15 @@ try:
             ("/privacy/", ["privacy-owner", "privacy-scope", "privacy-data", "privacy-grounds", "privacy-services", "privacy-retention", "privacy-rights", "privacy-protection"]),
         ):
             record = load(route, width, height)
+            assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
             links = js("""return [...document.querySelectorAll('.document-toc a')].map(a=>a.getAttribute('href').slice(1))""")
             assert links == headings, (route, links)
             first = driver.find_element(By.CSS_SELECTOR, ".document-toc a")
+            driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", first)
+            assert driver.execute_script("return arguments[0].getBoundingClientRect().top >= document.querySelector('.site-header').getBoundingClientRect().bottom", first)
             first.click()
             assert js("return location.hash") == "#" + headings[0]
+            wait.until(lambda _: js("const h=document.getElementById(location.hash.slice(1)).getBoundingClientRect();return h.top >= 72 && h.top < innerHeight"))
             assert js("""return document.querySelector('h1').innerText.length>10""")
             if width in (390, 1440):
                 js("window.scrollTo(0,0)")
@@ -262,6 +278,9 @@ try:
     assert not driver.find_element(By.CSS_SELECTOR, "[data-copy-email]").is_displayed()
     assert not driver.find_element(By.ID, "request-controls").is_displayed()
     assert len(driver.find_elements(By.CSS_SELECTOR, ".contact-topics li a")) == 3
+    driver.get(BASE + "/projects/raschet/")
+    assert driver.find_element(By.CSS_SELECTOR, '#main-nav a[href="/approach/"]').is_displayed()
+    assert driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]').is_displayed()
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": False})
 
     driver.get((OUTPUT / "Ventry-ui-audit.html").resolve().as_uri())
@@ -269,6 +288,9 @@ try:
     assert js("return location.hash") == "#projects"
     # The public preview must never load or mutate legacy personal records.
     driver.get(BASE + "/raschet/")
+    assert js("return [...document.querySelectorAll('.demo-site-route a')].map(a=>a.pathname)") == ["/projects/raschet/", "/contact/"]
+    assert js("return document.querySelector('.demo-site-route a[href*=\"topic=raschet\"]').hash") == "#request"
+    assert driver.find_element(By.CSS_SELECTOR, ".demo-site-route").is_displayed()
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     legacy = '{"version":2,"clients":[{"id":"legacy","name":"Старый тест","phone":""}],"entries":[]}'
     js("localStorage.setItem('dolgbook-v1-own', " + json.dumps(legacy) + ")")
@@ -348,6 +370,6 @@ try:
     report["demo_only_and_legacy_preservation"] = "PASS"
     report["navigation"] = "PASS"
     (OUTPUT / "all-pages-QA.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("PASS: 6 viewports, 8 public pages, section links, history, focus, clipboard and no-JS",flush=True)
+    print("PASS: 9 viewports, 8 corporate pages, product sections, demo routes, history, focus, clipboard and no-JS",flush=True)
 finally:
     driver.quit()

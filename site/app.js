@@ -20,7 +20,7 @@ if (menuButton && menu) {
     menuButton.setAttribute('aria-expanded', String(isOpen));
     menuButton.setAttribute('aria-label', isOpen ? 'Закрыть меню' : 'Открыть меню');
   });
-  const desktop = window.matchMedia('(min-width: 801px)');
+  const desktop = window.matchMedia('(min-width: 931px)');
   desktop.addEventListener('change', closeMenu);
   menu.addEventListener('focusout', () => {
     requestAnimationFrame(() => {

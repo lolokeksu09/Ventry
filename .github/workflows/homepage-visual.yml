@@ -16,6 +16,9 @@ on:
       - 'site/contact/index.html'
       - 'site/legal/index.html'
       - 'site/privacy/index.html'
+      - 'site/styles.css'
+      - 'site/brand.css'
+      - 'site/raschet/**'
       - 'tests/visual-pages.py'
       - '.github/workflows/homepage-visual.yml'
   workflow_dispatch:
@@ -84,6 +87,7 @@ jobs:
           assert 'src="/images/raschet/android-book.webp"' not in html
           html = html.replace('href="/projects/raschet/#gallery-title"','href="https://ventrylab.top/projects/raschet/#gallery-title"')
           html = html.replace('href="/raschet/?demo=1"','href="https://ventrylab.top/raschet/?demo=1"')
+          html = html.replace('href="/contact/#request"','href="https://ventrylab.top/contact/#request"')
           Path('artifacts/Ventry-ui-audit.html').write_text(html,encoding='utf-8')
           PY
           python3 -m http.server 18765 --bind 127.0.0.1 --directory site >/tmp/ventry-preview.log 2>&1 &
