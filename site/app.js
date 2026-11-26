@@ -132,3 +132,50 @@ if (screenDialog && typeof screenDialog.showModal === 'function') {
     });
   }
 }
+
+
+// Local-only search over static help; all content remains readable without JS.
+const knowledge = document.querySelector('[data-knowledge]');
+if (knowledge) {
+  const controls = knowledge.querySelector('[data-knowledge-controls]');
+  const search = controls.querySelector('[data-knowledge-search]');
+  const filters = [...controls.querySelectorAll('[data-knowledge-filter]')];
+  const items = [...knowledge.querySelectorAll('[data-knowledge-item]')];
+  const count = controls.querySelector('[data-knowledge-count]');
+  const empty = controls.querySelector('[data-knowledge-empty]');
+  const normalize = value => value.toLocaleLowerCase('ru').replace(/ё/g, 'е').trim();
+  const indexed = items.map(el => ({el, text: normalize(el.textContent), category: el.dataset.knowledgeItem}));
+  let category = 'all';
+  const refresh = () => {
+    const terms = normalize(search.value.slice(0, 120)).split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const item of indexed) {
+      const match = (category === 'all' || item.category === category) && terms.every(term => item.text.includes(term));
+      item.el.hidden = !match;
+      if (match) shown++;
+    }
+    for (const button of filters) button.setAttribute('aria-pressed', String(button.dataset.knowledgeFilter === category));
+    count.textContent = 'Найдено: ' + shown + ' из ' + items.length;
+    empty.hidden = shown !== 0;
+  };
+  const reset = () => {search.value = '';category = 'all';refresh();};
+  search.addEventListener('input', refresh);
+  filters.forEach(button => button.addEventListener('click', () => {category = button.dataset.knowledgeFilter;refresh();}));
+  controls.querySelector('[data-knowledge-reset]').addEventListener('click', () => {reset();search.focus();});
+  const revealAnchor = hash => {
+    let target;
+    try {target = document.getElementById(decodeURIComponent(hash.slice(1)));} catch {return;}
+    if (!target || !knowledge.contains(target)) return;
+    if (target.closest('[data-knowledge-item][hidden]')) {
+      reset();
+      target.scrollIntoView({block:'start'});
+    }
+  };
+  window.addEventListener('hashchange', () => revealAnchor(location.hash));
+  knowledge.addEventListener('click', event => {
+    const link = event.target.closest('a[href^="#"]');
+    if (link) revealAnchor(link.hash);
+  });
+  controls.hidden = false;
+  refresh();
+}

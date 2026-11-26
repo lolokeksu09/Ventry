@@ -267,3 +267,22 @@ button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}
 /* Catalog cards remain static and accessible; generated from reviewed metadata. */
 .work-detail .work-category{font-size:11px;letter-spacing:.045em;color:var(--ventry-green);margin:0 0 7px}
 .work-item+.work-item{margin-top:20px}
+
+
+/* Contact workspace: clear path selection and a local-only structured draft. */
+.contact-workspace{max-width:none;display:grid;grid-template-columns:minmax(200px,.68fr) minmax(0,1.32fr);align-items:start;gap:20px clamp(26px,5vw,68px)}
+.contact-kicker,.contact-topics .contact-kicker{font-size:12px;color:var(--ventry-green);margin:0 0 8px;letter-spacing:.04em}
+.contact-workspace .request-composer{margin:0;min-width:0;scroll-margin-top:12px}
+.contact-help-link a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.contact-workspace-note{grid-column:1/-1}
+.request-context{min-width:0;margin:20px 0 0;padding:16px;border:1px solid var(--line);border-radius:5px}
+.request-context legend{font-size:13px;color:var(--ventry-muted);padding:0 6px}
+.request-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.request-context-grid>div{min-width:0}
+.request-context-grid>div:last-child{grid-column:1/-1}
+.request-context label{margin:0 0 6px;font-size:13px}
+.request-context input{width:100%;min-width:0;background:#050907;border:1px solid #557662;border-radius:6px;color:var(--ink);font:inherit;font-size:16px;min-height:46px;padding:10px}
+.request-context input:focus-visible{outline:2px solid var(--ventry-focus);outline-offset:2px}
+.request-context p{font-size:12px;line-height:1.55}
+.request-context[hidden]{display:none!important}
+@media(max-width:800px){.contact-workspace{grid-template-columns:1fr}.request-context-grid{grid-template-columns:1fr}}

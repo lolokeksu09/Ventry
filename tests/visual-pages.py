@@ -257,6 +257,8 @@ try:
                 assert js("return document.querySelector('.release-list').innerText.length > 10")
             elif route == "/docs/":
                 assert js("return document.querySelectorAll('.guide-steps li').length") == 4
+                assert js("return document.querySelectorAll('[data-knowledge-item]').length") == 5
+                assert driver.find_element(By.ID, "docs-search").is_displayed()
                 assert js("return document.querySelector('#backup').textContent.includes('копии')")
             else:
                 assert js("return document.querySelectorAll('.resource-route-grid article').length") == 3
@@ -310,8 +312,47 @@ try:
     driver.refresh()
     assert js("return document.querySelector('#request-message').value") == ""
     report["local_email_draft"] = "PASS"
+    # Optional device information is included only for product/support drafts.
+    load("/contact/?topic=support#request", 390, 844)
+    for field, value in (("request-device", "Test & model"), ("request-android", "15"), ("request-version", "0.29")):
+        driver.find_element(By.ID, field).send_keys(value)
+    assert js("""const q=new URLSearchParams(document.querySelector('#request-mail').getAttribute('href').split('?')[1]);return q.get('body')==='Модель: Test & model\\r\\nAndroid: 15\\r\\nВерсия приложения: 0.29'""")
+    js("document.querySelector('#request-topic').value='partner';document.querySelector('#request-topic').dispatchEvent(new Event('change'))")
+    assert js("return document.querySelector('#request-context').hidden")
+    assert js("""return new URLSearchParams(document.querySelector('#request-mail').getAttribute('href').split('?')[1]).get('body')===''""")
+    driver.refresh()
+    assert js("return document.querySelector('#request-device').value") == ""
+    report["structured_local_draft"] = "PASS"
+
+    load("/docs/",390,844)
+    search = driver.find_element(By.ID,"docs-search")
+    search.send_keys("JSON")
+    assert js("return [...document.querySelectorAll('[data-knowledge-item]')].some(el=>!el.hidden)")
+    search.clear()
+    search.send_keys("no-result-7d128")
+    assert js("return [...document.querySelectorAll('[data-knowledge-item]')].every(el=>el.hidden)")
+    assert js("return !document.querySelector('[data-knowledge-empty]').hidden")
+    js("location.hash='backup'")
+    wait.until(lambda _: js("return !document.querySelector('#backup').closest('[data-knowledge-item]').hidden"))
+    assert js("return document.querySelector('#docs-search').value") == ""
+    load("/support/",390,844)
+    filter_button = driver.find_element(By.CSS_SELECTOR, '[data-knowledge-filter="data"]')
+    driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})",filter_button)
+    filter_button.click()
+    assert js("return document.querySelectorAll('[data-knowledge-item]:not([hidden])').length") == 3
+    assert js("return [...document.querySelectorAll('[data-knowledge-item]:not([hidden])')].every(el=>el.dataset.knowledgeItem==='data')")
+    reset = driver.find_element(By.CSS_SELECTOR, "[data-knowledge-reset]")
+    driver.execute_script("arguments[0].scrollIntoView({block:'center',behavior:'instant'})",reset)
+    reset.click()
+    assert js("return document.querySelectorAll('[data-knowledge-item]:not([hidden])').length") == 9
+    report["knowledge_search"] = "PASS"
 
     driver.execute_cdp_cmd("Emulation.setScriptExecutionDisabled", {"value": True})
+    driver.get(BASE + "/docs/")
+    assert driver.find_element(By.ID, "backup").is_displayed()
+    assert not driver.find_element(By.ID, "docs-controls").is_displayed()
+    driver.get(BASE + "/support/")
+    assert driver.find_element(By.CSS_SELECTOR, ".knowledge-faq summary").is_displayed()
     driver.get(BASE + "/?no-js=1")
     driver.find_element(By.CSS_SELECTOR, ".mobile-nav summary").click()
     driver.find_element(By.CSS_SELECTOR, '.mobile-nav nav a[href="/projects/"]').click()

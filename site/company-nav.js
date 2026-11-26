@@ -88,6 +88,10 @@ if (requestControls) {
   const fallback = document.querySelector('#request-fallback');
   const manual = document.querySelector('#request-text');
   const recipient = 'ventrybusinesswork@gmail.com';
+  const context = document.querySelector('#request-context');
+  const device = document.querySelector('#request-device');
+  const android = document.querySelector('#request-android');
+  const version = document.querySelector('#request-version');
   let revision = 0;
   const requested = new URLSearchParams(location.search).get('topic');
   if (topics.has(requested)) topic.value = requested;
@@ -95,13 +99,23 @@ if (requestControls) {
   const encode = value => new URLSearchParams([['v', value]]).toString().slice(2).replace(/\+/g, '%20');
   const draft = () => {
     const [subject, guidance] = topics.get(topic.value) || topics.get('raschet');
-    const body = message.value.slice(0, 800).trim().replace(/\r?\n/g, '\r\n');
+    const clean = (field, max) => field.value.slice(0, max).replace(/[\r\n\t]+/g, ' ').trim();
+    const lines = [];
+    if (topic.value !== 'partner') {
+      for (const [label, field, max] of [['Модель', device, 80], ['Android', android, 24], ['Версия приложения', version, 64]]) {
+        const value = clean(field, max);
+        if (value) lines.push(label + ': ' + value);
+      }
+    }
+    const messageBody = message.value.slice(0, 800).trim().replace(/\r?\n/g, '\r\n');
+    const body = [lines.join('\r\n'), messageBody].filter(Boolean).join('\r\n\r\n');
     return {subject, guidance, body, text: 'Кому: ' + recipient + '\nТема: ' + subject + '\n\n' + body};
   };
   const refresh = () => {
     revision += 1;
     const value = draft();
     hint.textContent = value.guidance;
+    context.hidden = topic.value === 'partner';
     limit.textContent = Math.min(message.value.length, 800) + ' / 800 символов';
     mail.href = 'mailto:' + recipient + '?subject=' + encode(value.subject) + '&body=' + encode(value.body);
     status.textContent = '';
@@ -110,6 +124,7 @@ if (requestControls) {
   };
   topic.addEventListener('change', refresh);
   message.addEventListener('input', refresh);
+  [device, android, version].forEach(field => field.addEventListener('input', refresh));
   copy.addEventListener('click', async () => {
     const value = draft();
     const currentRevision = revision;
