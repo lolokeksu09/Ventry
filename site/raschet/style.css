@@ -508,3 +508,9 @@ h1,.view-title{font-family:var(--ventry-sans);font-weight:650;letter-spacing:-.7
 .scenario-actions a{display:inline-flex;align-items:center;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:900px){.scenario-panel{grid-template-columns:1fr}}
 @media print{.scenario-panel{display:none!important}}
+
+/* Accessible navigation and keyboard focus, including narrow-screen labels. */
+.demo-skip{position:fixed;top:10px;left:12px;z-index:300;transform:translateY(calc(-100% - 24px));padding:12px 16px;min-height:44px;background:var(--ventry-primary);color:var(--ventry-on-primary);border-radius:6px;font-weight:600}
+.demo-skip:focus{transform:none}
+#demo-main:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ventry-focus);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}

@@ -1,6 +1,20 @@
 name: Ventry release snapshot monitor
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-snapshot.yml'
+      - 'tools/sync-releases.py'
+      - 'data/raschet-releases.json'
+      - 'data/raschet-release-notes.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-snapshot.yml'
+      - 'tools/sync-releases.py'
+      - 'data/raschet-releases.json'
+      - 'data/raschet-release-notes.json'
   schedule:
     - cron: '37 5 * * *'
   workflow_dispatch:
@@ -21,6 +35,8 @@ jobs:
           python3 tools/sync-releases.py --check
           python3 -m unittest discover -s tests -p test_release_sync.py
       - name: Fetch public release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 tools/sync-releases.py --refresh
       - name: Detect publication drift
         run: |

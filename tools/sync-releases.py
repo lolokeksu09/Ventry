@@ -7,9 +7,11 @@ import argparse
 from datetime import datetime
 import html
 import json
+import os
 from pathlib import Path
 import re
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener, HTTPRedirectHandler
+from urllib.error import HTTPError
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data/raschet-releases.json"
@@ -121,14 +123,27 @@ def replace_block(page, data, notes=None):
     _, after = remaining.split(END)
     return before + START + "\n" + render(data, notes) + "\n" + END + after
 
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise HTTPError(req.full_url, code, "Redirect refused", headers, fp)
+
 def fetch():
-    request = Request(API, headers={
+    headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "Ventry-release-snapshot",
         "X-GitHub-Api-Version": "2022-11-28",
-    })
-    with urlopen(request, timeout=20) as response:
-        payload = response.read(4 * 1024 * 1024 + 1)
+    }
+    # Optional ephemeral read-only CI credential. Never persist or print it.
+    token = os.environ.get("GH_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    request = Request(API, headers=headers)
+    opener = build_opener(NoRedirect())
+    try:
+        with opener.open(request, timeout=20) as response:
+            payload = response.read(4 * 1024 * 1024 + 1)
+    except HTTPError as error:
+        raise RuntimeError(f"GitHub release API returned HTTP {error.code}; published snapshot unchanged") from None
     if len(payload) > 4 * 1024 * 1024:
         raise ValueError("Unexpected response size")
     return normalize(json.loads(payload))
