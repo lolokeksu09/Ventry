@@ -103,6 +103,7 @@ try:
         assert js("""const org=document.querySelector('footer[itemtype="https://schema.org/Organization"]');return !!org && org.querySelector('[itemprop="name"]').textContent==='Ventry' && org.querySelector('[itemprop="email"]').href.startsWith('mailto:')""")
         assert js("return document.querySelector('.opening-actions a.hero-secondary').pathname") == "/about/"
         assert js("return document.querySelector('#projects .work-actions a.hero-primary').pathname") == "/raschet/"
+        assert js("return document.querySelector('#projects .work-item').dataset.product") == "raschet"
         assert len(driver.find_elements(By.CSS_SELECTOR, "#projects .work-features li")) == 3
         js("document.querySelector('#projects .work-preview img').loading='eager'")
         wait.until(lambda _: js("return document.querySelector('#projects .work-preview img').naturalWidth === 540"))
