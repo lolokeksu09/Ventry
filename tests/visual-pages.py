@@ -206,6 +206,10 @@ try:
     wait.until(lambda _: js("return document.querySelector('#client-count').textContent") == "4")
     assert "Старый тест" not in driver.find_element(By.ID, "clients").text
     assert not js("return !!document.querySelector('input[type=file],input[type=tel]')")
+    driver.find_element(By.ID, "quick-debt").click()
+    assert js("return document.querySelector('#entry-dialog').open")
+    driver.find_element(By.CSS_SELECTOR, "#entry-dialog [data-close]").click()
+    wait.until(lambda _: not js("return document.querySelector('#entry-dialog').open"))
     capture("ui-390-demo.png")
     driver.find_element(By.ID, "add-client").click()
     assert js("return document.querySelector('#client-form [name=name]').readOnly")
