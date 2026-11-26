@@ -1,7 +1,7 @@
 import {MAX_AMOUNT,today,moneyToCents,balance,debtOverview,validateBook,addEntry,demoBook,activeEntries} from './ledger.js';
 import { filterHistory, historyPage, HISTORY_PAGE_SIZE } from './history.js';
 import { listBackups } from './backups.js';
-import { periodRange, projectDemo } from './demo-analytics.js';
+import { periodRange, previousRange, projectDemo, bookDays, calendarDays } from './demo-analytics.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const blank=()=>({version:2,clients:[],entries:[]});
@@ -26,7 +26,7 @@ async function save(next) {
     render();
   } finally { writing = false; }
 }
-function switchView(view){if(!['book','history','statistics','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshLegacyBackups();}
+function switchView(view){if(!['book','dates','history','statistics','settings'].includes(view))view='book';$$('.view').forEach(el=>el.hidden=el.id!==`view-${view}`);$$('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));location.hash=view;if(view==='settings')refreshLegacyBackups();}
 $('#today').textContent=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date());
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
@@ -38,6 +38,8 @@ function resetDemo() {
   historyForm.reset();
   $('#stats-period').value='month';
   $('#stats-client').value='';
+  $('#stats-from').value=today();$('#stats-to').value=today();
+  dateKind='debt';dateMode='list';dateSelected=today();dateMonth=dateSelected.slice(0,7);
   currentHistoryPage = 0;
   load();
   switchView('book');
@@ -215,14 +217,45 @@ function render(){
   $('#empty-add')?.addEventListener('click',openClient);$$('[data-entry]').forEach(b=>b.onclick=()=>openEntry(b.dataset.client,b.dataset.entry));$$('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));
   renderHistory();
   renderStats();
+  renderDates();
   $('#book-note').textContent='Это интерактивный пример Android-приложения. Изменения живут только до перезагрузки страницы; реальные данные не вводятся.';
 }
 
+
+let dateKind='debt',dateMode='list',dateSelected=today(),dateMonth=dateSelected.slice(0,7);
+function renderDates(){
+  const groups=bookDays(book,dateKind);
+  for(const [id,active] of [['dates-debt',dateKind==='debt'],['dates-payment',dateKind==='payment'],['dates-list',dateMode==='list'],['dates-calendar',dateMode==='calendar']])$('#'+id).setAttribute('aria-pressed',String(active));
+  $('#calendar-panel').hidden=dateMode!=='calendar';
+  const counts=new Map(groups.map(g=>[g.day,g.entries.length]));
+  $('#calendar-month').textContent=new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric'}).format(new Date(dateMonth+'-01T12:00:00'));
+  $('#calendar-next').disabled=dateMonth>=today().slice(0,7);
+  $('#calendar-grid').innerHTML=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>'<span class="calendar-weekday">'+x+'</span>').join('')+
+    calendarDays(dateMonth).map(day=>day?'<button type="button" class="calendar-day" data-day="'+day+'" aria-label="'+dateText(day)+', записей: '+(counts.get(day)||0)+'" aria-pressed="'+(day===dateSelected)+'" '+(day>today()?'disabled':'')+'>'+Number(day.slice(-2))+(counts.has(day)?'<small>'+counts.get(day)+'</small>':'')+'</button>':'<span></span>').join('');
+  const panel=$('#date-entries'),opened=new Set([...panel.querySelectorAll('details[open]')].map(x=>x.dataset.date));
+  if(dateMode==='calendar'){const g=groups.find(g=>g.day===dateSelected);panel.innerHTML='<h3>'+dateText(dateSelected)+'</h3><p>Действительные записи: '+rub(g?.total||0)+'</p>'+historyRows(g?.entries||[])}
+  else panel.innerHTML=groups.length?groups.map(g=>'<details class="date-group" data-date="'+g.day+'" '+(opened.has(g.day)?'open':'')+'><summary><span>'+dateText(g.day)+' · '+g.entries.length+' зап.</span><strong>'+rub(g.total)+'</strong></summary>'+historyRows(g.entries)+'</details>').join(''):'<p>Нет записей.</p>';
+  $('[data-day]').forEach(b=>b.onclick=()=>{dateSelected=b.dataset.day;renderDates();$('[data-day]').find(x=>x.dataset.day===dateSelected)?.focus()});
+}
+function moveMonth(delta){const d=new Date(dateMonth+'-01T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+delta);dateMonth=d.toISOString().slice(0,7);dateSelected=dateMonth+'-01';renderDates()}
+$('#dates-debt').onclick=()=>{dateKind='debt';renderDates()};
+$('#dates-payment').onclick=()=>{dateKind='payment';renderDates()};
+$('#dates-list').onclick=()=>{dateMode='list';renderDates()};
+$('#dates-calendar').onclick=()=>{dateMode='calendar';renderDates()};
+$('#calendar-prev').onclick=()=>moveMonth(-1);
+$('#calendar-next').onclick=()=>moveMonth(1);
+$('#calendar-today').onclick=()=>{dateSelected=today();dateMonth=dateSelected.slice(0,7);renderDates()};
+$('#stats-from').value=today();$('#stats-to').value=today();
+$('#stats-from').max=today();$('#stats-to').max=today();
 function renderStats(){
   const select=$('#stats-client'), selected=select.value;
   select.innerHTML='<option value="">Весь магазин</option>'+book.clients.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join('');
   select.value=book.clients.some(c=>c.id===selected)?selected:'';
-  const scope=select.value, range=periodRange($('#stats-period').value,today(),book.entries);
+  const scope=select.value,preset=$('#stats-period').value;
+  $('#stats-custom').hidden=preset!=='custom';
+  let range;
+  try{range=periodRange(preset,today(),book.entries,{from:$('#stats-from').value,to:$('#stats-to').value})}catch(error){$('#stats-content').textContent=error.message;return}
+  const previous=previousRange(preset,range);
   const data=projectDemo(book,range,scope),t=data.totals;
   const current=[...debtOverview(book)].filter(([id])=>!scope||id===scope).map(([,x])=>x);
   const metric=(label,value)=>'<div class="stats-value"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>';
@@ -231,13 +264,18 @@ function renderStats(){
   const rank=data.customers.filter(c=>c.debtCount||c.paymentCount||c.end>0).sort((a,b)=>b.end-a.end||b.debt-a.debt);
   const ranking=scope?'': '<section class="card"><h3>Клиенты по остатку на конец периода</h3>'+ (rank.length?rank.map(c=>'<button type="button" class="stats-ranking" data-stats-client="'+esc(c.id)+'"><span>'+esc(c.name)+'<small>Долгов: '+c.debtCount+' · '+rub(c.debt)+'</small></span><strong>'+rub(c.end)+' ›</strong></button>').join(''):'<p>Нет записей за период.</p>')+'</section>';
   const daily='<section class="card"><h3>Долги и оплаты по дням</h3>'+ (data.days.length?data.days.map(d=>'<div class="stats-day"><strong>'+dateText(d.day)+'</strong><span>Долги '+rub(d.debt)+'</span><span>Оплаты '+rub(d.payment)+'</span></div>').join(''):'<p>Нет действительных операций.</p>')+'</section>';
+  const prior=previous?projectDemo(book,previous,scope).totals:null;
+  const compare=prior?group('Сравнение · '+dateText(previous.from)+' — '+dateText(previous.to),['debt','payment','end'].map((key,i)=>metric(['Долги: изменение','Оплаты: изменение','Остаток: изменение'][i],rub(t[key]-prior[key])))):'';
+  const max=Math.max(1,...data.days.flatMap(d=>[d.debt,d.payment]));
+  const chart=data.days.length?'<section class="card"><h3>Динамика операций</h3><p>Долги (янтарный) и оплаты (зелёный). Максимум: '+rub(max)+'</p><svg class="stats-chart" viewBox="0 0 320 120" role="img" aria-label="Динамика долгов и оплат по дням">'+data.days.map((d,i)=>{const w=300/data.days.length,x=10+i*w;return '<rect x="'+x+'" y="'+(110-100*d.debt/max)+'" width="'+w*.4+'" height="'+100*d.debt/max+'" fill="#d9a35e"><title>'+dateText(d.day)+': долг '+rub(d.debt)+'</title></rect><rect x="'+(x+w*.45)+'" y="'+(110-100*d.payment/max)+'" width="'+w*.4+'" height="'+100*d.payment/max+'" fill="#80bd9b"><title>'+dateText(d.day)+': оплата '+rub(d.payment)+'</title></rect>'}).join('')+'</svg></section>':'';
   $('#stats-content').innerHTML=group('На сегодня',[metric('Остаток',rub(sum('balance'))),metric('Просрочено',rub(sum('overdue'))),metric('Должников',String(current.filter(x=>x.balance>0).length))])+
     group('За период · '+dateText(range.from)+' — '+dateText(range.to),[metric('Остаток на начало',rub(t.start)),metric('Остаток на конец',rub(t.end)),metric('Изменение остатка',rub(t.end-t.start)),metric('Записано долгов',rub(t.debt)),metric('Записей долга',String(t.debtCount)),metric('Получено оплат',rub(t.payment)),metric('Записей оплаты',String(t.paymentCount)),metric('Средний долг',t.debtCount?rub(Math.round(t.debt/t.debtCount)):'Нет данных'),metric('Максимальный долг',t.debtCount?rub(t.maxDebt):'Нет данных'),metric('Отменено долгов',rub(t.cancelDebt)),metric('Отменено оплат',rub(t.cancelPayment))])+
-    '<p class="footnote">Суммы действительных долгов и оплат не включают записи, отменённые к концу периода. Остаток учитывает движение и отмены.</p>'+ranking+daily;
+    '<p class="footnote">Суммы действительных долгов и оплат не включают записи, отменённые к концу периода. Остаток учитывает движение и отмены.</p>'+compare+chart+ranking+daily;
   $('[data-stats-client]').forEach(b=>b.onclick=()=>{select.value=b.dataset.statsClient;renderStats();select.focus();});
 }
 $('#stats-period').onchange=renderStats;
 $('#stats-client').onchange=renderStats;
+$('#stats-from').onchange=renderStats;$('#stats-to').onchange=renderStats;
 
 function openClient(clientId=''){
   if(loadBlocked)return toast('Восстановите книгу в разделе «Данные и копии».');
