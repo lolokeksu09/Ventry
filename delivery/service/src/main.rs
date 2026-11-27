@@ -117,7 +117,11 @@ async fn admin_guard(State(app): State<Shared>, req: Request, next: Next) -> Res
     Ok(next.run(req).await)
 }
 async fn security_headers(req: Request, next: Next) -> Response {
-    let mut res = match tokio::time::timeout(Duration::from_secs(12),next.run(req)).await {
+    let seconds=match req.uri().path(){
+        "/api/v1/backups/1/put"|"/api/v1/backups/2/put"|"/api/v1/backups/3/put"=>90,
+        _=>12,
+    };
+    let mut res = match tokio::time::timeout(Duration::from_secs(seconds),next.run(req)).await {
         Ok(response) => response,
         Err(_) => ApiError(StatusCode::REQUEST_TIMEOUT,"request_timeout").into_response(),
     };

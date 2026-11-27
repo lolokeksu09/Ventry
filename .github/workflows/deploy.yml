@@ -207,7 +207,7 @@ jobs:
             sleep 4
           done
           test "$ready" = 1
-          for path in / /download /api/v1/download /api/v1/session /api/v1/projects /api/v1/customers/x; do
+          for path in / /download /api/v1/download /api/v1/session /api/v1/projects /api/v1/customers/x /api/v1/backups/list /api/v1/backups/1/read /api/v1/backups/1/put; do
             for method in GET POST; do
               test "$(curl -sS --max-time 10 -X "$method" -o /dev/null -w '%{http_code}' "$url$path")" = 404
             done

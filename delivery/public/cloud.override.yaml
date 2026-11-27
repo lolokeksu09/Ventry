@@ -1,0 +1,5 @@
+# Explicit owner opt-in, only after private acceptance and policy decision.
+services:
+  public-gateway:
+    environment:
+      VENTRY_CLOUD_ENABLED: "true"

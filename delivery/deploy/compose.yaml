@@ -22,7 +22,8 @@ services:
       - ../migrations/004_activation.sql:/docker-entrypoint-initdb.d/004.sql:ro
       - ../migrations/005_download_retry.sql:/docker-entrypoint-initdb.d/005.sql:ro
       - ../migrations/006_customer_desk.sql:/docker-entrypoint-initdb.d/006.sql:ro
-      - ./init-runtime.sh:/docker-entrypoint-initdb.d/007-runtime.sh:ro
+      - ../migrations/007_cloud_backups.sql:/docker-entrypoint-initdb.d/007.sql:ro
+      - ./init-runtime.sh:/docker-entrypoint-initdb.d/008-runtime.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d delivery"]
       interval: 3s
@@ -46,6 +47,7 @@ services:
       DELIVERY_PUBLIC_ADDR: 127.0.0.1:18082
       DELIVERY_PUBLIC_ORIGIN: "https://${DELIVERY_BIND_IP:-127.0.0.1}:18444"
       DELIVERY_ALLOW_LEGACY_ADMIN: "false"
+      DELIVERY_BACKUP_ENABLED: "false"
       DELIVERY_DB_CONFIG_FILE: /run/delivery/db.conf
       DELIVERY_ADMIN_TOKEN_FILE: /run/delivery/admin-token
       DELIVERY_SIGNING_KEY_FILE: /run/delivery/signing-key

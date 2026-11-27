@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     environment:
       VENTRY_UPSTREAM: https://db:18444
+      VENTRY_CLOUD_ENABLED: "false"
       VENTRY_UPSTREAM_TLS_NAME: "${DELIVERY_BIND_IP:-127.0.0.1}"
     volumes:
       - "${DELIVERY_STATE:?set state}/tls/gateway-ca.pem:/run/delivery/ca.pem:ro"

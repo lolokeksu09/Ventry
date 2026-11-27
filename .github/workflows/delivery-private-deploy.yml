@@ -36,7 +36,7 @@ jobs:
           # Reproduce an existing volume with the prior initialization sequence.
           old="$(mktemp "$PWD/delivery/deploy/.compose-005.XXXXXXXX")"
           trap 'rm -f "$old"' EXIT
-          sed '/006_customer_desk.sql:/d; s@007-runtime.sh@006-runtime.sh@' delivery/deploy/compose.yaml > "$old"
+          sed '/006_customer_desk.sql:/d; /007_cloud_backups.sql:/d; s@008-runtime.sh@006-runtime.sh@' delivery/deploy/compose.yaml > "$old"
           docker compose --env-file "$state/compose.env" -f "$old" up -d --wait --wait-timeout 120 db
           dc() { docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml "$@"; }
           dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_before.sql
@@ -56,8 +56,25 @@ jobs:
           grep -F 'Delivery upgrade recovery marker exists' "$RUNNER_TEMP/recovery-start.log"
           rm -- "$state/upgrade-006.incomplete"
           dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_after.sql
+      - name: Upgrade populated 006 volume and verify restore before starting cloud
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/ventry-private-state"
+          dc() { docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml "$@"; }
+          dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_before.sql
+          bash delivery/deploy/upgrade-007.sh "$state" --check | grep -Fx DELIVERY_SCHEMA_006_UPGRADE_REQUIRED
+          bash delivery/deploy/upgrade-007.sh "$state" --apply | tee "$RUNNER_TEMP/upgrade-007.log"
+          grep -Fx DELIVERY_007_BACKUP_RESTORE_VERIFIED "$RUNNER_TEMP/upgrade-007.log"
+          grep -F DELIVERY_007_UPGRADE_VERIFIED "$RUNNER_TEMP/upgrade-007.log"
+          bash delivery/deploy/upgrade-007.sh "$state" --apply | grep -Fx DELIVERY_SCHEMA_007_ALREADY_READY
+          touch "$state/upgrade-007.incomplete"
+          if bash delivery/deploy/start-private.sh "$state" --cloud; then exit 1; fi
+          rm -- "$state/upgrade-007.incomplete"
+          dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_after.sql
       - name: Start exact private TLS Docker stack
-        run: bash delivery/deploy/start-private.sh "$RUNNER_TEMP/ventry-private-state"
+        run: bash delivery/deploy/start-private.sh "$RUNNER_TEMP/ventry-private-state" --cloud
+      - name: Exercise actual gateway and private TLS cloud routes
+        run: bash delivery/deploy/test-cloud-ingress.sh "$RUNNER_TEMP/ventry-private-state"
       - name: Validate isolation and restore backup in fresh synthetic database
         run: |
           set -euo pipefail
@@ -125,6 +142,8 @@ jobs:
         run: |
           state="$RUNNER_TEMP/ventry-private-state"
           if [ -f "$state/compose.env" ]; then
-            docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml down -v || true
+            docker rm -f ventry-cloud-ci-front >/dev/null 2>&1 || true
+            docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml -f delivery/public/delivery.override.yaml down -v || true
+            docker network rm ventry-delivery-public || true
           fi
           rm -rf "$state"
