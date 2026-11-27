@@ -278,16 +278,38 @@ async fn release(State(app): State<Shared>) -> Json<artifact::Release> {
 async fn download(State(app): State<Shared>, req: Request) -> Result<Response, ApiError> {
     rate(&app.download_budget, 60)?;
     let hash = bearer(req.headers()).ok_or(ApiError(StatusCode::NOT_FOUND,"link_unavailable"))?;
+    let mut proofs=req.headers().get_all("x-ventry-download-retry").iter();
+    let proof=match proofs.next(){
+        None=>None,
+        Some(value)=>{
+            let digest=value.to_str().ok().and_then(token_digest)
+                .ok_or(ApiError(StatusCode::NOT_FOUND,"link_unavailable"))?;
+            if proofs.next().is_some() || bool::from(digest.ct_eq(&hash)){
+                return Err(ApiError(StatusCode::NOT_FOUND,"link_unavailable"));
+            }
+            Some(digest)
+        }
+    };
     axum::body::to_bytes(req.into_body(),0).await
         .map_err(|_| ApiError(StatusCode::BAD_REQUEST,"unexpected_body"))?;
-    let row = app.db.query_one("SELECT delivery.api_consume_download($1,$2)",
-        &[&&hash[..], &app.artifact.release.sha256]).await.map_err(db_error)?;
+    let row = if let Some(proof)=proof{
+        app.db.query_one("SELECT delivery.api_consume_download_retry($1,$2,$3)",
+            &[&&hash[..],&app.artifact.release.sha256,&&proof[..]]).await
+    }else{
+        app.db.query_one("SELECT delivery.api_consume_download($1,$2)",
+            &[&&hash[..],&app.artifact.release.sha256]).await
+    }.map_err(db_error)?;
     let used: bool = row.try_get(0).map_err(db_error)?;
     if !used { return Err(ApiError(StatusCode::NOT_FOUND,"link_unavailable")); }
-    Ok(([
+    let mut response=([
         (header::CONTENT_TYPE, "application/vnd.android.package-archive"),
         (header::CONTENT_DISPOSITION, "attachment; filename=\"Raschet-release-candidate.apk\""),
-    ], app.artifact.bytes.clone()).into_response())
+    ], app.artifact.bytes.clone()).into_response();
+    response.headers_mut().insert("x-ventry-apk-sha256",
+        HeaderValue::from_str(&app.artifact.release.sha256).map_err(|_|ApiError(StatusCode::SERVICE_UNAVAILABLE,"artifact_unavailable"))?);
+    response.headers_mut().insert("x-ventry-apk-size",
+        HeaderValue::from_str(&app.artifact.release.size.to_string()).map_err(|_|ApiError(StatusCode::SERVICE_UNAVAILABLE,"artifact_unavailable"))?);
+    Ok(response)
 }
 async fn admin_html() -> Html<&'static str> { Html(include_str!("../web/admin.html")) }
 async fn download_html() -> Html<&'static str> { Html(include_str!("../web/download.html")) }
@@ -378,6 +400,7 @@ async fn run() -> Result<(),Box<dyn Error>> {
     db.query_one("SELECT delivery.api_plans()", &[]).await?;
     let signer=license::LicenseSigner::from_file(&file_setting("DELIVERY_SIGNING_KEY_FILE")?)?;
     db.query_one("SELECT delivery.api_refresh_entitlement(NULL,NULL,NULL)",&[]).await?;
+    db.query_one("SELECT delivery.api_consume_download_retry(NULL,NULL,NULL)",&[]).await?;
     // Default is session-only. Direct master-token operation is explicitly local CI compatibility.
     let allow_legacy_admin=match env::var("DELIVERY_ALLOW_LEGACY_ADMIN").as_deref(){
         Ok("true")=>true, Ok("false")|Err(env::VarError::NotPresent)=>false,

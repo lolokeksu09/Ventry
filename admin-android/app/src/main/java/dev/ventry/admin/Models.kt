@@ -11,7 +11,12 @@ data class Plan(val code: String, val kopecks: Long, val enabled: Boolean)
 data class Subscription(val id: String, val customerId: String, val product: String, val status: String,
     val validUntil: String?, val installation: String?, val effectivePlan: String?)
 data class HistoryLine(val title: String, val detail: String)
-data class DownloadGrant(val id: String, val expires: String, val consumed: Boolean, val revoked: Boolean)
+data class DownloadGrant(val id: String, val expires: String, val consumed: Boolean, val revoked: Boolean,
+    val retryUntil:String?=null,val attempts:Int=0) {
+    fun retryAvailable():Boolean = !revoked && attempts in 1..2 && retryUntil?.let{
+        runCatching{java.time.Instant.parse(it).isAfter(java.time.Instant.now())}.getOrDefault(false)
+    }==true
+}
 data class History(val lines: List<HistoryLine> = emptyList(), val downloads: List<DownloadGrant> = emptyList())
 data class DeliveryLink(val url: String, val expires: String)
 data class ActivationCode(val code:String,val expires:String,val trial:Boolean)

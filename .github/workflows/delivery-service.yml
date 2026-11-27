@@ -59,6 +59,9 @@ jobs:
           db < delivery/tests/api_privileges.sql
           db < delivery/migrations/003_projects.sql
           db < delivery/migrations/004_activation.sql
+          db < delivery/tests/download_retry_before.sql
+          db < delivery/migrations/005_download_retry.sql
+          db < delivery/tests/download_retry_after.sql
           printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db
           printf 'host=127.0.0.1 port=55432 dbname=delivery user=delivery_runtime password=%s sslmode=disable\n' "$runtime_password" > "$RUNNER_TEMP/delivery-db.conf"
           openssl rand -hex 32 > "$RUNNER_TEMP/delivery-admin-token"

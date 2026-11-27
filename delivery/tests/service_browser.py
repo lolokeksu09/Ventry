@@ -91,6 +91,22 @@ try:
     driver.get(link); show("start")
     assert not urlsplit(driver.current_url).fragment
     screenshot("04-client-download.png")
+    # Drop the response after the real server consumed the grant. Same open
+    # page must recover, with no second link and no credential in storage.
+    driver.execute_script("""
+      const real=window.fetch.bind(window);
+      let dropped=false;
+      window.fetch=async (...args)=>{
+        const r=await real(...args);
+        if (!dropped && args[0]==='/api/v1/download' && r.ok) {
+          dropped=true; await r.arrayBuffer(); throw new Error('synthetic response loss');
+        }
+        return r;
+      };
+    """)
+    click("start")
+    wait.until(lambda d:elem("start").is_enabled())
+    assert "Повторите" in elem("status").text
     click("start"); show("save")
     assert elem("save").get_attribute("href").startswith("blob:")
     assert elem("save").get_attribute("download")=="Raschet-release-candidate.apk"
