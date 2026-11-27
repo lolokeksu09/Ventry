@@ -21,7 +21,9 @@ data class AdminState(
     val subscriptions:List<Subscription> = emptyList(),val next:String?=null,val release:ApprovedRelease?=null,
     val selected:Subscription?=null,val history:History=History(),val link:DeliveryLink?=null,val pending:PendingPayment?=null,
     val activations:List<ActivationRecord> = emptyList(),val activation:ActivationCode?=null,
-    val labels:Map<String,String> = emptyMap(),val savedConnection:Boolean=false
+    val labels:Map<String,String> = emptyMap(),val savedConnection:Boolean=false,
+    val serverDesk:Boolean=false,val deskQuery:String="",val deskFilter:String="all",
+    val revenue:Revenue?=null,val revenueDays:Int?=null,val customerCard:CustomerCard?=null,val paymentNext:String?=null
 )
 
 class AdminViewModel(application:Application):AndroidViewModel(application) {
@@ -114,16 +116,28 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         val all=c.projects()
         val p=all.first{it.code==code}
         val plans=c.plans(code)
-        val rows=c.subscriptions(code)
+        val previous=mutable.value
+        val same=previous.project?.code==code
+        val q=if(same)previous.deskQuery else ""
+        val filter=if(same)previous.deskFilter else "all"
+        val days=if(same)previous.revenueDays else null
+        // Explicit legacy compatibility: only a missing desk route on a known project falls back.
+        val desk=try{c.desk(code,q,filter)}catch(e:DeliveryApi.Failure){if(e.status==404)null else throw e}
+        val online=desk!=null
+        val rows=desk?:c.subscriptions(code)
+        val revenue=if(online)c.revenue(code,days) else null
         val release=if(p.releaseAvailable)c.release(code) else null
         val selected=keep?.let{c.subscription(it)}
         require(selected==null || selected.product==code)
-        val h=if(selected==null)History() else c.history(selected.id)
+        val card=if(online&&selected!=null)c.customer(selected.customerId) else null
+        val full=if(online&&selected!=null)c.paymentPage(selected.id) else null
+        val h=if(selected==null)History() else c.history(selected.id).let{if(full!=null)it.copy(payments=full) else it}
         val activations=if(selected==null)emptyList() else c.activations(selected.id)
         publish(owner){it.copy(projects=all,project=p,plans=plans,subscriptions=rows,
             next=if(rows.size==100)rows.last().id else null,release=release,selected=selected,history=h,
             pending=pending(),link=if(keep==it.selected?.id)it.link else null,activations=activations,
-            labels=labels.read(labelScope,code),
+            labels=labels.read(labelScope,code),serverDesk=online,deskQuery=if(online)q else "",deskFilter=if(online)filter else "all",
+            revenue=revenue,revenueDays=days,customerCard=card,paymentNext=if(full?.size==100)full.last().id else null,
             activation=if(keep==it.selected?.id)it.activation else null)}
     }
     fun openProject(code:String)=task{owner->
@@ -134,7 +148,7 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         if(mutable.value.busy)return
         val s=mutable.value
         if(s.selected!=null)mutable.value=s.copy(selected=null,history=History(),link=null,activation=null,activations=emptyList(),message="",error=false)
-        else if(s.project!=null)mutable.value=s.copy(project=null,plans=emptyList(),subscriptions=emptyList(),release=null,next=null,link=null,message="",error=false,labels=emptyMap())
+        else if(s.project!=null)mutable.value=s.copy(project=null,plans=emptyList(),subscriptions=emptyList(),release=null,next=null,link=null,message="",error=false,labels=emptyMap(),serverDesk=false,deskQuery="",deskFilter="all",revenue=null,revenueDays=null,customerCard=null,paymentNext=null)
         else lock()
     }
     fun refresh()=task{owner->
@@ -153,6 +167,21 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         client().createPlan(p.code,code,Contract.kopecks(price));projectData(owner,p.code)
         publish(owner){it.copy(message="Тариф зарегистрирован")}
     }
+    fun searchDesk(query:String,filter:String)=task{owner->
+        val s=mutable.value;val p=checkNotNull(s.project);require(s.serverDesk)
+        val q=query.trim();val rows=client().desk(p.code,q,filter)
+        publish(owner){it.copy(deskQuery=q,deskFilter=filter,subscriptions=rows,next=if(rows.size==100)rows.last().id else null)}
+    }
+    fun revenuePeriod(days:Int?)=task{owner->
+        val s=mutable.value;require(s.serverDesk);val r=client().revenue(checkNotNull(s.project).code,days)
+        publish(owner){it.copy(revenue=r,revenueDays=days)}
+    }
+    fun morePayments()=task{owner->
+        val s=mutable.value;val id=checkNotNull(s.selected).id;val cursor=s.paymentNext?:return@task
+        val rows=client().paymentPage(id,cursor)
+        require(rows.none{row->s.history.payments.any{it.id==row.id}}){"Пересечение страниц"}
+        publish(owner){it.copy(history=it.history.copy(payments=it.history.payments+rows),paymentNext=if(rows.size==100)rows.last().id else null)}
+    }
     fun more()=loadPages(1)
     fun loadBatch()=loadPages(20)
     private fun loadPages(maxPages:Int)=task{owner->
@@ -161,8 +190,10 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         var pages=0
         while(pages<maxPages && owner==generation){
             val cursor=mutable.value.next?:break
-            val rows=c.subscriptions(p.code,cursor)
-            publish(owner){it.copy(subscriptions=SubscriptionDesk.merge(it.subscriptions,rows),
+            val state=mutable.value
+            val rows=if(state.serverDesk)c.desk(p.code,state.deskQuery,state.deskFilter,cursor) else c.subscriptions(p.code,cursor)
+            require(rows.none{row->state.subscriptions.any{it.id==row.id}}){"Пересечение страниц; обновите список"}
+            publish(owner){it.copy(subscriptions=if(state.serverDesk)it.subscriptions+rows else SubscriptionDesk.merge(it.subscriptions,rows),
                 next=if(rows.size==100)rows.last().id else null)}
             pages++
         }
@@ -171,14 +202,29 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
     fun saveLabel(customer:String,value:String)=task{owner->
         val s=mutable.value;val p=checkNotNull(s.project)
         require(s.selected?.customerId==customer || s.subscriptions.any{it.customerId==customer})
-        labels.save(labelScope,p.code,customer,value)
-        publish(owner){it.copy(labels=labels.read(labelScope,p.code),message="Локальное имя сохранено")}
+        if(s.serverDesk){
+            val card=checkNotNull(s.customerCard);require(card.id==customer)
+            val name=CustomerLabels.clean(value).ifEmpty{null}
+            val updated=client().renameCustomer(customer,name,card.revision)
+            publish(owner){it.copy(customerCard=updated,subscriptions=it.subscriptions.map{row->
+                if(row.customerId==customer)row.copy(customerName=updated.name,customerRevision=updated.revision) else row
+            })}
+            projectData(owner,p.code,s.selected?.id)
+            publish(owner){it.copy(message="Имя сохранено на сервере",busy=false)}
+        }else{
+            labels.save(labelScope,p.code,customer,value)
+            publish(owner){it.copy(labels=labels.read(labelScope,p.code),message="Локальное имя сохранено")}
+        }
     }
     fun select(id:String)=task{owner->
         val p=checkNotNull(mutable.value.project)
         val s=client().subscription(Contract.uuid(id));require(s.product==p.code)
-        val h=client().history(s.id);val a=client().activations(s.id)
-        publish(owner){it.copy(selected=s,history=h,link=null,pending=pending(),activation=null,activations=a)}
+        val online=mutable.value.serverDesk
+        val card=if(online)client().customer(s.customerId) else null
+        val full=if(online)client().paymentPage(s.id) else null
+        val h=client().history(s.id).let{if(full!=null)it.copy(payments=full) else it};val a=client().activations(s.id)
+        publish(owner){it.copy(selected=s,history=h,link=null,pending=pending(),activation=null,activations=a,
+            customerCard=card,paymentNext=if(full?.size==100)full.last().id else null)}
     }
     fun createSubscription(id:String,customer:String)=task{owner->
         val p=checkNotNull(mutable.value.project)
