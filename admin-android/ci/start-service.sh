@@ -10,7 +10,7 @@ for i in $(seq 1 60); do
     sleep 1
 done
 db() { docker exec -i ventry-admin-ci psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 "$@"; }
-for migration in delivery/migrations/001_subscriptions.sql delivery/migrations/002_api_and_downloads.sql delivery/migrations/003_projects.sql; do
+for migration in delivery/migrations/001_subscriptions.sql delivery/migrations/002_api_and_downloads.sql delivery/migrations/003_projects.sql delivery/migrations/004_activation.sql; do
     db < "$migration"
 done
 printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db
@@ -27,6 +27,8 @@ assert hashlib.sha256(p.read_bytes()).hexdigest()==r["sha256"]
 PY
 export DELIVERY_DB_CONFIG_FILE="$RUNNER_TEMP/ventry-admin-db.conf"
 export DELIVERY_ADMIN_TOKEN_FILE="$RUNNER_TEMP/ventry-admin-token"
+openssl rand -hex 32 > "$RUNNER_TEMP/ventry-admin-signing-key"
+export DELIVERY_SIGNING_KEY_FILE="$RUNNER_TEMP/ventry-admin-signing-key"
 export DELIVERY_APK="$RUNNER_TEMP/ventry-admin-raschet.apk"
 export DELIVERY_APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
 export DELIVERY_AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"

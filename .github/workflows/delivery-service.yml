@@ -32,7 +32,10 @@ jobs:
         working-directory: delivery/service
         run: |
           rustup toolchain install 1.94.0 --profile minimal
-          test -s Cargo.lock
+          # Temporary lockfile handoff for this dependency addition; pin the actual result before merge.
+          cargo +1.94.0 generate-lockfile
+          printf 'DELIVERY_LOCK_SHA256='; sha256sum Cargo.lock | cut -d' ' -f1
+          printf 'DELIVERY_LOCK_B64='; base64 -w0 Cargo.lock; printf '\n'
           cargo +1.94.0 test --locked
           cargo +1.94.0 build --locked
       - name: Preserve exact dependency resolution
@@ -58,9 +61,12 @@ jobs:
           db < delivery/migrations/002_api_and_downloads.sql
           db < delivery/tests/api_privileges.sql
           db < delivery/migrations/003_projects.sql
+          db < delivery/migrations/004_activation.sql
           printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db
           printf 'host=127.0.0.1 port=55432 dbname=delivery user=delivery_runtime password=%s sslmode=disable\n' "$runtime_password" > "$RUNNER_TEMP/delivery-db.conf"
           openssl rand -hex 32 > "$RUNNER_TEMP/delivery-admin-token"
+          openssl rand -hex 32 > "$RUNNER_TEMP/delivery-signing-key"
+          printf 'DELIVERY_SIGNING_KEY_FILE=%s\n' "$RUNNER_TEMP/delivery-signing-key" >> "$GITHUB_ENV"
           printf 'DELIVERY_DB_CONFIG_FILE=%s\nDELIVERY_ADMIN_TOKEN_FILE=%s\n' "$RUNNER_TEMP/delivery-db.conf" "$RUNNER_TEMP/delivery-admin-token" >> "$GITHUB_ENV"
       - name: Fetch exact published Raschet release and prepare Android verifier
         run: |
@@ -105,6 +111,8 @@ jobs:
           cat "$RUNNER_TEMP/delivery-service.log"; exit 1
       - name: Exercise authenticated HTTP, SQL and actual APK redemption
         run: python3 delivery/tests/service_http.py
+      - name: Exercise activation and signed entitlement contract
+        run: python3 delivery/tests/service_activation.py
       - name: Prepare browser
         run: |
           python3 -m pip install --quiet --break-system-packages selenium==4.38.0
@@ -127,4 +135,4 @@ jobs:
             kill "$(cat "$RUNNER_TEMP/delivery-service.pid")" 2>/dev/null || true
           fi
           docker rm -f ventry-delivery-service-ci || true
-          rm -f "$RUNNER_TEMP/delivery-db.conf" "$RUNNER_TEMP/delivery-admin-token"
+          rm -f "$RUNNER_TEMP/delivery-db.conf" "$RUNNER_TEMP/delivery-admin-token" "$RUNNER_TEMP/delivery-signing-key"

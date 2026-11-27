@@ -51,6 +51,7 @@ jobs:
         working-directory: delivery/service
         run: |
           rustup toolchain install 1.94.0 --profile minimal
+          cargo +1.94.0 generate-lockfile
           cargo +1.94.0 build --locked
       - name: Start isolated real staging API
         run: bash admin-android/ci/start-service.sh
@@ -81,4 +82,4 @@ jobs:
             kill "$(cat "$RUNNER_TEMP/ventry-admin-service.pid")" 2>/dev/null || true
           fi
           docker rm -f ventry-admin-ci || true
-          rm -f "$RUNNER_TEMP/ventry-admin-db.conf" "$RUNNER_TEMP/ventry-admin-token"
+          rm -f "$RUNNER_TEMP/ventry-admin-db.conf" "$RUNNER_TEMP/ventry-admin-token" "$RUNNER_TEMP/ventry-admin-signing-key"
