@@ -151,6 +151,18 @@ admin(f"/subscriptions/{sid}/installation",409,data={"event_id":uid(),"old_insta
 s=admin(f"/subscriptions/{sid}")
 assert s["installation_id"]==new_device and s["valid_until"]==paid["ends_at"]
 assert len(admin(f"/subscriptions/{sid}/history")["grants"])==2
+# New desk endpoints use the existing private admin authorization boundary.
+expect(ADMIN,f"/api/v1/customers/{customer}",401)
+expect(PUBLIC,f"/api/v1/customers/{customer}",404,token=SECRET)
+assert admin(f"/customers/{customer}")["display_name"] is None
+assert admin(f"/customers/{customer}",data={"display_name":"Test shop","revision":0})["revision"]==1
+admin(f"/customers/{customer}",422,data={"revision":1})
+admin(f"/customers/{customer}",409,data={"display_name":"Stale edit","revision":0})
+assert admin(f"/customers/{customer}")["display_name"]=="Test shop"
+assert admin("/projects/raschet/desk?q=Test%20shop")[0]["id"]==sid
+assert admin("/projects/raschet/revenue?days=7")["confirmed_kopecks"]>=79900
+assert [p["id"] for p in admin(f"/subscriptions/{sid}/payments")]==[paid["id"]]
+admin("/projects/raschet/revenue?days=8",400)
 assert any(s["id"]==sid for s in admin("/subscriptions"))
 # Projects are created at runtime, with independent subscriptions and explicit prices.
 projects=admin("/projects")

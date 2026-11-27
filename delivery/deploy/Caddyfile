@@ -15,7 +15,7 @@
 https://:18443 {
     tls /run/delivery/server.pem /run/delivery/server-key.pem
     header -Server
-    @admin path / /admin.js /style.css /api/v1/session /api/v1/session/logout /api/v1/projects /api/v1/projects/* /api/v1/plans /api/v1/release /api/v1/subscriptions /api/v1/subscriptions/*
+    @admin path / /admin.js /style.css /api/v1/session /api/v1/session/logout /api/v1/projects /api/v1/projects/* /api/v1/customers/* /api/v1/plans /api/v1/release /api/v1/subscriptions /api/v1/subscriptions/*
     handle @admin {
         request_body {
             max_size 8KB
