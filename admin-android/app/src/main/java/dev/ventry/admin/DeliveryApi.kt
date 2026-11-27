@@ -7,11 +7,33 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.io.ByteArrayOutputStream
+import java.security.KeyStore
+import java.security.cert.X509Certificate
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
 
 /** No credentials in URLs, logs, persistent storage, redirects or build configuration. */
-class DeliveryApi(origin: String, private val token: String, private val staging: Boolean = BuildConfig.DEBUG) {
+class DeliveryApi(origin: String, private val token: String, private val staging: Boolean = BuildConfig.DEBUG,
+    private val trustedCa:X509Certificate?=null) {
     private val base = Contract.origin(origin, staging)
-    init { require(Contract.token(token)) { "Ключ доступа должен содержать 64 шестнадцатеричных символа" } }
+    init {
+        require(Contract.token(token)) { "Ключ доступа должен содержать 64 шестнадцатеричных символа" }
+        require(trustedCa==null || base.startsWith("https://"))
+    }
+    private val tls=trustedCa?.let{ca->
+        require(ca.basicConstraints>=0);ca.checkValidity()
+        val trust=KeyStore.getInstance(KeyStore.getDefaultType()).apply{load(null,null);setCertificateEntry("ventry-ca",ca)}
+        val manager=TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply{init(trust)}
+        SSLContext.getInstance("TLS").apply{init(null,manager.trustManagers,null)}.socketFactory
+    }
+    suspend fun openSession():DeliveryApi{
+        val reply=JSONObject(request("/api/v1/session",JSONObject()))
+        val session=reply.getString("session_token")
+        require(Contract.token(session) && reply.getInt("expires_in_seconds")==900)
+        return DeliveryApi(base,session,staging,trustedCa)
+    }
+    suspend fun closeSession(){request("/api/v1/session/logout",JSONObject())}
 
     class Failure(val status: Int) : Exception(when(status) {
         400, 422 -> "Проверьте введённые данные"
@@ -27,6 +49,8 @@ class DeliveryApi(origin: String, private val token: String, private val staging
         require(path.startsWith("/api/v1/"))
         val connection = URL(base + path).openConnection() as HttpURLConnection
         try {
+            if(connection is HttpsURLConnection && tls!=null)connection.sslSocketFactory=tls
+            // Do not change the default hostname verifier; certificate SAN must match the origin.
             connection.instanceFollowRedirects = false
             connection.connectTimeout = 8000
             connection.readTimeout = 15000

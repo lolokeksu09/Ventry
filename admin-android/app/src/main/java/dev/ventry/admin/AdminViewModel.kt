@@ -8,6 +8,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import java.security.cert.X509Certificate
 import org.json.JSONObject
 
 data class PendingPayment(val origin:String,val subscription:String,val event:String,val plan:String,val amount:Long)
@@ -25,6 +27,7 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
     private var origin=""
     private var generation=0L
     private var job:Job?=null
+    private var expiry:Job?=null
     private val mutable=MutableStateFlow(AdminState())
     val state=mutable.asStateFlow()
     private fun pending():PendingPayment? {
@@ -56,16 +59,22 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
             finally {publish(owner){it.copy(busy=false)}}
         }
     }
-    fun connect(server:String,key:String)=task { owner->
+    fun connect(server:String,key:String,ca:X509Certificate?=null)=task { owner->
         val url=Contract.origin(server,BuildConfig.DEBUG)
-        val c=DeliveryApi(url,key.trim())
+        val c=DeliveryApi(url,key.trim(),trustedCa=ca).openSession()
         val p=pending()
         val rows=c.projects()
-        if(owner==generation){api=c;origin=url;publish(owner){AdminState(connected=true,busy=true,projects=rows,pending=p)}}
+        if(owner==generation){
+            api=c;origin=url;publish(owner){AdminState(connected=true,busy=true,projects=rows,pending=p)}
+            expiry?.cancel()
+            expiry=viewModelScope.launch{delay(14*60*1000L);if(owner==generation)lock("Срок сеанса истёк. Войдите снова.")}
+        }else runCatching{c.closeSession()}
     }
     fun lock(message:String=""){
-        generation++;job?.cancel();job=null;api=null;origin=""
+        val old=api
+        generation++;job?.cancel();job=null;expiry?.cancel();expiry=null;api=null;origin=""
         mutable.value=AdminState(message=message,error=message.isNotEmpty())
+        if(old!=null)viewModelScope.launch{runCatching{old.closeSession()}}
     }
     private fun client()=checkNotNull(api)
     private suspend fun projectData(owner:Long,code:String,keep:String?=null) {

@@ -36,7 +36,7 @@ class StagingIntegrationTest {
     }
 
     @Test fun nativeTransportAgainstRealDatabase() = runBlocking {
-        val api=DeliveryApi(origin(),key(),true)
+        val api=DeliveryApi(origin(),key(),true).openSession()
         val project="native_"+Contract.newId().replace("-","").take(12)
         val customer=Contract.newId()
         val subscription=Contract.newId()
@@ -67,5 +67,7 @@ class StagingIntegrationTest {
         catch(e:DeliveryApi.Failure){assertEquals(409,e.status)}
         try { DeliveryApi(origin(),"0".repeat(64),true).projects(); fail("Invalid token accepted") }
         catch(e:DeliveryApi.Failure){assertEquals(401,e.status)}
+        api.closeSession()
+        try{api.projects();fail("Revoked session accepted")}catch(e:DeliveryApi.Failure){assertEquals(401,e.status)}
     }
 }
