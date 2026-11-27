@@ -65,6 +65,7 @@ expect(ADMIN,"/api/v1/plans",401,token="ab"*32)
 expect(ADMIN,"/api/v1/subscriptions",401,raw=b"x"*5000)
 expect(ADMIN,"/api/v1/subscriptions",413,token=SECRET,raw=b"x"*5000)
 expect(PUBLIC,"/api/v1/subscriptions",404,token=SECRET)
+expect(PUBLIC,"/api/v1/projects",404,token=SECRET)
 expect(PUBLIC,"/admin.js",404)
 expect(ADMIN,"/api/v1/download",404,method="POST")
 expect(ADMIN,"/",200)
@@ -124,4 +125,38 @@ s=admin(f"/subscriptions/{sid}")
 assert s["installation_id"]==new_device and s["valid_until"]==paid["ends_at"]
 assert len(admin(f"/subscriptions/{sid}/history")["grants"])==2
 assert any(s["id"]==sid for s in admin("/subscriptions"))
+# Projects are created at runtime, with independent subscriptions and explicit prices.
+projects=admin("/projects")
+raschet=next(p for p in projects if p["code"]=="raschet")
+assert raschet["display_name"]=="Расчёт" and raschet["release_available"]
+assert raschet["active_subscriptions"]>=1 and raschet["confirmed_kopecks"]>=79900
+code="test_"+uuid4().hex[:12]
+project={"code":code,"display_name":"Тестовый проект","package_name":"dev.ventry."+code}
+expect(ADMIN,"/api/v1/projects",401,data=project)
+assert admin("/projects",data=project)==admin("/projects",data=project)
+admin("/projects",409,data={**project,"display_name":"Другое имя"})
+admin("/projects",409,data={**project,"code":code+"x"})
+admin("/projects",400,data={**project,"code":"../../escape"})
+admin("/projects",400,data={**project,"code":code+"z","package_name":"wrong"})
+assert admin(f"/projects/{code}/plans")==[]
+admin(f"/projects/{uid()}/plans",400)
+admin("/projects/unknown_project/plans",404)
+plan={"code":"month","amount_kopecks":12300}
+assert admin(f"/projects/{code}/plans",data=plan)==admin(f"/projects/{code}/plans",data=plan)
+admin(f"/projects/{code}/plans",409,data={**plan,"amount_kopecks":29900})
+admin(f"/projects/{code}/plans",400,data={"code":"trial","amount_kopecks":1})
+admin("/projects/raschet/plans",409,data={"code":"month","amount_kopecks":12300})
+other=uid()
+admin("/subscriptions",data={"id":other,"customer_id":customer,"product":code})
+assert [row["id"] for row in admin("/subscriptions?product="+code)]==[other]
+assert all(row["product_code"]=="raschet" for row in admin("/subscriptions?product=raschet"))
+admin(f"/subscriptions/{other}/grant",409,data={"event_id":uid(),"plan":"month","confirmed_kopecks":29900,"confirmed":True})
+admin(f"/subscriptions/{other}/grant",data={"event_id":uid(),"plan":"month","confirmed_kopecks":12300,"confirmed":True})
+admin(f"/subscriptions/{other}/installation",data={"event_id":uid(),"old_installation":None,"new_installation":new_device})
+admin(f"/subscriptions/{other}/download",409,data={"event_id":uid()})
+project_row=next(p for p in admin("/projects") if p["code"]==code)
+assert not project_row["release_available"] and project_row["active_subscriptions"]==1
+assert project_row["confirmed_kopecks"]==12300 and project_row["enabled_plans"]==1
+assert next(p for p in admin("/projects/raschet/plans") if p["code"]=="month")["amount_kopecks"]==29900
+print("DELIVERY_PROJECT_ISOLATION_AND_RUNTIME_CATALOG_PASS")
 print("DELIVERY_HTTP_REAL_APK_AND_CONCURRENT_REDEEM_PASS")

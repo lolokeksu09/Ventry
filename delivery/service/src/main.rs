@@ -150,9 +150,65 @@ async fn plans(State(app): State<Shared>) -> ApiResult {
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Page { after: Option<Uuid> }
+struct Page { after: Option<Uuid>, product: Option<String> }
+fn valid_code(s: &str) -> bool {
+    let b=s.as_bytes();
+    !b.is_empty() && b.len()<=32 && b[0].is_ascii_lowercase()
+        && b.iter().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || *c==b'_' || *c==b'-')
+}
+fn valid_package(s: &str) -> bool {
+    s.len()<=180 && s.contains('.') && s.split('.').all(|segment| {
+        let b=segment.as_bytes();
+        !b.is_empty() && b[0].is_ascii_alphabetic() && b.iter().all(|c| c.is_ascii_alphanumeric() || *c==b'_')
+    })
+}
+fn product_code(code: &str) -> Result<(),ApiError> {
+    if !valid_code(code) { return Err(ApiError(StatusCode::BAD_REQUEST,"invalid_product")); }
+    Ok(())
+}
 async fn list(State(app): State<Shared>, Query(page): Query<Page>) -> ApiResult {
-    app.value("SELECT delivery.api_list($1)", &[&page.after]).await
+    if let Some(product)=page.product {
+        product_code(&product)?;
+        app.value("SELECT delivery.api_list_product($1,$2)", &[&product,&page.after]).await
+    } else {
+        app.value("SELECT delivery.api_list($1)", &[&page.after]).await
+    }
+}
+async fn projects(State(app): State<Shared>) -> ApiResult {
+    let Json(mut list)=app.value("SELECT delivery.api_products()",&[]).await?;
+    if let Some(rows)=list.as_array_mut() {
+        for row in rows {
+            row["release_available"]=json!(row["code"].as_str()==Some(app.artifact.release.product.as_str()));
+        }
+    }
+    Ok(Json(list))
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NewProduct { code: String, display_name: String, package_name: String }
+async fn create_product(State(app): State<Shared>,Json(data): Json<NewProduct>) -> ApiResult {
+    product_code(&data.code)?;
+    if data.display_name.trim()!=data.display_name || !(1..=100).contains(&data.display_name.chars().count())
+        || data.display_name.chars().any(char::is_control) || !valid_package(&data.package_name) {
+        return Err(ApiError(StatusCode::BAD_REQUEST,"invalid_product_metadata"));
+    }
+    app.value("SELECT delivery.api_create_product($1,$2,$3)", &[&data.code,&data.display_name,&data.package_name]).await
+}
+async fn project_plans(State(app): State<Shared>,Path(code): Path<String>) -> ApiResult {
+    product_code(&code)?;
+    app.value("SELECT delivery.api_product_plans($1)", &[&code]).await
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NewPlan { code: String, amount_kopecks: i64 }
+async fn create_plan(State(app): State<Shared>,Path(product): Path<String>,Json(data): Json<NewPlan>) -> ApiResult {
+    product_code(&product)?;
+    if !matches!(data.code.as_str(),"trial"|"month"|"quarter"|"year")
+        || !(0..=1_000_000_000).contains(&data.amount_kopecks)
+        || (data.code=="trial")!=(data.amount_kopecks==0) {
+        return Err(ApiError(StatusCode::BAD_REQUEST,"invalid_plan"));
+    }
+    app.value("SELECT delivery.api_create_plan($1,$2,$3)", &[&product,&data.code,&data.amount_kopecks]).await
 }
 async fn status(State(app): State<Shared>, Path(id): Path<Uuid>) -> ApiResult {
     app.value("SELECT delivery.api_status($1)", &[&id]).await
@@ -166,7 +222,7 @@ async fn history(State(app): State<Shared>, Path(id): Path<Uuid>) -> ApiResult {
 #[serde(deny_unknown_fields)]
 struct Create { id: Uuid, customer_id: Uuid, product: String }
 async fn create(State(app): State<Shared>, Json(data): Json<Create>) -> ApiResult {
-    if data.product != "raschet" || data.id.is_nil() || data.customer_id.is_nil() {
+    if !valid_code(&data.product) || data.id.is_nil() || data.customer_id.is_nil() {
         return Err(ApiError(StatusCode::BAD_REQUEST, "invalid_subscription"));
     }
     app.value("SELECT delivery.api_create($1,$2,$3)", &[&data.id,&data.customer_id,&data.product]).await
@@ -240,6 +296,8 @@ async fn css() -> impl IntoResponse {
 fn admin_router(app: Shared) -> Router {
     let api = Router::new()
         .route("/api/v1/plans",get(plans))
+        .route("/api/v1/projects",get(projects).post(create_product))
+        .route("/api/v1/projects/{code}/plans",get(project_plans).post(create_plan))
         .route("/api/v1/release",get(release))
         .route("/api/v1/subscriptions",get(list).post(create))
         .route("/api/v1/subscriptions/{id}",get(status))

@@ -32,7 +32,12 @@ jobs:
         working-directory: delivery/service
         run: |
           rustup toolchain install 1.94.0 --profile minimal
-          if [ ! -f Cargo.lock ]; then cargo +1.94.0 generate-lockfile; fi
+          if [ ! -f Cargo.lock ]; then
+            cargo +1.94.0 generate-lockfile
+            # One-time handoff of the public, non-secret dependency manifest for review.
+            printf 'DELIVERY_LOCK_SHA256='; sha256sum Cargo.lock | cut -d' ' -f1
+            printf 'DELIVERY_LOCK_B64='; base64 -w0 Cargo.lock; printf '\n'
+          fi
           cargo +1.94.0 test --locked
           cargo +1.94.0 build --locked
       - name: Preserve exact dependency resolution
@@ -57,6 +62,7 @@ jobs:
           db < delivery/migrations/001_subscriptions.sql
           db < delivery/migrations/002_api_and_downloads.sql
           db < delivery/tests/api_privileges.sql
+          db < delivery/migrations/003_projects.sql
           printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db
           printf 'host=127.0.0.1 port=55432 dbname=delivery user=delivery_runtime password=%s sslmode=disable\n' "$runtime_password" > "$RUNNER_TEMP/delivery-db.conf"
           openssl rand -hex 32 > "$RUNNER_TEMP/delivery-admin-token"
