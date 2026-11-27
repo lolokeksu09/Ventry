@@ -1,15 +1,15 @@
-# Owner-approved opt-in: append to the existing site Caddyfile in a verified
-# checkout. Do not publish until DNS, TLS and deploy persistence are established.
+# Public licensing only. APK delivery remains closed until signed candidate acceptance.
 license.ventrylab.top {
     header {
         -Server
-        Strict-Transport-Security "max-age=31536000"
+        Strict-Transport-Security "max-age=604800"
         X-Content-Type-Options "nosniff"
         Referrer-Policy "no-referrer"
+        Cache-Control "no-store"
     }
     @client {
         method POST
-        path /api/v1/download /api/v1/activate /api/v1/entitlement
+        path /api/v1/activate /api/v1/entitlement
     }
     handle @client {
         request_body {
@@ -19,17 +19,7 @@ license.ventrylab.top {
             header_up X-Ventry-Client-IP {http.request.remote.host}
         }
     }
-    @static {
-        method GET HEAD
-        path /download /download.js /style.css
-    }
-    handle @static {
-        reverse_proxy ventry-public-gateway:18090 {
-            header_up X-Ventry-Client-IP {http.request.remote.host}
-        }
-    }
     handle {
-        header Cache-Control "no-store"
         respond 404
     }
 }

@@ -97,6 +97,8 @@ jobs:
         run: docker run --rm -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" ventry-caddy:patched-test caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Протестировать CSP и закрытые маршруты работающего Caddy
         run: bash tests/security-http.sh
+      - name: Проверить публичный контур лицензирования без production
+        run: bash tests/license-ingress-http.sh
       - name: Передать проверенную сборку Caddy для деплоя
         uses: actions/upload-artifact@v4
         with:
@@ -189,3 +191,25 @@ jobs:
           # Preserve the temporary HTTPS hostname while publishing new canonical URLs.
           curl --fail --silent --show-error --max-time 15 "$legacy/healthz" | grep -Fx 'ok'
           test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$url/__ventry_not_found__")" = 404
+      - name: Проверить публичный HTTPS лицензирования
+        run: |
+          set -euo pipefail
+          url='https://license.ventrylab.top'
+          # Invalid synthetic activation never mutates customer data. Require backend JSON,
+          # not a generic proxy 404; normal TLS verification remains enabled.
+          ready=0
+          for i in $(seq 1 30); do
+            if code="$(curl -sS --max-time 8 -o "$RUNNER_TEMP/license-denial.json" -w '%{http_code}' -H 'Content-Type: application/json' --data '{"installation_id":"00000000-0000-0000-0000-000000000001","product":"raschet"}' "$url/api/v1/entitlement")" &&
+              test "$code" = 404 &&
+              python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["error"]=="activation_unavailable"' "$RUNNER_TEMP/license-denial.json"; then
+              ready=1; break
+            fi
+            sleep 4
+          done
+          test "$ready" = 1
+          for path in / /download /api/v1/download /api/v1/session /api/v1/projects /api/v1/customers/x; do
+            for method in GET POST; do
+              test "$(curl -sS --max-time 10 -X "$method" -o /dev/null -w '%{http_code}' "$url$path")" = 404
+            done
+          done
+          echo LICENSE_PUBLIC_HTTPS_OK

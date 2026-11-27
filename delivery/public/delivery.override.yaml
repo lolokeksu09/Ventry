@@ -1,8 +1,5 @@
 # Explicit owner opt-in only. Do not use for private-only installation.
 services:
-  api:
-    environment:
-      DELIVERY_PUBLIC_ORIGIN: "https://license.ventrylab.top"
   public-gateway:
     build:
       context: ../..
@@ -12,7 +9,7 @@ services:
       VENTRY_UPSTREAM: https://db:18444
       VENTRY_UPSTREAM_TLS_NAME: "${DELIVERY_BIND_IP:-127.0.0.1}"
     volumes:
-      - "${DELIVERY_STATE:?set state}/tls/ca.pem:/run/delivery/ca.pem:ro"
+      - "${DELIVERY_STATE:?set state}/tls/gateway-ca.pem:/run/delivery/ca.pem:ro"
     networks:
       default: {}
       public-ingress:
