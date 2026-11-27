@@ -24,6 +24,9 @@ for arg in ["--headless=new","--no-sandbox","--disable-dev-shm-usage","--window-
     options.add_argument(arg)
 options.add_experimental_option("prefs",{"download.default_directory":str(downloads),"download.prompt_for_download":False})
 driver=webdriver.Chrome(options=options)
+# Headless Chrome must have an explicit allowed download directory. This is a
+# test-profile setting only; do not disable real-client Safe Browsing policies.
+driver.execute_cdp_cmd("Browser.setDownloadBehavior",{"behavior":"allow","downloadPath":str(downloads)})
 wait=WebDriverWait(driver,20)
 def elem(i): return driver.find_element(By.ID,i)
 def show(i): return wait.until(EC.visibility_of_element_located((By.ID,i)))
@@ -65,8 +68,10 @@ try:
     click("new-payment"); click("confirmed")
     elem("grant-form").find_element(By.CSS_SELECTOR,"button[type=submit]").click(); idle()
     wait.until(lambda d:"Начисление подтверждено" in elem("message").text)
+    driver.execute_script("window.scrollTo(0,0)")
     fit(); screenshot("02-desktop.png")
-    driver.set_window_size(390,844); fit(); screenshot("03-mobile.png")
+    driver.set_window_size(390,844); driver.execute_script("window.scrollTo(0,0)")
+    fit(); screenshot("03-mobile.png")
     driver.execute_script("document.getElementById('issue').closest('details').open=true")
     click("issue"); show("link-box"); idle()
     link=elem("download-link").get_attribute("value")
@@ -74,9 +79,24 @@ try:
     driver.get(link); show("start")
     assert not urlsplit(driver.current_url).fragment
     screenshot("04-client-download.png")
-    click("start"); show("save"); click("save")
+    click("start"); show("save")
+    assert elem("save").get_attribute("href").startswith("blob:")
+    assert elem("save").get_attribute("download")=="Raschet-release-candidate.apk"
+    click("save")
     apk=downloads/"Raschet-release-candidate.apk"
-    wait.until(lambda d:apk.exists() and apk.stat().st_size==release["size"])
+    try:
+        WebDriverWait(driver,40).until(lambda d:apk.exists() and apk.stat().st_size==release["size"])
+    except Exception:
+        print("Browser download directory:",[(p.name,p.stat().st_size) for p in downloads.iterdir()])
+        # Inspect only download state, never URL, token or full browser history.
+        driver.get("chrome://downloads/")
+        print("Browser download state:",driver.execute_script("""
+          const m=document.querySelector('downloads-manager');
+          const items=m?.shadowRoot?.querySelector('#downloadsList')?.items || [];
+          return Array.from(items,x=>({state:x.state,dangerType:x.dangerType,
+              percent:x.percent,totalBytes:x.totalBytes,receivedBytes:x.receivedBytes}));
+        """))
+        raise
     assert hashlib.sha256(apk.read_bytes()).hexdigest()==release["sha256"]
     driver.get(link)
     wait.until(lambda d: not urlsplit(d.current_url).fragment)
