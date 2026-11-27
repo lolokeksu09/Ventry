@@ -57,6 +57,12 @@ class StagingIntegrationTest {
         assertEquals(1,api.history(subscription).lines.count{it.detail.endsWith(event)})
         assertTrue(api.subscriptions(project).all{it.product==project})
         assertFalse(api.projects().single{it.code==project}.releaseAvailable)
+        val code=api.issueActivation(subscription,Contract.newId(),false)
+        assertTrue(Contract.token(code.code))
+        val activation=api.activations(subscription).single()
+        assertFalse(activation.consumed)
+        api.revokeActivation(subscription,activation.id)
+        assertTrue(api.activations(subscription).single().revoked)
         try { api.issue(subscription,Contract.newId()); fail("Unapproved product issued APK") }
         catch(e:DeliveryApi.Failure){assertEquals(409,e.status)}
         try { DeliveryApi(origin(),"0".repeat(64),true).projects(); fail("Invalid token accepted") }

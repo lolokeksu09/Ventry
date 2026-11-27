@@ -30,6 +30,18 @@ driver.execute_cdp_cmd("Browser.setDownloadBehavior",{"behavior":"allow","downlo
 wait=WebDriverWait(driver,20)
 def elem(i): return driver.find_element(By.ID,i)
 def show(i): return wait.until(EC.visibility_of_element_located((By.ID,i)))
+def workspace():
+    # Report only the UI's sanitized message, not browser credentials or request bodies.
+    def ready(d):
+        return d.execute_script("""
+          const w=document.getElementById('workspace'),m=document.getElementById('message');
+          if (!w.hidden && !w.inert) return true;
+          if (!w.inert && m.classList.contains('error')) return m.textContent;
+          return false;
+        """)
+    result=wait.until(ready)
+    assert result is True, "Admin login failed: "+str(result)
+
 def click(i): wait.until(EC.element_to_be_clickable((By.ID,i))).click()
 def fill(i,v):
     e=show(i); e.clear(); e.send_keys(v)
@@ -45,7 +57,7 @@ try:
     driver.get("http://127.0.0.1:18081/")
     screenshot("01-login.png")
     fill("token",secret); elem("login-form").find_element(By.CSS_SELECTOR,"button[type=submit]").click()
-    show("workspace"); idle()
+    workspace()
     form=elem("create-form")
     summary_for(form); click("new-ids")
     customer=elem("customer-id").get_attribute("value")
@@ -106,7 +118,7 @@ try:
     show("login")
     assert not elem("workspace").is_displayed()
     fill("token",secret); elem("login-form").find_element(By.CSS_SELECTOR,"button[type=submit]").click()
-    show("workspace"); idle()
+    workspace()
     assert Select(elem("project-select")).first_selected_option.get_attribute("value")=="raschet"
     form=elem("project-form"); summary_for(form)
     code="browser_"+uuid4().hex[:12]

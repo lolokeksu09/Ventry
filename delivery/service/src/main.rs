@@ -1,4 +1,5 @@
 mod artifact;
+mod license;
 
 use artifact::{Artifact, load};
 use axum::{
@@ -68,6 +69,8 @@ struct App {
     public_origin: url::Url,
     admin_budget: Mutex<Budget>,
     download_budget: Mutex<Budget>,
+    activation_budget: Mutex<Budget>,
+    signer: license::LicenseSigner,
 }
 impl App {
     async fn value(&self, sql: &str, args: &[&(dyn ToSql + Sync)]) -> ApiResult {
@@ -305,6 +308,8 @@ fn admin_router(app: Shared) -> Router {
         .route("/api/v1/subscriptions/{id}/installation",post(bind))
         .route("/api/v1/subscriptions/{id}/grant",post(grant))
         .route("/api/v1/subscriptions/{id}/download",post(issue))
+        .route("/api/v1/subscriptions/{id}/activations",get(license::activation_history).post(license::issue_activation))
+        .route("/api/v1/subscriptions/{id}/activations/{event}/revoke",post(license::revoke_activation))
         .route("/api/v1/subscriptions/{id}/downloads/{event}/revoke",post(revoke))
         .layer(DefaultBodyLimit::max(4096))
         .route_layer(middleware::from_fn_with_state(app.clone(),admin_guard));
@@ -317,6 +322,8 @@ fn public_router(app: Shared) -> Router {
         .route("/download.js",get(download_js))
         .route("/style.css",get(css))
         .route("/api/v1/download",post(download))
+        .route("/api/v1/activate",post(license::activate))
+        .route("/api/v1/entitlement",post(license::refresh))
         .layer(DefaultBodyLimit::max(1024))
         .with_state(app).layer(middleware::from_fn(security_headers))
 }
@@ -363,8 +370,10 @@ async fn run() -> Result<(),Box<dyn Error>> {
     let role = db.query_one("SELECT current_user <> 'postgres' AND NOT (SELECT rolsuper FROM pg_roles WHERE rolname=current_user) AND pg_has_role(current_user,'delivery_api','USAGE') AND NOT has_table_privilege(current_user,'delivery.subscription','UPDATE') AND NOT has_table_privilege(current_user,'delivery.download_grant','SELECT')", &[]).await?;
     if !role.get::<_,bool>(0) { return Err("Database login exceeds allowed capability role".into()); }
     db.query_one("SELECT delivery.api_plans()", &[]).await?;
-    let app = Arc::new(App { db,admin_digest,artifact,public_origin,
-        admin_budget:Mutex::new(Budget::new()),download_budget:Mutex::new(Budget::new()) });
+    let signer=license::LicenseSigner::from_file(&file_setting("DELIVERY_SIGNING_KEY_FILE")?)?;
+    db.query_one("SELECT delivery.api_refresh_entitlement(NULL,NULL,NULL)",&[]).await?;
+    let app = Arc::new(App { db,admin_digest,artifact,public_origin,signer,
+        admin_budget:Mutex::new(Budget::new()),download_budget:Mutex::new(Budget::new()),activation_budget:Mutex::new(Budget::new()) });
     let admin_listener = tokio::net::TcpListener::bind(admin).await?;
     let public_listener = tokio::net::TcpListener::bind(public).await?;
     println!("Delivery staging listeners ready");
