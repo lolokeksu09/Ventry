@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -228,7 +230,7 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
         TabRow(selectedTabIndex=tab,containerColor=Night,contentColor=Leaf){listOf("Подписки","Тарифы","Релиз").forEachIndexed{index,title->
             Tab(selected=tab==index,onClick={if(!s.busy)tab=index},text={Text(title,fontSize=13.sp)})
         }}
-        LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+        LazyColumn(Modifier.fillMaxSize().testTag("project_content"),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
             item{PendingPanel(s,vm);Row(verticalAlignment=Alignment.CenterVertically){Text(p.packageName ?: p.code,Modifier.weight(1f),color=Muted,fontSize=12.sp);TextButton(onClick=vm::refresh,enabled=!s.busy){Text("Обновить")}}}
             when(tab){
                 0->{
@@ -242,7 +244,7 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
                             Secondary("Новые UUID",!s.busy){customer=Contract.newId();subscription=Contract.newId()}
                             Action("Создать",!s.busy,"create_subscription"){vm.createSubscription(subscription,customer)}
                         }
-                        Field("Открыть по UUID",openId,{openId=it},!s.busy);Secondary("Открыть",!s.busy && openId.isNotBlank()){vm.select(openId)}
+                        Field("Открыть по UUID",openId,{openId=it},!s.busy,"open_subscription_id");Action("Открыть",!s.busy && openId.isNotBlank(),"open_subscription"){vm.select(openId)}
                     }
                     val rows=s.subscriptions.filter{(search.isBlank() || it.id.contains(search,true) || it.customerId.contains(search,true)) &&
                         (filter=="all" || it.status==filter || (filter=="pending" && it.status in listOf("not_started","awaiting_activation")))}
@@ -283,16 +285,31 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
 @Composable
 private fun Detail(s:AdminState,vm:AdminViewModel){
     val sub=checkNotNull(s.selected);val context=LocalContext.current
-    var action by remember(sub.id){mutableStateOf("history")};var planCode by remember(sub.id){mutableStateOf("")};var price by remember(sub.id){mutableStateOf("")}
+    var action by remember(sub.id){mutableStateOf(if(sub.status in listOf("not_started","awaiting_activation"))"activation" else "history")};var planCode by remember(sub.id){mutableStateOf("")};var price by remember(sub.id){mutableStateOf("")}
     var paymentId by remember(sub.id){mutableStateOf(Contract.newId())};var bindId by remember(sub.id){mutableStateOf(Contract.newId())}
     var device by remember(sub.id){mutableStateOf("")};var confirm by remember(sub.id){mutableStateOf("")};var revokeId by remember(sub.id){mutableStateOf("")}
     val plan=s.plans.firstOrNull{it.enabled && it.code==planCode}
-    LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+    LazyColumn(Modifier.fillMaxSize().testTag("subscription_detail"),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
         item{PendingPanel(s,vm);Panel{
-            Heading(Contract.status(sub.status));Fact("Клиент",sub.customerId);Fact("Подписка",sub.id);Fact("До",sub.validUntil ?: "—")
-            Fact("Установка",sub.installation ?: "Не привязана");Fact("Тариф",Contract.period(sub.effectivePlan));Secondary("Обновить",!s.busy){vm.refresh()}
+            Heading(Contract.status(sub.status));Fact("Срок доступа",sub.validUntil ?: "—")
+            Fact("Тариф",Contract.period(sub.effectivePlan))
         }}
-        item{Choice(listOf("history" to "История","grant" to "Продление / пробный доступ","bind" to "Устройство","download" to "Выдача APK","activation" to "Лицензия / активация"),action,{action=it},!s.busy)}
+        item{Panel{
+            Heading("Действия с подпиской")
+            val actions=listOf("activation" to "Лицензия", "download" to "Выдача APK",
+                "grant" to "Оплата", "bind" to "Устройство", "history" to "История и данные")
+            actions.chunked(2).forEach { group ->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                    group.forEach { (key,title) ->
+                        val modifier=Modifier.weight(1f).heightIn(min=48.dp)
+                            .testTag("subscription_action_"+key).semantics{selected=action==key}
+                        if(action==key) Button(onClick={action=key},enabled=!s.busy,modifier=modifier){Text(title)}
+                        else OutlinedButton(onClick={action=key},enabled=!s.busy,modifier=modifier){Text(title)}
+                    }
+                    if(group.size==1)Spacer(Modifier.weight(1f))
+                }
+            }
+        }}
         when(action){
             "grant"->item{Panel{
                 Heading("Подтверждение оплаты")
@@ -313,7 +330,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                     Heading("Активация лицензии")
                     Text("Код действует 24 часа. Пробный период начинается при первой активации. Платный код использует существующий оплаченный срок.",color=Muted)
                     Action("Выдать оплаченный код",!s.busy && sub.status in listOf("active","awaiting_activation")){confirm="activation"}
-                    Action("Выдать 7 дней",!s.busy && sub.status=="not_started" && sub.installation==null && s.plans.any{it.code=="trial" && it.enabled}){confirm="trial_activation"}
+                    Action("Выдать 7 дней",!s.busy && sub.status=="not_started" && sub.installation==null && s.plans.any{it.code=="trial" && it.enabled},"issue_trial"){confirm="trial_activation"}
                     s.activation?.let{a->
                         Fact("Истекает",a.expires)
                         Text(a.code,color=Leaf,fontSize=13.sp)
@@ -323,7 +340,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                             },"Передать код"))
                         }
                     }
-                    Text("Текущий опубликованный APK «Расчёта» пока не умеет активировать эти коды.",color=Muted,fontSize=12.sp)
+                    Text("Для активации нужен лицензируемый APK. Публичный кандидат пока не поддерживает коды; закрытая сборка владельца работает через защищённый туннель.",color=Muted,fontSize=12.sp)
                 }}
                 items(s.activations,key={it.id}){a->Panel{
                     Heading(if(a.consumed)"Активирован" else if(a.revoked)"Отозван" else if(a.trial)"Пробный код" else "Код активации")
@@ -349,6 +366,17 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                 }}
             }
             else->{
+                item{Panel{
+                    Heading("Данные подписки")
+                    Fact("Клиент",sub.customerId);Fact("Подписка",sub.id)
+                    Fact("Установка",sub.installation ?: "Не привязана")
+                    Action("Поделиться номером подписки",!s.busy){
+                        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply{
+                            type="text/plain";putExtra(Intent.EXTRA_TEXT,sub.id)
+                        },"Передать номер подписки"))
+                    }
+                    Secondary("Обновить",!s.busy){vm.refresh()}
+                }}
                 if(s.history.lines.isEmpty())item{Text("История начислений и привязок пуста",color=Muted)}
                 items(s.history.lines){line->Panel{Heading(line.title);Text(line.detail,fontSize=12.sp,color=Muted)}}
             }

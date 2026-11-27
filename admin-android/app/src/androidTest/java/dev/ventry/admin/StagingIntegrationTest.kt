@@ -31,6 +31,28 @@ class StagingIntegrationTest {
         compose.waitUntil(30_000){compose.onAllNodesWithText("Тарифы").fetchSemanticsNodes().isNotEmpty()}
         compose.onNodeWithText("Тарифы").performClick()
         compose.onNodeWithText("299,00 ₽").assertExists()
+        val subscription=Contract.newId()
+        runBlocking{
+            val api=DeliveryApi(origin(),key(),true).openSession()
+            api.createSubscription("raschet",subscription,Contract.newId())
+            api.closeSession()
+        }
+        compose.onNodeWithText("Подписки").performClick()
+        compose.onNodeWithTag("project_content").performScrollToNode(hasTestTag("open_subscription_id"))
+        compose.onNodeWithTag("open_subscription_id").performTextInput(subscription)
+        compose.onNodeWithTag("project_content").performScrollToNode(hasTestTag("open_subscription"))
+        compose.onNodeWithTag("open_subscription").performClick()
+        waitTag("subscription_action_activation")
+        compose.onNodeWithTag("subscription_action_activation").assertExists()
+        compose.onNodeWithTag("subscription_action_download").assertExists()
+        compose.onNodeWithTag("subscription_detail").performScrollToNode(hasTestTag("issue_trial"))
+        compose.onNodeWithTag("issue_trial").assertIsEnabled().performClick()
+        compose.onNodeWithText("Выдать пробный доступ?").assertExists()
+        compose.onNodeWithText("Отмена").performClick()
+        compose.onNodeWithTag("subscription_detail").performScrollToNode(hasTestTag("subscription_action_history"))
+        compose.onNodeWithTag("subscription_action_history").performClick()
+        compose.onNodeWithTag("subscription_detail").performScrollToNode(hasText("Данные подписки"))
+        compose.onNodeWithText("Данные подписки").assertExists()
         compose.onNodeWithTag("logout").performClick()
         compose.onNodeWithTag("token").assertExists()
     }
