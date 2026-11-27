@@ -163,7 +163,7 @@ class DeliveryApi(origin: String, private val token: String, private val staging
             HistoryLine(if(it.isNull("old_installation")) "Привязка" else "Перенос",it.getString("recorded_at")+"\n"+it.getString("new_installation"))
         }
         return History(grants+bindings,r.getJSONArray("downloads").mapItems {
-            DownloadGrant(it.getString("id"),it.getString("expires_at"),!it.isNull("consumed_at"),!it.isNull("revoked_at"))
+            DownloadGrant(it.getString("id"),it.getString("expires_at"),!it.isNull("consumed_at"),!it.isNull("revoked_at"),it.nullable("retry_until"),it.optInt("delivery_attempts",0))
         })
     }
 }

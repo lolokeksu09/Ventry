@@ -161,8 +161,10 @@ function renderHistory(history) {
   for(const i of history.installations) line(target,i.old_installation?'Перенос устройства':'Привязка устройства',date(i.recorded_at)+' · '+i.new_installation);
   for(const d of history.downloads) {
     const live=!d.consumed_at && !d.revoked_at && Date.parse(d.expires_at)>Date.now();
-    const item=line(target,'APK · '+(d.consumed_at?'Использована':d.revoked_at?'Отозвана':live?'Доступна':'Истекла'),date(d.created_at)+' · '+d.id);
-    if(!d.consumed_at && !d.revoked_at) {
+    const retryLive=!d.revoked_at && d.retry_until && Date.parse(d.retry_until)>Date.now() && d.delivery_attempts<3;
+    const item=line(target,'APK · '+(d.revoked_at?'Отозвана':retryLive?'Повтор доступен':d.consumed_at?'Использована':live?'Доступна':'Истекла'),
+      date(d.created_at)+' · '+d.id+(d.retry_until?' · Выдач: '+d.delivery_attempts+'/3':''));
+    if(!d.revoked_at && (!d.consumed_at || retryLive)) {
       const button=document.createElement('button'); button.type='button'; button.className='secondary'; button.textContent='Отозвать';
       const sid=selected.id;
       button.addEventListener('click',()=>act(async()=>{

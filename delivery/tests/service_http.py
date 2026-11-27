@@ -56,7 +56,7 @@ def issue(sid):
     link = urlsplit(receipt["url"])
     assert link.netloc == "127.0.0.1:18082" and link.path == "/download"
     assert len(link.fragment) == 64 and not link.query
-    assert "token_hash" not in receipt["grant"]
+    assert "token_hash" not in receipt["grant"] and "retry_hash" not in receipt["grant"]
     return receipt["grant"]["id"], link.fragment
 
 # Authentication must precede malformed/oversized request parsing.

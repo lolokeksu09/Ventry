@@ -333,7 +333,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
             }
             "download"->{
                 item{Panel{
-                    Heading("Персональная выдача APK");Text("Одна загрузка, 30 минут. Код активации выдаётся отдельно в разделе лицензии.",color=Muted)
+                    Heading("Персональная выдача APK");Text("Один получатель, 30 минут. При сбое — до трёх выдач в одной вкладке за пять минут. Код активации отдельно.",color=Muted)
                     Action("Создать ссылку",!s.busy && s.project?.releaseAvailable==true){vm.issue()}
                     if(s.project?.releaseAvailable!=true)Text("Нет одобренной сборки.",color=Muted)
                     s.link?.let{link->Fact("Истекает",link.expires);Text(link.url,fontSize=12.sp,color=Leaf)
@@ -341,8 +341,11 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                     }
                 }}
                 items(s.history.downloads,key={it.id}){d->Panel{
-                    Heading(if(d.consumed)"Использована" else if(d.revoked)"Отозвана" else "Ссылка");Fact("До",d.expires);Fact("ID",d.id)
-                    if(!d.consumed && !d.revoked)Secondary("Отозвать",!s.busy){revokeId=d.id;confirm="revoke"}
+                    val retry=d.retryAvailable()
+                    Heading(if(d.revoked)"Отозвана" else if(retry)"Повтор доступен" else if(d.consumed)"Использована" else "Ссылка")
+                    Fact("До",d.expires);Fact("ID",d.id)
+                    if(d.retryUntil!=null){Fact("Выдач",d.attempts.toString()+"/3");Fact("Повтор до",d.retryUntil)}
+                    if(!d.revoked && (!d.consumed || retry))Secondary("Отозвать",!s.busy){revokeId=d.id;confirm="revoke"}
                 }}
             }
             else->{
