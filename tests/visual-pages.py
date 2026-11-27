@@ -229,7 +229,7 @@ try:
         expected_navigation = ["/projects/", "/releases/", "/docs/", "/support/", "/about/"]
         assert js("return [...document.querySelectorAll('#main-nav a')].map(a=>a.pathname)") == expected_navigation
         assert js("return document.querySelector('#main-nav [aria-current=location]').pathname") == "/projects/"
-        assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#next-title", "#faq-title"]
+        assert js("return [...document.querySelectorAll('.product-section-nav a')].map(a=>a.hash)") == ["#android-features-title", "#gallery-title", "#possibilities-title", "#subscription-title", "#next-title", "#faq-title"]
         assert js("return document.querySelectorAll('.demo-boundary-grid article').length") == 2
         gallery_link = driver.find_element(By.CSS_SELECTOR, '.product-section-nav a[href="#gallery-title"]')
         driver.execute_script("arguments[0].scrollIntoView({block:'start',behavior:'instant'})", gallery_link)
