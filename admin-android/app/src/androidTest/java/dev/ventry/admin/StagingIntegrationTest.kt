@@ -61,6 +61,7 @@ class StagingIntegrationTest {
         compose.onNodeWithText("Данные подписки").assertExists()
         compose.onNodeWithTag("logout").performClick()
         compose.onNodeWithTag("token").assertExists()
+        compose.onNodeWithTag("saved_connect").assertDoesNotExist()
     }
 
     @Test fun nativeTransportAgainstRealDatabase() = runBlocking {
