@@ -208,9 +208,9 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
             val updated=client().renameCustomer(customer,name,card.revision)
             publish(owner){it.copy(customerCard=updated,subscriptions=it.subscriptions.map{row->
                 if(row.customerId==customer)row.copy(customerName=updated.name,customerRevision=updated.revision) else row
-            },message="Имя сохранено на сервере")}
+            })}
             projectData(owner,p.code,s.selected?.id)
-            publish(owner){it.copy(message="Имя сохранено на сервере")}
+            publish(owner){it.copy(message="Имя сохранено на сервере",busy=false)}
         }else{
             labels.save(labelScope,p.code,customer,value)
             publish(owner){it.copy(labels=labels.read(labelScope,p.code),message="Локальное имя сохранено")}
