@@ -48,8 +48,8 @@ BEGIN
 END;
 $$;
 RESET ROLE;
-UPDATE delivery.download_grant SET created_at=clock_timestamp()-interval '31 minutes',
- expires_at=clock_timestamp()-interval '1 minute'
+UPDATE delivery.download_grant SET created_at=transaction_timestamp()-interval '31 minutes',
+ expires_at=transaction_timestamp()-interval '1 minute'
  WHERE id=current_setting('delivery.test_expiry')::uuid;
 SET LOCAL ROLE delivery_api;
 DO $$ BEGIN

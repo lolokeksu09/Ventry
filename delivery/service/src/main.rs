@@ -105,7 +105,10 @@ async fn admin_guard(State(app): State<Shared>, req: Request, next: Next) -> Res
     Ok(next.run(req).await)
 }
 async fn security_headers(req: Request, next: Next) -> Response {
-    let mut res = next.run(req).await;
+    let mut res = match tokio::time::timeout(Duration::from_secs(12),next.run(req)).await {
+        Ok(response) => response,
+        Err(_) => ApiError(StatusCode::REQUEST_TIMEOUT,"request_timeout").into_response(),
+    };
     let h = res.headers_mut();
     for (name, value) in [
         ("cache-control", "no-store"),
@@ -186,9 +189,11 @@ async fn revoke(State(app): State<Shared>, Path((id,event)): Path<(Uuid,Uuid)>) 
 async fn release(State(app): State<Shared>) -> Json<artifact::Release> {
     Json(app.artifact.release.clone())
 }
-async fn download(State(app): State<Shared>, headers: HeaderMap) -> Result<Response, ApiError> {
+async fn download(State(app): State<Shared>, req: Request) -> Result<Response, ApiError> {
     rate(&app.download_budget, 60)?;
-    let hash = bearer(&headers).ok_or(ApiError(StatusCode::NOT_FOUND,"link_unavailable"))?;
+    let hash = bearer(req.headers()).ok_or(ApiError(StatusCode::NOT_FOUND,"link_unavailable"))?;
+    axum::body::to_bytes(req.into_body(),0).await
+        .map_err(|_| ApiError(StatusCode::BAD_REQUEST,"unexpected_body"))?;
     let row = app.db.query_one("SELECT delivery.api_consume_download($1,$2)",
         &[&&hash[..], &app.artifact.release.sha256]).await.map_err(db_error)?;
     let used: bool = row.try_get(0).map_err(db_error)?;

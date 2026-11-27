@@ -38,9 +38,9 @@ async function act(fn) {
   const currentEpoch=epoch;
   // Prevent competing mutations and selection changes while an operation is pending.
   $('workspace').setAttribute('aria-busy','true');
-  $('workspace').inert=true; $('login').inert=true;
+  $('workspace').inert=true; $('login').inert=true; $('logout').disabled=true;
   try { await fn(); } catch(e) { if(epoch===currentEpoch || !credential) message(e.message || 'Ошибка операции',true); }
-  finally { busy=false; $('workspace').inert=false; $('login').inert=false; $('workspace').removeAttribute('aria-busy'); }
+  finally { busy=false; $('workspace').inert=false; $('login').inert=false; $('workspace').removeAttribute('aria-busy'); $('logout').disabled=false; }
 }
 function updatePlan() {
   const p=plans.find(x=>x.code===$('plan').value);
@@ -85,7 +85,7 @@ function renderHistory(history) {
   for(const d of history.downloads) {
     const live=!d.consumed_at && !d.revoked_at && Date.parse(d.expires_at)>Date.now();
     const item=line(target,'APK · '+(d.consumed_at?'Использована':d.revoked_at?'Отозвана':live?'Доступна':'Истекла'),date(d.created_at)+' · '+d.id);
-    if(live) {
+    if(!d.consumed_at && !d.revoked_at) {
       const button=document.createElement('button'); button.type='button'; button.className='secondary'; button.textContent='Отозвать';
       const sid=selected.id;
       button.addEventListener('click',()=>act(async()=>{

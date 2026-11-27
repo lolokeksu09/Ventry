@@ -58,7 +58,7 @@ pub fn load(apk: &Path, apksigner: &Path, aapt: &Path) -> Result<Artifact, Box<d
             Some(digest.trim().to_ascii_lowercase())
         } else { None }
     }).collect();
-    if certificates.as_slice() != [release.certificate_sha256.as_str()] {
+    if certificates.len() != 1 || certificates[0] != release.certificate_sha256 {
         return Err("APK certificate mismatch or unexpected signer count".into());
     }
     let badging = command_output(aapt, &["dump", "badging", path])?;
