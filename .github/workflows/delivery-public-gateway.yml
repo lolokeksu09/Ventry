@@ -1,0 +1,35 @@
+name: Delivery public gateway
+on:
+  pull_request:
+    paths:
+      - 'delivery/public/**'
+      - '.github/workflows/delivery-public-gateway.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'delivery/public/**'
+      - '.github/workflows/delivery-public-gateway.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  boundary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.4'
+          cache: false
+      - name: Test real TLS proxy boundary and bounded quotas
+        working-directory: delivery/public
+        run: go test -race -v ./...
+      - name: Build minimal gateway image and validate opt-in compose
+        run: |
+          set -euo pipefail
+          docker build -f delivery/public/Dockerfile -t ventry-gateway-ci .
+          DELIVERY_STATE=/tmp/synthetic DELIVERY_BIND_IP=127.0.0.1 docker compose -f delivery/deploy/compose.yaml -f delivery/public/delivery.override.yaml config --quiet
+          docker compose -f compose.yaml -f delivery/public/site.override.yaml config --quiet

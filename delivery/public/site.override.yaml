@@ -1,0 +1,10 @@
+# Optional additional network for the existing Caddy, no host ports added.
+services:
+  web:
+    networks:
+      default: {}
+      public-ingress: {}
+networks:
+  public-ingress:
+    external: true
+    name: ventry-delivery-public
