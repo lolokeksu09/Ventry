@@ -26,3 +26,5 @@ start-private.sh строит и запускает стек, проверяет
 ## Остаток до реальной продажи
 
 Текущий production сайт не получает новые маршруты. Требуется доступ владельца к VDS для первого install (существующая ограниченная CI-команда принимает только сайт), настройки WireGuard/host firewall и DNS/TLS клиентского endpoint. Затем production pin и HTTPS в подписанной сборке «Расчёта», испытание обновления и переноса на реальных устройствах, восстановление БД и signing key. Не объявлять коммерческий запуск по результату CI staging.
+
+CI Delivery private deployment поднимает отдельный Compose, проверяет привязку только к loopback, отказ при ошибочном пароле DB owner, HTTPS session-only API, повторный provision без смены ключа, pg_dump и реальный restore в отдельную synthetic database, затем Android TLS test: неизвестный CA отвергается, неправильное имя отвергается, с доверенным CA сессия работает и отзывается. Реальная WireGuard сеть, firewall и physical-phone rollout в CI не проверяются. Доступ к production VDS требует существующий полноценный SSH владельца; не пытаться обходить ограниченный сайт-deploy entrypoint.

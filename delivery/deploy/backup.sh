@@ -3,11 +3,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 umask 077
 [[ $# = 1 && "$1" = /* ]]
-state="$1";grep -Fxq "DELIVERY_STATE=$state" "$state/compose.env"
+state="$1";unset DELIVERY_STATE DELIVERY_BIND_IP COMPOSE_PROJECT_NAME COMPOSE_FILE
+grep -Fxq "DELIVERY_STATE=$state" "$state/compose.env"
 out="$state/backups/delivery-$(date -u +%Y%m%dT%H%M%SZ).dump"
 tmp="$(mktemp "$state/backups/.dump.XXXXXXXX")"
 trap 'rm -f "$tmp"' EXIT
-docker compose --env-file "$state/compose.env" -f compose.yaml exec -T db pg_dump -U postgres -Fc delivery > "$tmp"
+docker compose --env-file "$state/compose.env" -f compose.yaml exec -T -u postgres db pg_dump -U postgres -Fc delivery > "$tmp"
 test -s "$tmp"
 docker compose --env-file "$state/compose.env" -f compose.yaml exec -T db pg_restore -l < "$tmp" >/dev/null
 test ! -e "$out"

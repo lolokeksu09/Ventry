@@ -7,6 +7,7 @@ services:
     command: ["postgres", "-c", "listen_addresses=127.0.0.1"]
     environment:
       POSTGRES_DB: delivery
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=peer"
       POSTGRES_PASSWORD_FILE: /run/delivery/db-owner
     ports:
       - "${DELIVERY_BIND_IP:-127.0.0.1}:18443:18443/tcp"

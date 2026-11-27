@@ -3,6 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 umask 077
+unset DELIVERY_STATE DELIVERY_BIND_IP COMPOSE_PROJECT_NAME COMPOSE_FILE
 state=""
 bind="127.0.0.1"
 iface=""

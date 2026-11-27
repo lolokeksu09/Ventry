@@ -3,6 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 [[ $# = 1 && "$1" = /* ]]
 state="$1"
+unset DELIVERY_STATE DELIVERY_BIND_IP COMPOSE_PROJECT_NAME COMPOSE_FILE
 grep -Fxq "DELIVERY_STATE=$state" "$state/compose.env"
 bind="$(sed -n 's/^DELIVERY_BIND_IP=//p' "$state/compose.env")"
 python3 - "$bind" <<'PY'

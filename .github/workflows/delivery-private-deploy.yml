@@ -1,0 +1,103 @@
+name: Delivery private deployment
+
+on:
+  pull_request:
+    paths:
+      - 'delivery/**'
+      - 'admin-android/**'
+      - '.github/workflows/delivery-private-deploy.yml'
+      - 'tools/build-patched-caddy.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate deployment scripts and provision isolated state
+        run: |
+          set -euo pipefail
+          for f in delivery/deploy/*.sh; do bash -n "$f"; done
+          bash delivery/deploy/provision-private.sh --state "$RUNNER_TEMP/ventry-private-state"
+          # Provision must not replace the first installation's identity.
+          before="$(sha256sum "$RUNNER_TEMP/ventry-private-state/license-public-key.hex")"
+          if bash delivery/deploy/provision-private.sh --state "$RUNNER_TEMP/ventry-private-state"; then exit 1; fi
+          test "$before" = "$(sha256sum "$RUNNER_TEMP/ventry-private-state/license-public-key.hex")"
+      - name: Start exact private TLS Docker stack
+        run: bash delivery/deploy/start-private.sh "$RUNNER_TEMP/ventry-private-state"
+      - name: Validate isolation and restore backup in fresh synthetic database
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/ventry-private-state"
+          dc() { docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml "$@"; }
+          dc config --format json > "$RUNNER_TEMP/ventry-private-compose.json"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          s=json.loads((Path(os.environ["RUNNER_TEMP"])/"ventry-private-compose.json").read_text())["services"]
+          assert len(s["db"]["ports"])==2 and all(p["host_ip"]=="127.0.0.1" and p["target"] in [18443,18444] for p in s["db"]["ports"])
+          assert not s["api"].get("ports") and not s["edge"].get("ports")
+          assert s["api"]["read_only"] and s["edge"]["read_only"]
+          assert s["api"]["environment"]["DELIVERY_ALLOW_LEGACY_ADMIN"]=="false"
+          PY
+          if dc exec -T -e PGPASSWORD=wrong db psql -h 127.0.0.1 -U postgres -d delivery -c 'SELECT 1'; then
+            echo 'Unexpected passwordless owner access'; exit 1
+          fi
+          # Actual pg_dump + restore, no production or old volume involved.
+          bash delivery/deploy/backup.sh "$state"
+          archive="$(find "$state/backups" -maxdepth 1 -name '*.dump' -print -quit)"
+          test -s "$archive"
+          sha256sum -c "$archive.sha256"
+          dc exec -T -u postgres db createdb -U postgres delivery_restore
+          dc exec -T -u postgres db pg_restore -U postgres -d delivery_restore --exit-on-error < "$archive"
+          test "$(dc exec -T -u postgres db psql -U postgres -d delivery_restore -Atc 'SELECT count(*) FROM delivery.plan')" = 4
+          test "$(dc exec -T -u postgres db psql -U postgres -d delivery_restore -Atc 'SELECT count(*) FROM delivery.product')" = 1
+          echo DELIVERY_PRIVATE_BACKUP_RESTORE_PASS
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Compile native TLS acceptance test
+        run: |
+          sdkmanager_bin="${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager"
+          "$sdkmanager_bin" --install 'platforms;android-35' 'build-tools;35.0.0'
+          gradle -p admin-android assembleDebug assembleDebugAndroidTest --no-daemon
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader
+          script: bash delivery/deploy/test-private-android.sh "$RUNNER_TEMP/ventry-private-state"
+      - name: Collect failure diagnostics without credentials
+        if: failure()
+        run: |
+          state="$RUNNER_TEMP/ventry-private-state"
+          if [ -f "$state/compose.env" ]; then
+            docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml ps
+            docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml logs --tail 60 api edge || true
+          fi
+      - name: Destroy only synthetic runner environment
+        if: always()
+        run: |
+          state="$RUNNER_TEMP/ventry-private-state"
+          if [ -f "$state/compose.env" ]; then
+            docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml down -v || true
+          fi
+          rm -rf "$state"
