@@ -49,6 +49,12 @@ jobs:
           grep -Fx DELIVERY_006_BACKUP_RESTORE_VERIFIED "$RUNNER_TEMP/upgrade-006.log"
           grep -F DELIVERY_006_UPGRADE_VERIFIED "$RUNNER_TEMP/upgrade-006.log"
           bash delivery/deploy/upgrade-006.sh "$state" --apply | grep -Fx DELIVERY_SCHEMA_006_ALREADY_READY
+          # A synthetic interruption marker must block even a complete-looking schema.
+          touch "$state/upgrade-006.incomplete"
+          if bash delivery/deploy/upgrade-006.sh "$state" --check; then exit 1; fi
+          if bash delivery/deploy/start-private.sh "$state" > "$RUNNER_TEMP/recovery-start.log" 2>&1; then exit 1; fi
+          grep -F 'Delivery upgrade recovery marker exists' "$RUNNER_TEMP/recovery-start.log"
+          rm -- "$state/upgrade-006.incomplete"
           dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_after.sql
       - name: Start exact private TLS Docker stack
         run: bash delivery/deploy/start-private.sh "$RUNNER_TEMP/ventry-private-state"

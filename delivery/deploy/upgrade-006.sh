@@ -31,6 +31,11 @@ if [[ "$mode" = --apply ]]; then
     exec 9>"$state/upgrade-006.lock"
     flock -n 9 || { echo "Another upgrade holds the state lock" >&2; exit 1; }
 fi
+marker="$state/upgrade-006.incomplete"
+if [[ -e "$marker" ]]; then
+    echo "Previous migration may be incomplete; inspect retained backup and database before clearing recovery marker" >&2
+    exit 1
+fi
 version="$(schema)"
 case "$version" in
     ready) verify_006; echo DELIVERY_SCHEMA_006_ALREADY_READY; exit 0 ;;
@@ -47,6 +52,7 @@ dir="$(mktemp -d "$state/backups/upgrade-006-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXXXX
 archive="$dir/delivery.dump"
 restore_db="delivery_verify_006_$(date +%s)_${RANDOM}_${RANDOM}"
 restore_created=false
+verified=false
 cleanup() {
     local rc=$?
     trap - EXIT
@@ -55,6 +61,12 @@ cleanup() {
             echo "Could not remove temporary verification database $restore_db; inspect manually" >&2
             rc=1
         fi
+    fi
+    if [[ "$rc" = 0 && "$verified" = true ]]; then
+        if rm -- "$marker"; then
+            printf '%s\n' "DELIVERY_006_UPGRADE_VERIFIED $dir"
+            echo "API/edge remain stopped. Run start-private.sh for the checked revision."
+        else rc=1; fi
     fi
     if [[ "$rc" != 0 ]]; then
         echo "Upgrade incomplete. Keep API/edge stopped; inspect state and backup $dir. No automatic restore." >&2
@@ -78,11 +90,12 @@ test "$(fingerprint "$restore_db")" = "$before"
 test "$(fingerprint delivery)" = "$before"
 no_other_clients
 echo DELIVERY_006_BACKUP_RESTORE_VERIFIED
+# Durable failure guard: do not treat a partially verified commit as a completed upgrade.
+printf '%s\n' "$dir" > "$marker"
 # The migration owns its BEGIN/COMMIT and rolls back on SQL failure.
 dc exec -T -u postgres -e 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=600s' db \
     psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < ../migrations/006_customer_desk.sql
 verify_006
 test "$(fingerprint delivery)" = "$before"
 printf '%s\n' "$before" > "$dir/original-tables.sha256"
-printf '%s\n' "DELIVERY_006_UPGRADE_VERIFIED $dir"
-echo "API/edge remain stopped. Run start-private.sh for the checked revision."
+verified=true

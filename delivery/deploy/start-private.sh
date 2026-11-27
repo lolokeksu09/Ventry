@@ -19,6 +19,12 @@ if [[ "$bind" != 127.0.0.1 ]]; then
   [[ "$found" = true ]] || { echo "Private WireGuard address unavailable; refusing start" >&2;exit 1; }
 fi
 dc() { docker compose --env-file "$state/compose.env" -f compose.yaml "$@"; }
+umask 077
+exec 9>"$state/upgrade-006.lock"
+flock -n 9 || { echo "Delivery upgrade or startup already holds the state lock" >&2; exit 1; }
+[[ ! -e "$state/upgrade-006.incomplete" ]] || {
+  echo "Delivery upgrade recovery marker exists; refusing startup" >&2; exit 1
+}
 dc config --quiet
 # Do not recreate an existing database or launch a new API against a stale schema.
 if [[ -z "$(dc ps --all -q db)" ]]; then
