@@ -3,7 +3,7 @@ SET LOCAL plpgsql.check_asserts=on;
 DO $$
 BEGIN
     ASSERT (SELECT to_jsonb(s) FROM delivery.subscription s WHERE id='60000000-0000-4000-8000-000000000001')=(SELECT subscription FROM public.desk_upgrade_snapshot);
-    ASSERT (SELECT to_jsonb(g) FROM delivery.grant_event g WHERE id='60000000-0000-4000-8000-000000000005')=(SELECT grant FROM public.desk_upgrade_snapshot);
+    ASSERT (SELECT to_jsonb(g) FROM delivery.grant_event g WHERE id='60000000-0000-4000-8000-000000000005')=(SELECT "grant" FROM public.desk_upgrade_snapshot);
     ASSERT NOT has_table_privilege('delivery_api','delivery.customer','SELECT');
     ASSERT NOT has_table_privilege('delivery_api','delivery.customer','UPDATE');
 END $$;
