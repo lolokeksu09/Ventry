@@ -1,0 +1,13 @@
+{
+  "product": "raschet",
+  "tag": "raschet-v0.30.0-beta.1-rc.1",
+  "version_name": "0.30.0-beta.1",
+  "version_code": 35,
+  "package_name": "dev.ventry.raschet",
+  "revision": "e4adc234127536de5b07d9ef1d16ae2827adec66",
+  "size": 8935082,
+  "sha256": "02ae25ba938e103574ce2b5234a292b5787fc22e382797e228f4f30abeb2d8dc",
+  "certificate_sha256": "293a4796216cb392f84ea39e03a40d8281fec4bd654a1ebfb8e9c5399e53d215",
+  "source": "https://github.com/lolokeksu09/dolg-book/releases/download/raschet-v0.30.0-beta.1-rc.1/Raschet-release-candidate.apk",
+  "prerelease": true
+}

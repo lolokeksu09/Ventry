@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Ventry Delivery — Управление</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/admin.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div><p class="brand">VENTRY <span>DELIVERY</span></p><h1>Подписки и выдача</h1></div>
+    <button id="logout" type="button" class="secondary" hidden>Выйти</button>
+  </header>
+  <main>
+    <div class="notice">Закрытый тестовый контур. Подтверждение платежа не списывает деньги; выдаваемый APK пока не проверяет подписку.</div>
+    <section id="login">
+      <h2>Вход администратора</h2>
+      <form id="login-form" class="stack">
+        <label for="token">Ключ доступа</label>
+        <input id="token" type="password" required autocomplete="off" spellcheck="false" maxlength="64">
+        <button type="submit">Войти</button>
+      </form>
+    </section>
+    <p id="message" role="status" aria-live="polite"></p>
+    <div id="workspace" hidden>
+      <section class="projects-panel">
+        <h2>Проекты Ventry</h2>
+        <label for="project-select">Текущий проект</label>
+        <select id="project-select"></select>
+        <p id="project-package" class="hint"></p>
+        <dl class="project-metrics">
+          <div><dt>Активные</dt><dd id="metric-active">—</dd></div>
+          <div><dt>Истекают за 7 дней</dt><dd id="metric-expiring">—</dd></div>
+          <div><dt>Истекли</dt><dd id="metric-expired">—</dd></div>
+          <div><dt>Ожидают</dt><dd id="metric-pending">—</dd></div>
+          <div><dt>Подтверждённые начисления</dt><dd id="metric-confirmed">—</dd></div>
+        </dl>
+        <details>
+          <summary>Добавить проект</summary>
+          <form id="project-form" class="stack">
+            <label for="project-name">Название</label><input id="project-name" required maxlength="100">
+            <label for="project-code">Уникальный код (латиница)</label><input id="project-code" required maxlength="32" pattern="[a-z][a-z0-9_\-]{0,31}" autocomplete="off">
+            <label for="project-package-input">Android package ID</label><input id="project-package-input" required maxlength="180" autocomplete="off" spellcheck="false">
+            <button type="submit">Создать проект</button>
+            <p class="hint">Новый проект не наследует цены или APK других продуктов.</p>
+          </form>
+        </details>
+        <details>
+          <summary>Тарифы текущего проекта</summary>
+          <ul id="project-plans" class="plan-list"></ul>
+          <form id="project-plan-form" class="stack">
+            <label for="new-plan-code">Период</label><select id="new-plan-code"></select>
+            <label for="new-plan-amount">Цена, ₽</label><input id="new-plan-amount" required inputmode="decimal" autocomplete="off">
+            <button id="add-plan" type="submit">Добавить тариф</button>
+            <p id="plan-hint" class="hint">Цена задаётся отдельно; уже созданный тариф пока нельзя изменить.</p>
+          </form>
+        </details>
+      </section>
+      <section class="release"><h2>Разрешённая сборка</h2><p id="release-info"></p><code id="release-sha"></code></section>
+      <div class="workspace">
+        <section>
+          <div class="section-head"><h2>Клиенты</h2><button id="refresh" type="button" class="secondary">Обновить</button></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Клиент / подписка</th><th>Статус</th><th>До</th></tr></thead><tbody id="customers"></tbody></table>
+          </div>
+          <p id="empty" hidden>Клиентов пока нет.</p>
+          <button type="button" id="next-page" class="secondary" hidden>Следующие 100</button>
+          <details>
+            <summary>Создать клиента</summary>
+            <form id="create-form" class="stack">
+              <label for="customer-id">ID клиента (UUID)</label><input id="customer-id" required autocomplete="off">
+              <label for="subscription-id">ID подписки (UUID)</label><input id="subscription-id" required autocomplete="off">
+              <button id="new-ids" type="button" class="secondary">Сгенерировать ID</button>
+              <button type="submit">Создать подписку</button>
+            </form>
+          </details>
+        </section>
+        <section id="detail">
+          <h2>Подписка</h2>
+          <form id="open-form" class="inline"><label for="open-id">Открыть по ID</label><input id="open-id" required autocomplete="off"><button type="submit" class="secondary">Открыть</button></form>
+          <p id="select-hint">Выберите клиента в списке.</p>
+          <div id="selected" hidden>
+            <dl class="facts"><dt>ID</dt><dd id="selected-id"></dd><dt>Статус</dt><dd id="selected-status"></dd><dt>Действует до</dt><dd id="selected-until"></dd><dt>Установка</dt><dd id="selected-device"></dd><dt>Тариф</dt><dd id="selected-plan"></dd></dl>
+            <details open>
+              <summary>Продление или пробный доступ</summary>
+              <form id="grant-form" class="stack">
+                <label for="plan">Тариф</label><select id="plan" required></select>
+                <label for="amount">Подтверждённая сумма, ₽</label><input id="amount" required inputmode="decimal" autocomplete="off">
+                <label for="payment-id">ID операции (UUID)</label><input id="payment-id" required autocomplete="off">
+                <button id="new-payment" type="button" class="secondary">Новый ID операции</button>
+                <p class="hint">При повторе после ошибки сохраняйте тот же ID. Не подтверждайте один платёж под разными ID.</p>
+                <label class="check"><input id="confirmed" type="checkbox" required>Подтверждаю получение указанной суммы или выдачу пробного периода.</label>
+                <button type="submit">Подтвердить</button>
+              </form>
+            </details>
+            <details>
+              <summary>Привязка или перенос устройства</summary>
+              <form id="bind-form" class="stack">
+                <label for="device-id">Новый ID установки (UUID)</label><input id="device-id" required autocomplete="off">
+                <label for="bind-id">ID операции (UUID)</label><input id="bind-id" required autocomplete="off">
+                <button id="new-bind" type="button" class="secondary">Новый ID операции</button>
+                <button type="submit">Сохранить привязку</button>
+              </form>
+            </details>
+            <details>
+              <summary>Выдать APK</summary>
+              <p id="issue-note">Одна загрузка, 30 минут. При прерывании скачивания потребуется новый код. Если ссылка ещё действует, сначала отзовите её.</p>
+              <button id="issue" type="button">Создать ссылку</button>
+              <div id="link-box" hidden class="stack"><label for="download-link">Ссылка для клиента</label><input id="download-link" readonly><button id="copy" type="button" class="secondary">Копировать</button><p id="link-expiry" class="hint"></p></div>
+            </details>
+            <details open>
+              <summary>История</summary>
+              <div id="history"></div>
+            </details>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer>Ventry Delivery · Изолированная панель оператора</footer>
+</body>
+</html>

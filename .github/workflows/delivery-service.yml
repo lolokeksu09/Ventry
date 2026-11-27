@@ -1,0 +1,130 @@
+name: Ventry Delivery service
+
+on:
+  pull_request:
+    paths:
+      - 'delivery/**'
+      - '.github/workflows/delivery-service.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'delivery/**'
+      - '.github/workflows/delivery-service.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate web and Python sources
+        run: |
+          node --check delivery/service/web/admin.js
+          node --check delivery/service/web/download.js
+          python3 -m py_compile delivery/tests/service_http.py delivery/tests/service_browser.py
+      - name: Compile Rust and run unit tests
+        working-directory: delivery/service
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal
+          test -s Cargo.lock
+          cargo +1.94.0 test --locked
+          cargo +1.94.0 build --locked
+      - name: Preserve exact dependency resolution
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-cargo-lock
+          path: delivery/service/Cargo.lock
+          if-no-files-found: error
+      - name: Prepare isolated PostgreSQL and least-privilege service login
+        run: |
+          set -euo pipefail
+          umask 077
+          export POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+          runtime_password="$(openssl rand -hex 32)"
+          docker run -d --name ventry-delivery-service-ci \
+            -p 127.0.0.1:55432:5432 --env POSTGRES_PASSWORD -e POSTGRES_DB=delivery postgres:17
+          for i in $(seq 1 60); do
+            if docker exec ventry-delivery-service-ci pg_isready -h 127.0.0.1 -U postgres -d delivery; then break; fi
+            sleep 1
+          done
+          db() { docker exec -i ventry-delivery-service-ci psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 "$@"; }
+          db < delivery/migrations/001_subscriptions.sql
+          db < delivery/migrations/002_api_and_downloads.sql
+          db < delivery/tests/api_privileges.sql
+          db < delivery/migrations/003_projects.sql
+          printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db
+          printf 'host=127.0.0.1 port=55432 dbname=delivery user=delivery_runtime password=%s sslmode=disable\n' "$runtime_password" > "$RUNNER_TEMP/delivery-db.conf"
+          openssl rand -hex 32 > "$RUNNER_TEMP/delivery-admin-token"
+          printf 'DELIVERY_DB_CONFIG_FILE=%s\nDELIVERY_ADMIN_TOKEN_FILE=%s\n' "$RUNNER_TEMP/delivery-db.conf" "$RUNNER_TEMP/delivery-admin-token" >> "$GITHUB_ENV"
+      - name: Fetch exact published Raschet release and prepare Android verifier
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          import hashlib
+          r=json.loads(Path('delivery/service/release.json').read_text())
+          p=Path(os.environ['RUNNER_TEMP'])/'Raschet.apk'
+          subprocess.run(['curl','--fail','--silent','--show-error','--location','--retry','3','--max-time','120',r['source'],'-o',str(p)],check=True)
+          assert p.stat().st_size == r['size']
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==r['sha256']
+          PY
+          sdkmanager_bin="${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager"
+          "$sdkmanager_bin" --install 'build-tools;35.0.0'
+          printf 'DELIVERY_APK=%s\nDELIVERY_APKSIGNER=%s\nDELIVERY_AAPT=%s\n' \
+            "$RUNNER_TEMP/Raschet.apk" "$ANDROID_HOME/build-tools/35.0.0/apksigner" "$ANDROID_HOME/build-tools/35.0.0/aapt" >> "$GITHUB_ENV"
+      - name: Start verified staging service and reject damaged APK
+        env:
+          DELIVERY_ADMIN_ADDR: 127.0.0.1:18081
+          DELIVERY_PUBLIC_ADDR: 127.0.0.1:18082
+          DELIVERY_PUBLIC_ORIGIN: http://127.0.0.1:18082
+        run: |
+          set -euo pipefail
+          binary=delivery/service/target/debug/ventry-delivery
+          cp "$DELIVERY_APK" "$RUNNER_TEMP/damaged.apk"
+          printf '\000' | dd of="$RUNNER_TEMP/damaged.apk" bs=1 count=1 conv=notrunc status=none
+          if DELIVERY_APK="$RUNNER_TEMP/damaged.apk" "$binary"; then echo 'Damaged APK accepted'; exit 1; fi
+          if DELIVERY_ADMIN_ADDR=0.0.0.0:18081 "$binary"; then echo 'Public admin binding accepted'; exit 1; fi
+          umask 077
+          printf 'host=127.0.0.1 hostaddr=192.0.2.1 port=55432 dbname=delivery user=invalid sslmode=disable\n' > "$RUNNER_TEMP/remote-db.conf"
+          if DELIVERY_DB_CONFIG_FILE="$RUNNER_TEMP/remote-db.conf" "$binary"; then echo 'Remote hostaddr accepted'; exit 1; fi
+          rm -f "$RUNNER_TEMP/remote-db.conf"
+          "$binary" > "$RUNNER_TEMP/delivery-service.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/delivery-service.pid"
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:18081/ >/dev/null && curl -fsS http://127.0.0.1:18082/download >/dev/null; then exit 0; fi
+            kill -0 "$(cat "$RUNNER_TEMP/delivery-service.pid")" || { cat "$RUNNER_TEMP/delivery-service.log"; exit 1; }
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/delivery-service.log"; exit 1
+      - name: Exercise authenticated HTTP, SQL and actual APK redemption
+        run: python3 delivery/tests/service_http.py
+      - name: Prepare browser
+        run: |
+          python3 -m pip install --quiet --break-system-packages selenium==4.38.0
+          command -v google-chrome
+          command -v chromedriver
+      - name: Test real browser subscription and download flow
+        run: python3 delivery/tests/service_browser.py
+      - name: Upload safe UI captures (no tokens or APK)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-browser-captures
+          path: ${{ runner.temp }}/delivery-browser/*.png
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Stop isolated test environment
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/delivery-service.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/delivery-service.pid")" 2>/dev/null || true
+          fi
+          docker rm -f ventry-delivery-service-ci || true
+          rm -f "$RUNNER_TEMP/delivery-db.conf" "$RUNNER_TEMP/delivery-admin-token"
