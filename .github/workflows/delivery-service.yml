@@ -90,6 +90,10 @@ jobs:
           printf '\000' | dd of="$RUNNER_TEMP/damaged.apk" bs=1 count=1 conv=notrunc status=none
           if DELIVERY_APK="$RUNNER_TEMP/damaged.apk" "$binary"; then echo 'Damaged APK accepted'; exit 1; fi
           if DELIVERY_ADMIN_ADDR=0.0.0.0:18081 "$binary"; then echo 'Public admin binding accepted'; exit 1; fi
+          umask 077
+          printf 'host=127.0.0.1 hostaddr=192.0.2.1 port=55432 dbname=delivery user=invalid sslmode=disable\n' > "$RUNNER_TEMP/remote-db.conf"
+          if DELIVERY_DB_CONFIG_FILE="$RUNNER_TEMP/remote-db.conf" "$binary"; then echo 'Remote hostaddr accepted'; exit 1; fi
+          rm -f "$RUNNER_TEMP/remote-db.conf"
           "$binary" > "$RUNNER_TEMP/delivery-service.log" 2>&1 &
           echo "$!" > "$RUNNER_TEMP/delivery-service.pid"
           for i in $(seq 1 40); do

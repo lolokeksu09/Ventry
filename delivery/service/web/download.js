@@ -27,3 +27,6 @@ start.addEventListener('click',async()=>{
   }
 });
 addEventListener('pagehide',()=>{if(objectUrl) URL.revokeObjectURL(objectUrl);});
+
+// Opening another personal link in the same tab may be fragment-only navigation.
+addEventListener('hashchange',()=>{if(location.hash) location.reload();});

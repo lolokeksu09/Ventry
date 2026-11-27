@@ -78,7 +78,9 @@ try:
     apk=downloads/"Raschet-release-candidate.apk"
     wait.until(lambda d:apk.exists() and apk.stat().st_size==release["size"])
     assert hashlib.sha256(apk.read_bytes()).hexdigest()==release["sha256"]
-    driver.get(link); click("start")
+    driver.get(link)
+    wait.until(lambda d: not urlsplit(d.current_url).fragment)
+    click("start")
     wait.until(lambda d:"недоступна" in elem("status").text)
     driver.get("http://127.0.0.1:18081/")
     show("login")

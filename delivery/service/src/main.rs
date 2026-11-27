@@ -269,7 +269,7 @@ async fn run() -> Result<(),Box<dyn Error>> {
     let database = fs::read_to_string(file_setting("DELIVERY_DB_CONFIG_FILE")?)?;
     let mut cfg: Config = database.trim().parse()?;
     drop(database);
-    if cfg.get_hosts().is_empty() || cfg.get_hosts().iter().any(|host| match host {
+    if cfg.get_hosts().is_empty() || cfg.get_hostaddrs().iter().any(|ip| !ip.is_loopback()) || cfg.get_hosts().iter().any(|host| match host {
         Host::Tcp(name) => !matches!(name.as_str(),"127.0.0.1"|"::1"),
         #[cfg(unix)] Host::Unix(_) => false,
     }) { return Err("Database must be local Unix socket or loopback IP".into()); }
