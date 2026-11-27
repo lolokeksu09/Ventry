@@ -9,7 +9,10 @@ data class Project(val code: String, val name: String, val packageName: String?,
     val enabledPlans: Int, val releaseAvailable: Boolean)
 data class Plan(val code: String, val kopecks: Long, val enabled: Boolean)
 data class Subscription(val id: String, val customerId: String, val product: String, val status: String,
-    val validUntil: String?, val installation: String?, val effectivePlan: String?)
+    val validUntil: String?, val installation: String?, val effectivePlan: String?,
+    val customerName:String?=null,val customerRevision:Long?=null)
+data class CustomerCard(val id:String,val name:String?,val revision:Long)
+data class Revenue(val confirmed:Long,val count:Long,val from:String?,val to:String)
 data class HistoryLine(val title: String, val detail: String)
 data class PaymentEvent(val id:String,val plan:String,val amount:Long,val recordedAt:String,val startsAt:String,val endsAt:String)
 data class DownloadGrant(val id: String, val expires: String, val consumed: Boolean, val revoked: Boolean,

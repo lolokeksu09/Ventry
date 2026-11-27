@@ -85,7 +85,8 @@ class DeliveryApi(origin: String, private val token: String, private val staging
     private fun JSONObject.nullable(key: String) = if(isNull(key)) null else getString(key)
     private fun <T> JSONArray.mapItems(block: (JSONObject)->T): List<T> = (0 until length()).map { block(getJSONObject(it)) }
     private fun JSONObject.sub() = Subscription(getString("id"),getString("customer_id"),getString("product_code"),
-        getString("status"),nullable("valid_until"),nullable("installation_id"),nullable("effective_plan"))
+        getString("status"),nullable("valid_until"),nullable("installation_id"),nullable("effective_plan"),
+        nullable("customer_name"),if(isNull("customer_revision"))null else getLong("customer_revision"))
     private fun objectOf(vararg entries: Pair<String,Any?>) = JSONObject().apply {
         entries.forEach { (k,v) -> put(k,v ?: JSONObject.NULL) }
     }
@@ -116,6 +117,40 @@ class DeliveryApi(origin: String, private val token: String, private val staging
             require(it.size<=100 && it.all { row -> row.product == code }) { "Ответ относится к другому проекту" }
             SubscriptionDesk.validatePage(it,after)
         }
+    suspend fun desk(code:String,q:String="",filter:String="all",after:String?=null):List<Subscription>{
+        require(q.length<=80 && filter in listOf("all","active","expired","pending","expiring"))
+        val encoded=java.net.URLEncoder.encode(q,"UTF-8")
+        val rows=JSONArray(request("/api/v1/projects/"+product(code)+"/desk?q="+encoded+"&filter="+filter+
+            (after?.let{"&after="+Contract.uuid(it)}?:""))).mapItems{it.sub()}
+        require(rows.size<=100 && rows.map{it.id}.distinct().size==rows.size &&
+            rows.all{it.product==code && it.customerRevision!=null && it.customerRevision>=0})
+        if(filter!="expiring")SubscriptionDesk.validatePage(rows,after)
+        return rows
+    }
+    private fun JSONObject.card(expected:String):CustomerCard=CustomerCard(Contract.uuid(getString("id")),nullable("display_name"),getLong("revision")).also{
+        require(it.id==Contract.uuid(expected)&&it.revision>=0)
+    }
+    suspend fun customer(id:String):CustomerCard=JSONObject(request("/api/v1/customers/"+Contract.uuid(id))).card(id)
+    suspend fun renameCustomer(id:String,name:String?,revision:Long):CustomerCard {
+        require(revision>=0)
+        return JSONObject(request("/api/v1/customers/"+Contract.uuid(id),objectOf("display_name" to name,"revision" to revision))).card(id)
+    }
+    suspend fun revenue(code:String,days:Int?):Revenue{
+        require(days==null || days in listOf(7,30,90))
+        val r=JSONObject(request("/api/v1/projects/"+product(code)+"/revenue"+(days?.let{"?days="+it}?:"")))
+        return Revenue(r.getLong("confirmed_kopecks"),r.getLong("payment_count"),r.nullable("from"),r.getString("to")).also{
+            require(it.confirmed>=0&&it.count>=0)
+        }
+    }
+    suspend fun paymentPage(id:String,after:String?=null):List<PaymentEvent>{
+        val rows=JSONArray(request(sub(id)+"/payments"+(after?.let{"?after="+Contract.uuid(it)}?:""))).mapItems{
+            require(Contract.uuid(it.getString("subscription_id"))==Contract.uuid(id))
+            PaymentEvent(Contract.uuid(it.getString("id")),it.getString("plan_code"),it.getLong("amount_kopecks"),
+                it.getString("recorded_at"),it.getString("starts_at"),it.getString("ends_at"))
+        }
+        require(rows.size<=100 && rows.map{it.id}.distinct().size==rows.size && rows.all{it.amount>0 && it.id!=after})
+        return rows
+    }
     suspend fun subscription(id: String): Subscription = JSONObject(request(sub(id))).sub()
     suspend fun createSubscription(project: String,id: String,customer: String) {
         request("/api/v1/subscriptions",objectOf("id" to Contract.uuid(id),"customer_id" to Contract.uuid(customer),"product" to product(project)))

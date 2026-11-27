@@ -47,7 +47,7 @@ class StagingIntegrationTest {
         compose.onNodeWithTag("customer_label").performTextInput("QA магазин")
         compose.onNodeWithTag("subscription_detail").performScrollToNode(hasTestTag("save_customer_label"))
         compose.onNodeWithTag("save_customer_label").performClick()
-        compose.waitUntil(30_000){compose.onAllNodesWithText("Локальное имя сохранено").fetchSemanticsNodes().isNotEmpty()}
+        compose.waitUntil(30_000){compose.onAllNodesWithText("Имя сохранено на сервере").fetchSemanticsNodes().isNotEmpty()}
         compose.onNodeWithTag("subscription_detail").performScrollToNode(hasTestTag("subscription_action_activation"))
         compose.onNodeWithTag("subscription_action_activation").assertExists()
         compose.onNodeWithTag("subscription_action_download").assertExists()
@@ -89,6 +89,12 @@ class StagingIntegrationTest {
         assertEquals(event,history.payments.single().id)
         assertEquals(12300L,SubscriptionDesk.payments(history.payments,7,java.time.Instant.now(),java.time.ZoneId.of("UTC")).confirmed)
         assertTrue(api.subscriptions(project).all{it.product==project})
+        val card=api.customer(customer)
+        assertNull(card.name)
+        assertEquals("Native shop",api.renameCustomer(customer,"Native shop",card.revision).name)
+        assertEquals(subscription,api.desk(project,"Native shop").single().id)
+        assertEquals(12300L,api.revenue(project,7).confirmed)
+        assertEquals(event,api.paymentPage(subscription).single().id)
         assertFalse(api.projects().single{it.code==project}.releaseAvailable)
         val code=api.issueActivation(subscription,Contract.newId(),false)
         assertTrue(Contract.token(code.code))
