@@ -199,11 +199,18 @@ function on(id,fn) {
 }
 on('login-form',async()=>{
   credential=$('token').value.trim(); $('token').value='';
+  const session=await request('/session',{},'POST');
+  if(!/^[0-9a-f]{64}$/.test(session.session_token) || session.expires_in_seconds!==900) throw new Error('Некорректный сеанс.');
+  credential=session.session_token;
   await loadProject('raschet');
   $('login').hidden=true; $('workspace').hidden=false; $('logout').hidden=false;
   message('Доступ подтверждён.');
 });
-$('logout').addEventListener('click',()=>{resetSession(); message('Сеанс завершён.');});
+$('logout').addEventListener('click',()=>act(async()=>{
+  try { await request('/session/logout',{},'POST'); message('Сеанс завершён.'); }
+  catch { message('Локальный сеанс закрыт. Серверный ключ истечёт автоматически.',true); }
+  finally { resetSession(); }
+}));
 $('refresh').addEventListener('click',()=>act(async()=>{ await loadCustomers(); if(selected) await loadSelected(selected.id,true); await refreshProjectMetrics(); message('Данные обновлены.'); }));
 $('project-select').addEventListener('change',()=>act(()=>loadProject($('project-select').value)));
 on('project-form',async()=>{

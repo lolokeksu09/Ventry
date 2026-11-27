@@ -1,5 +1,6 @@
 mod artifact;
 mod license;
+mod sessions;
 
 use artifact::{Artifact, load};
 use axum::{
@@ -71,6 +72,9 @@ struct App {
     download_budget: Mutex<Budget>,
     activation_budget: Mutex<Budget>,
     signer: license::LicenseSigner,
+    sessions: Mutex<sessions::Sessions>,
+    login_budget: Mutex<Budget>,
+    allow_legacy_admin: bool,
 }
 impl App {
     async fn value(&self, sql: &str, args: &[&(dyn ToSql + Sync)]) -> ApiResult {
@@ -102,7 +106,7 @@ fn rate(budget: &Mutex<Budget>, limit: u32) -> Result<(), ApiError> {
 async fn admin_guard(State(app): State<Shared>, req: Request, next: Next) -> Result<Response, ApiError> {
     rate(&app.admin_budget, 120)?;
     let actual = bearer(req.headers()).ok_or(ApiError(StatusCode::UNAUTHORIZED, "unauthorized"))?;
-    if !bool::from(actual.ct_eq(&app.admin_digest)) {
+    if !sessions::authorized(&app,&actual)? {
         return Err(ApiError(StatusCode::UNAUTHORIZED, "unauthorized"));
     }
     Ok(next.run(req).await)
@@ -313,7 +317,9 @@ fn admin_router(app: Shared) -> Router {
         .route("/api/v1/subscriptions/{id}/downloads/{event}/revoke",post(revoke))
         .layer(DefaultBodyLimit::max(4096))
         .route_layer(middleware::from_fn_with_state(app.clone(),admin_guard));
-    Router::new().route("/",get(admin_html)).route("/admin.js",get(admin_js))
+    Router::new().route("/api/v1/session",post(sessions::login))
+        .route("/api/v1/session/logout",post(sessions::logout))
+        .route("/",get(admin_html)).route("/admin.js",get(admin_js))
         .route("/style.css",get(css)).merge(api).with_state(app)
         .layer(middleware::from_fn(security_headers))
 }
@@ -372,7 +378,13 @@ async fn run() -> Result<(),Box<dyn Error>> {
     db.query_one("SELECT delivery.api_plans()", &[]).await?;
     let signer=license::LicenseSigner::from_file(&file_setting("DELIVERY_SIGNING_KEY_FILE")?)?;
     db.query_one("SELECT delivery.api_refresh_entitlement(NULL,NULL,NULL)",&[]).await?;
+    // Default is session-only. Direct master-token operation is explicitly local CI compatibility.
+    let allow_legacy_admin=match env::var("DELIVERY_ALLOW_LEGACY_ADMIN").as_deref(){
+        Ok("true")=>true, Ok("false")|Err(env::VarError::NotPresent)=>false,
+        _=>return Err("Invalid legacy admin option".into()),
+    };
     let app = Arc::new(App { db,admin_digest,artifact,public_origin,signer,
+        sessions:Mutex::new(sessions::Sessions::default()),login_budget:Mutex::new(Budget::new()),allow_legacy_admin,
         admin_budget:Mutex::new(Budget::new()),download_budget:Mutex::new(Budget::new()),activation_budget:Mutex::new(Budget::new()) });
     let admin_listener = tokio::net::TcpListener::bind(admin).await?;
     let public_listener = tokio::net::TcpListener::bind(public).await?;

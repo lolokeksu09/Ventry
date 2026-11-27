@@ -27,7 +27,7 @@ jobs:
         run: |
           node --check delivery/service/web/admin.js
           node --check delivery/service/web/download.js
-          python3 -m py_compile delivery/tests/service_http.py delivery/tests/service_browser.py
+          python3 -m py_compile delivery/tests/service_http.py delivery/tests/service_browser.py delivery/tests/service_sessions.py
       - name: Compile Rust and run unit tests
         working-directory: delivery/service
         run: |
@@ -87,6 +87,7 @@ jobs:
           DELIVERY_ADMIN_ADDR: 127.0.0.1:18081
           DELIVERY_PUBLIC_ADDR: 127.0.0.1:18082
           DELIVERY_PUBLIC_ORIGIN: http://127.0.0.1:18082
+          DELIVERY_ALLOW_LEGACY_ADMIN: "true"
         run: |
           set -euo pipefail
           binary=delivery/service/target/debug/ventry-delivery
@@ -133,6 +134,8 @@ jobs:
             sleep 1
           done
           cat "$RUNNER_TEMP/delivery-service.log"; exit 1
+      - name: Check session-only administrator boundary
+        run: python3 delivery/tests/service_sessions.py
       - name: Prepare browser
         run: |
           python3 -m pip install --quiet --break-system-packages selenium==4.38.0
