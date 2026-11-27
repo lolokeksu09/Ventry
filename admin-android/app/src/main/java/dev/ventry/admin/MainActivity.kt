@@ -1,6 +1,8 @@
 package dev.ventry.admin
 
 import android.content.Intent
+import android.app.Activity
+import android.app.KeyguardManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -97,6 +99,27 @@ private fun Login(s:AdminState,vm:AdminViewModel){
     var caStatus by remember{mutableStateOf("")}
     val context=LocalContext.current
     val scope=rememberCoroutineScope()
+    var manual by remember{mutableStateOf(false)}
+    var save by remember{mutableStateOf(false)}
+    var requested by remember{mutableStateOf("")}
+    val keyguard=context.getSystemService(KeyguardManager::class.java)
+    val credential=rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){ result->
+        val action=requested;requested=""
+        if(result.resultCode==Activity.RESULT_OK && vm.canSaveConnection()){
+            if(action=="saved")vm.connectSaved()
+            if(action=="save"){
+                val key=token;token=""
+                vm.connect(server,key,ca,true)
+            }
+        }
+    }
+    @Suppress("DEPRECATION")
+    fun authenticate(action:String){
+        val intent=keyguard?.createConfirmDeviceCredentialIntent("Ventry Admin","Подтвердите доступ к сохранённому подключению")
+        if(intent!=null && vm.canSaveConnection()){
+            requested=action;credential.launch(intent)
+        }
+    }
     val picker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
         if(uri!=null)scope.launch{
             try{
@@ -116,7 +139,17 @@ private fun Login(s:AdminState,vm:AdminViewModel){
     }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item{Text("Вход в центр управления",style=MaterialTheme.typography.titleLarge)}
-        item{Text("Закрытый контур. Ключ используется только для входа; затем действует отзываемый короткий сеанс.",color=Muted)}
+        if(s.savedConnection && !manual){
+            item{Panel{
+                Heading("Подключение сохранено")
+                Text("Подтвердите блокировку телефона — адрес, ключ и сертификат вводить снова не нужно.",color=Muted)
+                Action("Открыть админку",!s.busy && vm.canSaveConnection(),"saved_connect"){authenticate("saved")}
+                if(!vm.canSaveConnection())Text("Установите блокировку экрана или войдите вручную.",color=Muted)
+                Secondary("Другой сервер или ручной вход",!s.busy){manual=true}
+                Secondary("Забыть подключение",!s.busy){vm.forgetConnection()}
+            }}
+        }else{
+        item{Text("Настройте подключение один раз. В следующий раз достаточно разблокировать телефон.",color=Muted)}
         item{Field("Адрес HTTPS",server,{server=it},!s.busy,"server")}
         item{OutlinedTextField(token,{token=it},Modifier.fillMaxWidth().testTag("token"),label={Text("Ключ администратора")},singleLine=true,enabled=!s.busy,
             visualTransformation=PasswordVisualTransformation(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password))}
@@ -126,7 +159,21 @@ private fun Login(s:AdminState,vm:AdminViewModel){
             if(ca!=null)Secondary("Использовать системные сертификаты",!s.busy){ca=null;caStatus=""}
             Text("Импортируйте CA только из доверенной выдачи владельца. Сверьте SHA-256. Проверка имени сервера сохраняется.",color=Muted,fontSize=12.sp)
         }
-        item{Action("Подключиться",!s.busy && server.isNotBlank() && token.isNotBlank(),"connect"){val key=token;token="";vm.connect(server,key,ca)}}
+        item{
+            if(vm.canSaveConnection() && server.trim().startsWith("https://")){
+                Row(verticalAlignment=Alignment.CenterVertically){
+                    Checkbox(checked=save,onCheckedChange={save=it},enabled=!s.busy)
+                    Text("Запомнить подключение",Modifier.weight(1f),color=Muted)
+                }
+                Text("Данные шифруются ключом Android Keystore и доступны после подтверждения блокировки экрана.",color=Muted,fontSize=12.sp)
+            }
+            Action("Подключиться",!s.busy && server.isNotBlank() && token.isNotBlank(),"connect"){
+                if(save && vm.canSaveConnection() && server.trim().startsWith("https://"))authenticate("save")
+                else {val key=token;token="";vm.connect(server,key,ca)}
+            }
+            if(s.savedConnection)Secondary("К сохранённому входу",!s.busy){token="";manual=false}
+        }
+        }
         if(BuildConfig.DEBUG)item{Text("STAGING: HTTP только на 127.0.0.1 через локальный туннель. Не используйте production-ключи.",color=Muted,fontSize=12.sp)}
     }
 }

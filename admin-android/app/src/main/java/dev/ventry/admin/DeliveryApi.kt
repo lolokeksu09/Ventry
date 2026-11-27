@@ -13,7 +13,7 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 
-/** No credentials in URLs, logs, persistent storage, redirects or build configuration. */
+/** No credentials in URLs, logs, redirects or build configuration. Optional encrypted storage is owned by SavedConnectionStore. */
 class DeliveryApi(origin: String, private val token: String, private val staging: Boolean = BuildConfig.DEBUG,
     private val trustedCa:X509Certificate?=null) {
     private val base = Contract.origin(origin, staging)
