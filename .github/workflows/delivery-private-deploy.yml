@@ -29,6 +29,27 @@ jobs:
           before="$(sha256sum "$RUNNER_TEMP/ventry-private-state/license-public-key.hex")"
           if bash delivery/deploy/provision-private.sh --state "$RUNNER_TEMP/ventry-private-state"; then exit 1; fi
           test "$before" = "$(sha256sum "$RUNNER_TEMP/ventry-private-state/license-public-key.hex")"
+      - name: Upgrade populated 005 volume with verified backup and restore
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/ventry-private-state"
+          # Reproduce an existing volume with the prior initialization sequence.
+          old="$(mktemp "$PWD/delivery/deploy/.compose-005.XXXXXXXX")"
+          trap 'rm -f "$old"' EXIT
+          sed '/006_customer_desk.sql:/d; s@007-runtime.sh@006-runtime.sh@' delivery/deploy/compose.yaml > "$old"
+          docker compose --env-file "$state/compose.env" -f "$old" up -d --wait --wait-timeout 120 db
+          dc() { docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml "$@"; }
+          dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_before.sql
+          bash delivery/deploy/upgrade-006.sh "$state" --check | grep -Fx DELIVERY_SCHEMA_005_UPGRADE_REQUIRED
+          if bash delivery/deploy/start-private.sh "$state" > "$RUNNER_TEMP/pre-upgrade-start.log" 2>&1; then
+            echo 'Stale schema startup accepted'; exit 1
+          fi
+          grep -F 'Delivery schema not ready (upgrade_required)' "$RUNNER_TEMP/pre-upgrade-start.log"
+          bash delivery/deploy/upgrade-006.sh "$state" --apply | tee "$RUNNER_TEMP/upgrade-006.log"
+          grep -Fx DELIVERY_006_BACKUP_RESTORE_VERIFIED "$RUNNER_TEMP/upgrade-006.log"
+          grep -F DELIVERY_006_UPGRADE_VERIFIED "$RUNNER_TEMP/upgrade-006.log"
+          bash delivery/deploy/upgrade-006.sh "$state" --apply | grep -Fx DELIVERY_SCHEMA_006_ALREADY_READY
+          dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_after.sql
       - name: Start exact private TLS Docker stack
         run: bash delivery/deploy/start-private.sh "$RUNNER_TEMP/ventry-private-state"
       - name: Validate isolation and restore backup in fresh synthetic database
