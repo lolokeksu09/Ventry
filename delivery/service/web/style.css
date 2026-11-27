@@ -25,3 +25,6 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}summar
 #login,.download-page section{max-width:520px;margin:20px auto}.download-page{max-width:640px}#download-link{font-size:.75rem}
 @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr)}section{padding:16px}.masthead{padding-top:16px;padding-bottom:16px}}
 @media(max-width:400px){.masthead{align-items:flex-start}.inline{grid-template-columns:1fr}.section-head{flex-wrap:wrap}}
+
+.projects-panel{margin-bottom:20px}.projects-panel>select{margin:8px 0}.project-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:0;margin:12px 0 0}.project-metrics>div{padding:9px 12px;border-left:1px solid var(--line);min-width:0}.project-metrics dt{font-size:.77rem;color:var(--muted)}.project-metrics dd{margin:5px 0 0;font-size:1.35rem;font-weight:650;overflow-wrap:anywhere}.plan-list{padding-left:20px;color:var(--muted);font-size:.88rem}
+@media(max-width:400px){.project-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.project-metrics dd{font-size:1.1rem}}

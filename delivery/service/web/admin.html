@@ -25,6 +25,39 @@
     </section>
     <p id="message" role="status" aria-live="polite"></p>
     <div id="workspace" hidden>
+      <section class="projects-panel">
+        <h2>Проекты Ventry</h2>
+        <label for="project-select">Текущий проект</label>
+        <select id="project-select"></select>
+        <p id="project-package" class="hint"></p>
+        <dl class="project-metrics">
+          <div><dt>Активные</dt><dd id="metric-active">—</dd></div>
+          <div><dt>Истекают за 7 дней</dt><dd id="metric-expiring">—</dd></div>
+          <div><dt>Истекли</dt><dd id="metric-expired">—</dd></div>
+          <div><dt>Ожидают</dt><dd id="metric-pending">—</dd></div>
+          <div><dt>Подтверждённые начисления</dt><dd id="metric-confirmed">—</dd></div>
+        </dl>
+        <details>
+          <summary>Добавить проект</summary>
+          <form id="project-form" class="stack">
+            <label for="project-name">Название</label><input id="project-name" required maxlength="100">
+            <label for="project-code">Уникальный код (латиница)</label><input id="project-code" required maxlength="32" pattern="[a-z][a-z0-9_\-]{0,31}" autocomplete="off">
+            <label for="project-package-input">Android package ID</label><input id="project-package-input" required maxlength="180" autocomplete="off" spellcheck="false">
+            <button type="submit">Создать проект</button>
+            <p class="hint">Новый проект не наследует цены или APK других продуктов.</p>
+          </form>
+        </details>
+        <details>
+          <summary>Тарифы текущего проекта</summary>
+          <ul id="project-plans" class="plan-list"></ul>
+          <form id="project-plan-form" class="stack">
+            <label for="new-plan-code">Период</label><select id="new-plan-code"></select>
+            <label for="new-plan-amount">Цена, ₽</label><input id="new-plan-amount" required inputmode="decimal" autocomplete="off">
+            <button id="add-plan" type="submit">Добавить тариф</button>
+            <p id="plan-hint" class="hint">Цена задаётся отдельно; уже созданный тариф пока нельзя изменить.</p>
+          </form>
+        </details>
+      </section>
       <section class="release"><h2>Разрешённая сборка</h2><p id="release-info"></p><code id="release-sha"></code></section>
       <div class="workspace">
         <section>
@@ -73,7 +106,7 @@
             </details>
             <details>
               <summary>Выдать APK</summary>
-              <p>Одна загрузка, 30 минут. При прерывании скачивания потребуется новый код. Если ссылка ещё действует, сначала отзовите её.</p>
+              <p id="issue-note">Одна загрузка, 30 минут. При прерывании скачивания потребуется новый код. Если ссылка ещё действует, сначала отзовите её.</p>
               <button id="issue" type="button">Создать ссылку</button>
               <div id="link-box" hidden class="stack"><label for="download-link">Ссылка для клиента</label><input id="download-link" readonly><button id="copy" type="button" class="secondary">Копировать</button><p id="link-expiry" class="hint"></p></div>
             </details>
