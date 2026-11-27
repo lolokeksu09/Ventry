@@ -1,0 +1,10 @@
+**
+!delivery/
+!delivery/service/
+!delivery/service/Cargo.toml
+!delivery/service/Cargo.lock
+!delivery/service/release.json
+!delivery/service/src/
+!delivery/service/src/**
+!delivery/service/web/
+!delivery/service/web/**

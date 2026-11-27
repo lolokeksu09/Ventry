@@ -35,6 +35,7 @@ export DELIVERY_AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
 export DELIVERY_ADMIN_ADDR=127.0.0.1:18081
 export DELIVERY_PUBLIC_ADDR=127.0.0.1:18082
 export DELIVERY_PUBLIC_ORIGIN=http://127.0.0.1:18082
+# Native admin tests use session-only by default.
 delivery/service/target/debug/ventry-delivery > "$RUNNER_TEMP/ventry-admin-service.log" 2>&1 &
 echo "$!" > "$RUNNER_TEMP/ventry-admin-service.pid"
 for i in $(seq 1 40); do

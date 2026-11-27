@@ -6,6 +6,8 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
@@ -29,6 +31,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.security.MessageDigest
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 
 private val Night=Color(0xFF080B09)
 private val PanelColor=Color(0xFF121915)
@@ -81,13 +89,40 @@ private fun AdminScreen(s:AdminState,vm:AdminViewModel){
 @Composable
 private fun Login(s:AdminState,vm:AdminViewModel){
     var server by remember{mutableStateOf("")};var token by remember{mutableStateOf("")}
+    var ca by remember{mutableStateOf<X509Certificate?>(null)}
+    var caStatus by remember{mutableStateOf("")}
+    val context=LocalContext.current
+    val scope=rememberCoroutineScope()
+    val picker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
+        if(uri!=null)scope.launch{
+            try{
+                val cert=withContext(Dispatchers.IO){
+                    val bytes=context.contentResolver.openInputStream(uri)?.use{input->
+                        val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(4096)
+                        while(true){val n=input.read(buffer);if(n<0)break;require(out.size()+n<=16384);out.write(buffer,0,n)}
+                        out.toByteArray()
+                    }?:error("Empty file")
+                    (CertificateFactory.getInstance("X.509").generateCertificate(bytes.inputStream()) as X509Certificate)
+                        .also{require(it.basicConstraints>=0);it.checkValidity()}
+                }
+                ca=cert
+                caStatus="SHA-256 CA: "+MessageDigest.getInstance("SHA-256").digest(cert.encoded).joinToString(":"){"%02x".format(it.toInt() and 255)}
+            }catch(_:Exception){ca=null;caStatus="Не удалось прочитать действительный CA-сертификат."}
+        }
+    }
     LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
         item{Text("Вход в центр управления",style=MaterialTheme.typography.titleLarge)}
-        item{Text("Закрытый тестовый контур. Ключ не сохраняется после выхода.",color=Muted)}
+        item{Text("Закрытый контур. Ключ используется только для входа; затем действует отзываемый короткий сеанс.",color=Muted)}
         item{Field("Адрес HTTPS",server,{server=it},!s.busy,"server")}
         item{OutlinedTextField(token,{token=it},Modifier.fillMaxWidth().testTag("token"),label={Text("Ключ администратора")},singleLine=true,enabled=!s.busy,
             visualTransformation=PasswordVisualTransformation(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password))}
-        item{Action("Подключиться",!s.busy && server.isNotBlank() && token.isNotBlank(),"connect"){val key=token;token="";vm.connect(server,key)}}
+        item{
+            Secondary("Импортировать CA закрытого сервера",!s.busy){picker.launch(arrayOf("*/*"))}
+            if(caStatus.isNotEmpty())Text(caStatus,color=Muted,fontSize=12.sp)
+            if(ca!=null)Secondary("Использовать системные сертификаты",!s.busy){ca=null;caStatus=""}
+            Text("Импортируйте CA только из доверенной выдачи владельца. Сверьте SHA-256. Проверка имени сервера сохраняется.",color=Muted,fontSize=12.sp)
+        }
+        item{Action("Подключиться",!s.busy && server.isNotBlank() && token.isNotBlank(),"connect"){val key=token;token="";vm.connect(server,key,ca)}}
         if(BuildConfig.DEBUG)item{Text("STAGING: HTTP только на 127.0.0.1 через локальный туннель. Не используйте production-ключи.",color=Muted,fontSize=12.sp)}
     }
 }
