@@ -165,7 +165,12 @@ try:
         assert js("return document.querySelector('.screen-dialog').open") is False
         assert js("""return document.querySelector('.product-page .product-copy h1').textContent""") == "Расчёт"
         assert js("""const app=document.querySelector('main[itemtype="https://schema.org/SoftwareApplication"]');return !!app && app.querySelector('[itemprop="name"]').textContent==='Расчёт' && app.querySelector('[itemprop="operatingSystem"]').content==='Android'""")
-        assert js("return [...document.querySelectorAll(\'.android-feature-list dt\')].map(e=>e.textContent)") == ["Книга клиентов", "Возврат долгов", "Статистика магазина", "Статистика клиента", "Отчёты", "Сохранность книги"]
+        assert js("return [...document.querySelectorAll(\'section[aria-labelledby=\"android-features-title\"] .android-feature-list dt\')].map(e=>e.textContent)") == ["Книга клиентов", "Возврат долгов", "Статистика магазина", "Статистика клиента", "Отчёты", "Сохранность книги"]
+        assert js("""return [...document.querySelectorAll('section[aria-labelledby="subscription-title"] .android-feature-list dt')].map(e=>e.textContent)""") == ["Рабочий учёт", "Обновления и помощь", "Данные остаются у владельца", "Без автоматических списаний"]
+        assert js("""return document.querySelector('a[href="#subscription-title"]').hash""") == "#subscription-title"
+        assert js("""const section=document.querySelector('section[aria-labelledby="subscription-title"]');return section.innerText.includes('Публичная продажа и автоматическая оплата пока не запущены') && section.innerText.includes('После окончания срока сохраняются просмотр книги, погашение долгов, исправления, экспорт и восстановление') && section.innerText.includes('72 часами')""")
+        assert js("""const section=document.querySelector('section[aria-labelledby="subscription-title"]');return [...section.querySelectorAll('dt,dd')].every(e=>{const r=e.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth+1 && r.width>0})"""), "Subscription content overflows viewport"
+
         assert js("return [...document.querySelectorAll('.scenario-grid a')].map(a=>new URL(a.href).searchParams.get('scenario'))") == ["debt","payment","deadlines","history","calendar","statistics"]
         screenshots = driver.find_elements(By.CSS_SELECTOR, ".android-gallery-grid img")
         assert len(screenshots) == 3
