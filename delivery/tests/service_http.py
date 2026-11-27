@@ -18,8 +18,8 @@ RELEASE = json.loads((Path(__file__).parents[1] / "service/release.json").read_t
 def uid():
     return str(uuid4())
 
-def call(base, path, *, token=None, data=None, method=None, raw=None):
-    headers = {}
+def call(base, path, *, token=None, data=None, method=None, raw=None, retry=None):
+    headers = {} if retry is None else {"X-Ventry-Download-Retry": retry}
     if token is not None:
         headers["Authorization"] = "Bearer " + token
     if data is not None:
@@ -105,6 +105,33 @@ redeem(token,404)
 event2, token2=issue(sid)
 admin(f"/subscriptions/{sid}/downloads/{event2}/revoke",data={})
 redeem(token2,404)
+# Lost response recovery: the link is claimed by one independently generated
+# browser credential; a second browser cannot obtain the APK from that link.
+event3, token3=issue(sid)
+retry="42"*32
+other_retry="43"*32
+redeem(token3,404,retry=token3)
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+    results=list(pool.map(lambda proof:call(PUBLIC,"/api/v1/download",token=token3,method="POST",retry=proof),[retry,other_retry]))
+assert sorted(x[0] for x in results)==[200,404]
+winner=retry if results[0][0]==200 else other_retry
+loser=other_retry if winner==retry else retry
+redeem(token3,404)
+redeem(token3,404,retry=loser)
+again=redeem(token3,200,retry=winner)
+assert hashlib.sha256(again[1]).hexdigest()==RELEASE["sha256"]
+assert again[2]["X-Ventry-APK-SHA256"]==RELEASE["sha256"]
+assert again[2]["X-Ventry-APK-Size"]==str(RELEASE["size"])
+redeem(token3,200,retry=winner)
+redeem(token3,404,retry=winner)
+event4, token4=issue(sid)
+redeem(token4,200,retry=winner)
+admin(f"/subscriptions/{sid}/downloads/{event4}/revoke",data={})
+redeem(token4,404,retry=winner)
+history=json.dumps(admin(f"/subscriptions/{sid}/history"))
+assert winner not in history and loser not in history and "retry_hash" not in history
+assert admin(f"/subscriptions/{sid}")["status"]=="not_started"
+print("DELIVERY_DOWNLOAD_BOUNDED_SAME_RECIPIENT_RETRY_PASS")
 assert token not in json.dumps(admin(f"/subscriptions/{sid}/history"))
 assert "token_hash" not in json.dumps(admin(f"/subscriptions/{sid}/history"))
 device,new_device=uid(),uid()
