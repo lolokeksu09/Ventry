@@ -58,3 +58,29 @@ http://135.106.227.179 {
     header -Server
     redir https://135-106-227-179.sslip.io{uri} 308
 }
+
+# Public licensing only. APK delivery remains closed until signed candidate acceptance.
+license.ventrylab.top {
+    header {
+        -Server
+        Strict-Transport-Security "max-age=604800"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        Cache-Control "no-store"
+    }
+    @client {
+        method POST
+        path /api/v1/activate /api/v1/entitlement
+    }
+    handle @client {
+        request_body {
+            max_size 2KB
+        }
+        reverse_proxy ventry-public-gateway:18090 {
+            header_up X-Ventry-Client-IP {http.request.remote.host}
+        }
+    }
+    handle {
+        respond 404
+    }
+}
