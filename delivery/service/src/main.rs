@@ -2,6 +2,7 @@ mod artifact;
 mod license;
 mod sessions;
 mod desk;
+mod backups;
 
 use artifact::{Artifact, load};
 use axum::{
@@ -72,6 +73,9 @@ struct App {
     admin_budget: Mutex<Budget>,
     download_budget: Mutex<Budget>,
     activation_budget: Mutex<Budget>,
+    backups_enabled: bool,
+    backup_budget: Mutex<Budget>,
+    backup_slots: Arc<tokio::sync::Semaphore>,
     signer: license::LicenseSigner,
     sessions: Mutex<sessions::Sessions>,
     login_budget: Mutex<Budget>,
@@ -357,6 +361,9 @@ fn public_router(app: Shared) -> Router {
         .route("/api/v1/download",post(download))
         .route("/api/v1/activate",post(license::activate))
         .route("/api/v1/entitlement",post(license::refresh))
+        .route("/api/v1/backups/list",post(backups::list))
+        .route("/api/v1/backups/{slot}/read",post(backups::read))
+        .route("/api/v1/backups/{slot}/put",post(backups::put))
         .layer(DefaultBodyLimit::max(1024))
         .with_state(app).layer(middleware::from_fn(security_headers))
 }
@@ -411,7 +418,13 @@ async fn run() -> Result<(),Box<dyn Error>> {
         Ok("true")=>true, Ok("false")|Err(env::VarError::NotPresent)=>false,
         _=>return Err("Invalid legacy admin option".into()),
     };
+    let backups_enabled=match env::var("DELIVERY_BACKUP_ENABLED").as_deref(){
+        Ok("true")=>true, Ok("false")|Err(env::VarError::NotPresent)=>false,
+        _=>return Err("Invalid backup option".into()),
+    };
+    if backups_enabled { db.query_one("SELECT delivery.api_backup_list(NULL,NULL)",&[]).await?; }
     let app = Arc::new(App { db,admin_digest,artifact,public_origin,signer,
+        backups_enabled,backup_budget:Mutex::new(Budget::new()),backup_slots:Arc::new(tokio::sync::Semaphore::new(4)),
         sessions:Mutex::new(sessions::Sessions::default()),login_budget:Mutex::new(Budget::new()),allow_legacy_admin,
         admin_budget:Mutex::new(Budget::new()),download_budget:Mutex::new(Budget::new()),activation_budget:Mutex::new(Budget::new()) });
     let admin_listener = tokio::net::TcpListener::bind(admin).await?;
