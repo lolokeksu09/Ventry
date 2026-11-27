@@ -259,9 +259,7 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
                         Field("Открыть по UUID",openId,{openId=it},!s.busy,"open_subscription_id");Action("Открыть",!s.busy && openId.isNotBlank(),"open_subscription"){vm.select(openId)}
                     }
                     val now=Instant.now()
-                    val rows=remember(s.subscriptions,s.labels,search,filter,now.epochSecond/60){
-                        SubscriptionDesk.select(s.subscriptions,s.labels,search,filter,now)
-                    }
+                    val rows=SubscriptionDesk.select(s.subscriptions,s.labels,search,filter,now)
                     if(rows.isEmpty())item{Text(if(s.next!=null)"Нет совпадений среди загруженных. Загрузите следующие страницы." else "Нет подписок в выбранном списке",color=Muted)}
                     items(rows,key={it.id}){sub->
                         Surface(Modifier.fillMaxWidth().clickable(enabled=!s.busy){vm.select(sub.id)}.testTag("subscription_"+sub.id),color=PanelColor,shape=RoundedCornerShape(12.dp),border=BorderStroke(1.dp,Line)){
@@ -399,9 +397,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                     }
                     Secondary("Обновить",!s.busy){vm.refresh()}
                 }}
-                val payments=remember(s.history.payments,paymentDays){
-                    SubscriptionDesk.payments(s.history.payments,paymentDays,Instant.now(),ZoneId.systemDefault())
-                }
+                val payments=SubscriptionDesk.payments(s.history.payments,paymentDays,Instant.now(),ZoneId.systemDefault())
                 item{Panel{
                     Heading("Подтверждённые оплаты")
                     Fact("Получено по выбранным записям",Contract.money(payments.confirmed))
