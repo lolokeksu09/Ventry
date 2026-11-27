@@ -1,0 +1,68 @@
+name: Ventry Delivery core
+
+on:
+  pull_request:
+    paths:
+      - 'delivery/**'
+      - '.github/workflows/delivery-core.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'delivery/**'
+      - '.github/workflows/delivery-core.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate operator scripts
+        run: |
+          bash -n delivery/bin/admin.sh delivery/tests/concurrency.sh
+      - name: Start isolated PostgreSQL 17 (no exposed network or production data)
+        run: |
+          set -euo pipefail
+          docker run -d --name ventry-delivery-ci --network none \
+            -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=delivery \
+            -v "$PWD/delivery:/work:ro" postgres:17
+          for i in $(seq 1 60); do
+            if docker exec ventry-delivery-ci pg_isready -h 127.0.0.1 -U postgres -d delivery; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Apply migration and exercise real subscription transactions
+        run: |
+          set -euo pipefail
+          docker exec -i ventry-delivery-ci psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/migrations/001_subscriptions.sql
+          docker exec -i ventry-delivery-ci psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/subscriptions.sql
+          bash delivery/tests/concurrency.sh ventry-delivery-ci
+      - name: Smoke-test local operator CLI
+        run: |
+          set -euo pipefail
+          admin() { docker exec -e PGUSER=postgres -e PGDATABASE=delivery ventry-delivery-ci bash /work/bin/admin.sh "$@"; }
+          sub=20000000-0000-4000-8000-000000000001
+          admin plans
+          admin create "$sub" 20000000-0000-4000-8000-000000000002
+          admin bind "$sub" 20000000-0000-4000-8000-000000000003 20000000-0000-4000-8000-000000000004
+          admin trial "$sub" 20000000-0000-4000-8000-000000000005
+          admin renew "$sub" 20000000-0000-4000-8000-000000000006 month 29900
+          admin status "$sub" | grep -F active
+          admin history "$sub"
+          if admin renew "$sub" 20000000-0000-4000-8000-000000000007 month 1; then
+            echo "Wrong price accepted"; exit 1
+          fi
+          if admin status "not-a-uuid"; then
+            echo "Invalid UUID accepted"; exit 1
+          fi
+      - name: Remove isolated test container
+        if: always()
+        run: docker rm -f ventry-delivery-ci || true
