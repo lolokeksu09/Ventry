@@ -65,6 +65,7 @@ jobs:
           db < delivery/tests/customer_desk_before.sql
           db < delivery/migrations/006_customer_desk.sql
           db < delivery/tests/customer_desk_after.sql
+          db < delivery/migrations/007_cloud_backups.sql
           printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db
           printf 'host=127.0.0.1 port=55432 dbname=delivery user=delivery_runtime password=%s sslmode=disable\n' "$runtime_password" > "$RUNNER_TEMP/delivery-db.conf"
           openssl rand -hex 32 > "$RUNNER_TEMP/delivery-admin-token"
@@ -94,6 +95,7 @@ jobs:
           DELIVERY_PUBLIC_ADDR: 127.0.0.1:18082
           DELIVERY_PUBLIC_ORIGIN: http://127.0.0.1:18082
           DELIVERY_ALLOW_LEGACY_ADMIN: "true"
+          DELIVERY_BACKUP_ENABLED: "true"
         run: |
           set -euo pipefail
           binary=delivery/service/target/debug/ventry-delivery
@@ -117,6 +119,8 @@ jobs:
         run: python3 delivery/tests/service_http.py
       - name: Exercise activation and signed entitlement contract
         run: python3 delivery/tests/service_activation.py
+      - name: Test isolated cloud backup transport and retention slots
+        run: python3 delivery/tests/service_backups.py
       - name: Start fresh process for independent browser quota
         env:
           DELIVERY_ADMIN_ADDR: 127.0.0.1:18081
