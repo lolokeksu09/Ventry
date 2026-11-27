@@ -111,6 +111,19 @@ class DeliveryApi(origin: String, private val token: String, private val staging
     suspend fun revoke(id: String,event: String) {
         request(sub(id)+"/downloads/"+Contract.uuid(event)+"/revoke",JSONObject())
     }
+    suspend fun activations(id:String):List<ActivationRecord> =
+        JSONArray(request(sub(id)+"/activations")).mapItems {
+            ActivationRecord(it.getString("id"),it.getString("expires_at"),it.getBoolean("trial"),!it.isNull("consumed_at"),!it.isNull("revoked_at"))
+        }
+    suspend fun issueActivation(id:String,event:String,trial:Boolean):ActivationCode {
+        val r=JSONObject(request(sub(id)+"/activations",objectOf("event_id" to Contract.uuid(event),"trial" to trial)))
+        val code=r.getString("code")
+        require(Contract.token(code))
+        return ActivationCode(code,r.getJSONObject("activation").getString("expires_at"),trial)
+    }
+    suspend fun revokeActivation(id:String,event:String){
+        request(sub(id)+"/activations/"+Contract.uuid(event)+"/revoke",JSONObject())
+    }
     suspend fun release(project: String): ApprovedRelease {
         val r=JSONObject(request("/api/v1/release"))
         require(r.getString("product")==project) { "Сборка другого проекта" }

@@ -257,7 +257,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
             Heading(Contract.status(sub.status));Fact("Клиент",sub.customerId);Fact("Подписка",sub.id);Fact("До",sub.validUntil ?: "—")
             Fact("Установка",sub.installation ?: "Не привязана");Fact("Тариф",Contract.period(sub.effectivePlan));Secondary("Обновить",!s.busy){vm.refresh()}
         }}
-        item{Choice(listOf("history" to "История","grant" to "Продление / пробный доступ","bind" to "Устройство","download" to "Выдача APK"),action,{action=it},!s.busy)}
+        item{Choice(listOf("history" to "История","grant" to "Продление / пробный доступ","bind" to "Устройство","download" to "Выдача APK","activation" to "Лицензия / активация"),action,{action=it},!s.busy)}
         when(action){
             "grant"->item{Panel{
                 Heading("Подтверждение оплаты")
@@ -273,9 +273,32 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                 Heading(if(sub.installation==null)"Привязка" else "Перенос устройства");Field("Новый ID установки",device,{device=it},!s.busy);Fact("ID операции",bindId)
                 Secondary("Новый ID операции",!s.busy){bindId=Contract.newId()};Action("Сохранить привязку",!s.busy && device.isNotBlank()){confirm="bind"}
             }}
+            "activation"->{
+                item{Panel{
+                    Heading("Активация лицензии")
+                    Text("Код действует 24 часа. Пробный период начинается при первой активации. Платный код использует существующий оплаченный срок.",color=Muted)
+                    Action("Выдать оплаченный код",!s.busy && sub.status in listOf("active","awaiting_activation")){confirm="activation"}
+                    Action("Выдать 7 дней",!s.busy && sub.status=="not_started" && sub.installation==null && s.plans.any{it.code=="trial" && it.enabled}){confirm="trial_activation"}
+                    s.activation?.let{a->
+                        Fact("Истекает",a.expires)
+                        Text(a.code,color=Leaf,fontSize=13.sp)
+                        Action("Поделиться кодом",!s.busy){
+                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply{
+                                type="text/plain";putExtra(Intent.EXTRA_TEXT,"Код активации "+(s.project?.name ?: sub.product)+": "+a.code)
+                            },"Передать код"))
+                        }
+                    }
+                    Text("Текущий опубликованный APK «Расчёта» пока не умеет активировать эти коды.",color=Muted,fontSize=12.sp)
+                }}
+                items(s.activations,key={it.id}){a->Panel{
+                    Heading(if(a.consumed)"Активирован" else if(a.revoked)"Отозван" else if(a.trial)"Пробный код" else "Код активации")
+                    Fact("До",a.expires);Fact("ID",a.id)
+                    if(!a.consumed && !a.revoked)Secondary("Отозвать код",!s.busy){revokeId=a.id;confirm="revoke_activation"}
+                }}
+            }
             "download"->{
                 item{Panel{
-                    Heading("Персональная выдача APK");Text("Одна загрузка, 30 минут. Код активации ещё не реализован.",color=Muted)
+                    Heading("Персональная выдача APK");Text("Одна загрузка, 30 минут. Код активации выдаётся отдельно в разделе лицензии.",color=Muted)
                     Action("Создать ссылку",!s.busy && s.project?.releaseAvailable==true){vm.issue()}
                     if(s.project?.releaseAvailable!=true)Text("Нет одобренной сборки.",color=Muted)
                     s.link?.let{link->Fact("Истекает",link.expires);Text(link.url,fontSize=12.sp,color=Leaf)
@@ -295,8 +318,8 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
     }
     if(confirm.isNotEmpty()){
         val kind=confirm
-        val title=when(kind){"grant"->"Подтвердить оплату?";"bind"->"Сохранить устройство?";else->"Отозвать ссылку?"}
-        val message=when(kind){"grant"->"Подтверждайте только полученную сумму или пробный доступ."; "bind"->"Срок не изменится. Старое устройство перестанет быть текущим.";else->"Неиспользованный код перестанет работать."}
-        Confirm(title,message,{confirm=""},{confirm="";when(kind){"grant"->plan?.let{vm.confirmPayment(it,price,paymentId)};"bind"->vm.bind(bindId,device);else->vm.revoke(revokeId)}})
+        val title=when(kind){"grant"->"Подтвердить оплату?";"bind"->"Сохранить устройство?";"activation"->"Выдать код?";"trial_activation"->"Выдать пробный доступ?";"revoke_activation"->"Отозвать код?";else->"Отозвать ссылку?"}
+        val message=when(kind){"grant"->"Подтверждайте только полученную сумму или пробный доступ."; "bind"->"Срок не изменится. Старое устройство перестанет быть текущим.";"activation"->"Код может перенести подписку на новое устройство. Оплаченный срок сохранится.";"trial_activation"->"Однократные семь дней начнутся после активации.";else->"Неиспользованный код перестанет работать."}
+        Confirm(title,message,{confirm=""},{confirm="";when(kind){"grant"->plan?.let{vm.confirmPayment(it,price,paymentId)};"bind"->vm.bind(bindId,device);"activation"->vm.issueActivation(false);"trial_activation"->vm.issueActivation(true);"revoke_activation"->vm.revokeActivation(revokeId);else->vm.revoke(revokeId)}})
     }
 }

@@ -15,7 +15,8 @@ data class AdminState(
     val connected:Boolean=false,val busy:Boolean=false,val message:String="",val error:Boolean=false,
     val projects:List<Project> = emptyList(),val project:Project?=null,val plans:List<Plan> = emptyList(),
     val subscriptions:List<Subscription> = emptyList(),val next:String?=null,val release:ApprovedRelease?=null,
-    val selected:Subscription?=null,val history:History=History(),val link:DeliveryLink?=null,val pending:PendingPayment?=null
+    val selected:Subscription?=null,val history:History=History(),val link:DeliveryLink?=null,val pending:PendingPayment?=null,
+    val activations:List<ActivationRecord> = emptyList(),val activation:ActivationCode?=null
 )
 
 class AdminViewModel(application:Application):AndroidViewModel(application) {
@@ -77,18 +78,20 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         val selected=keep?.let{c.subscription(it)}
         require(selected==null || selected.product==code)
         val h=if(selected==null)History() else c.history(selected.id)
+        val activations=if(selected==null)emptyList() else c.activations(selected.id)
         publish(owner){it.copy(projects=all,project=p,plans=plans,subscriptions=rows,
             next=if(rows.size==100)rows.last().id else null,release=release,selected=selected,history=h,
-            pending=pending(),link=if(keep==it.selected?.id)it.link else null)}
+            pending=pending(),link=if(keep==it.selected?.id)it.link else null,activations=activations,
+            activation=if(keep==it.selected?.id)it.activation else null)}
     }
     fun openProject(code:String)=task{owner->
-        publish(owner){it.copy(project=null,plans=emptyList(),subscriptions=emptyList(),selected=null,release=null,history=History(),link=null,next=null)}
+        publish(owner){it.copy(project=null,plans=emptyList(),subscriptions=emptyList(),selected=null,release=null,history=History(),link=null,next=null,activation=null,activations=emptyList())}
         projectData(owner,code)
     }
     fun back(){
         if(mutable.value.busy)return
         val s=mutable.value
-        if(s.selected!=null)mutable.value=s.copy(selected=null,history=History(),link=null,message="",error=false)
+        if(s.selected!=null)mutable.value=s.copy(selected=null,history=History(),link=null,activation=null,activations=emptyList(),message="",error=false)
         else if(s.project!=null)mutable.value=s.copy(project=null,plans=emptyList(),subscriptions=emptyList(),release=null,next=null,link=null,message="",error=false)
         else lock()
     }
@@ -116,7 +119,8 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
     fun select(id:String)=task{owner->
         val p=checkNotNull(mutable.value.project)
         val s=client().subscription(Contract.uuid(id));require(s.product==p.code)
-        val h=client().history(s.id);publish(owner){it.copy(selected=s,history=h,link=null,pending=pending())}
+        val h=client().history(s.id);val a=client().activations(s.id)
+        publish(owner){it.copy(selected=s,history=h,link=null,pending=pending(),activation=null,activations=a)}
     }
     fun createSubscription(id:String,customer:String)=task{owner->
         val p=checkNotNull(mutable.value.project)
@@ -151,6 +155,18 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
     fun issue()=task{owner->
         val s=checkNotNull(mutable.value.selected);require(mutable.value.project?.releaseAvailable==true)
         val link=client().issue(s.id,Contract.newId());publish(owner){it.copy(link=link,message="Ссылка создана")}
+        projectData(owner,s.product,s.id)
+    }
+    fun issueActivation(trial:Boolean)=task{owner->
+        val s=checkNotNull(mutable.value.selected)
+        val a=client().issueActivation(s.id,Contract.newId(),trial)
+        publish(owner){it.copy(activation=a,message="Код активации создан")}
+        projectData(owner,s.product,s.id)
+    }
+    fun revokeActivation(event:String)=task{owner->
+        val s=checkNotNull(mutable.value.selected)
+        client().revokeActivation(s.id,event)
+        publish(owner){it.copy(activation=null,message="Код отозван")}
         projectData(owner,s.product,s.id)
     }
     fun revoke(event:String)=task{owner->
