@@ -112,7 +112,7 @@ try:
     code="browser_"+uuid4().hex[:12]
     fill("project-name","Другой проект"); fill("project-code",code); fill("project-package-input","dev.ventry."+code)
     form.find_element(By.CSS_SELECTOR,"button[type=submit]").click()
-    wait.until(lambda d:Select(elem("project-select")).first_selected_option.get_attribute("value")==code); idle()
+    wait.until(lambda d:d.execute_script("return document.getElementById('project-select').value") == code); idle()
     assert elem("release-info").text=="Одобренной сборки нет."
     form=elem("project-plan-form"); summary_for(form)
     Select(elem("new-plan-code")).select_by_value("month"); fill("new-plan-amount","123")
