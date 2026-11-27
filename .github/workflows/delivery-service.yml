@@ -32,12 +32,7 @@ jobs:
         working-directory: delivery/service
         run: |
           rustup toolchain install 1.94.0 --profile minimal
-          if [ ! -f Cargo.lock ]; then
-            cargo +1.94.0 generate-lockfile
-            # One-time handoff of the public, non-secret dependency manifest for review.
-            printf 'DELIVERY_LOCK_SHA256='; sha256sum Cargo.lock | cut -d' ' -f1
-            printf 'DELIVERY_LOCK_B64='; base64 -w0 Cargo.lock; printf '\n'
-          fi
+          test -s Cargo.lock
           cargo +1.94.0 test --locked
           cargo +1.94.0 build --locked
       - name: Preserve exact dependency resolution
