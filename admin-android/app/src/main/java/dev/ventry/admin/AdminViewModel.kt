@@ -62,8 +62,10 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
     fun connect(server:String,key:String,ca:X509Certificate?=null)=task { owner->
         val url=Contract.origin(server,BuildConfig.DEBUG)
         val c=DeliveryApi(url,key.trim(),trustedCa=ca).openSession()
-        val p=pending()
-        val rows=c.projects()
+        val p:PendingPayment?
+        val rows:List<Project>
+        try { p=pending();rows=c.projects() }
+        catch(e:Exception){runCatching{c.closeSession()};throw e}
         if(owner==generation){
             api=c;origin=url;publish(owner){AdminState(connected=true,busy=true,projects=rows,pending=p)}
             expiry?.cancel()

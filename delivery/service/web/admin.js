@@ -199,7 +199,9 @@ function on(id,fn) {
 }
 on('login-form',async()=>{
   credential=$('token').value.trim(); $('token').value='';
-  const session=await request('/session',{},'POST');
+  let session;
+  try { session=await request('/session',{},'POST'); }
+  finally { credential=''; }
   if(!/^[0-9a-f]{64}$/.test(session.session_token) || session.expires_in_seconds!==900) throw new Error('Некорректный сеанс.');
   credential=session.session_token;
   await loadProject('raschet');
