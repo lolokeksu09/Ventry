@@ -19,7 +19,32 @@ if [[ "$bind" != 127.0.0.1 ]]; then
   [[ "$found" = true ]] || { echo "Private WireGuard address unavailable; refusing start" >&2;exit 1; }
 fi
 dc() { docker compose --env-file "$state/compose.env" -f compose.yaml "$@"; }
+umask 077
+exec 9>"$state/upgrade-006.lock"
+flock -n 9 || { echo "Delivery upgrade or startup already holds the state lock" >&2; exit 1; }
+[[ ! -e "$state/upgrade-006.incomplete" ]] || {
+  echo "Delivery upgrade recovery marker exists; refusing startup" >&2; exit 1
+}
 dc config --quiet
+# Do not recreate an existing database or launch a new API against a stale schema.
+if [[ -z "$(dc ps --all -q db)" ]]; then
+  dc up -d --wait --wait-timeout 120 db
+elif [[ -z "$(dc ps --status running -q db)" ]]; then
+  dc start db
+fi
+ready=false
+for i in $(seq 1 60); do
+  if dc exec -T db pg_isready -h 127.0.0.1 -U postgres -d delivery >/dev/null 2>&1; then
+    ready=true; break
+  fi
+  sleep 2
+done
+[[ "$ready" = true ]] || { echo "Delivery database not ready" >&2; exit 1; }
+schema="$(dc exec -T -u postgres db psql -X -qAt -U postgres -d delivery -v ON_ERROR_STOP=1 < schema-006-state.sql)"
+[[ "$schema" = ready ]] || {
+  echo "Delivery schema not ready ($schema); use upgrade-006.sh --check before starting API/edge" >&2
+  exit 1
+}
 dc up -d --build
 for i in $(seq 1 60); do
   if curl --cacert "$state/tls/ca.pem" -fsS --connect-timeout 2 --max-time 5 "https://$bind:18443/" >/dev/null &&
