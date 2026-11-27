@@ -1,6 +1,7 @@
 mod artifact;
 mod license;
 mod sessions;
+mod desk;
 
 use artifact::{Artifact, load};
 use axum::{
@@ -325,6 +326,10 @@ async fn css() -> impl IntoResponse {
 fn admin_router(app: Shared) -> Router {
     let api = Router::new()
         .route("/api/v1/plans",get(plans))
+        .route("/api/v1/customers/{id}",get(desk::customer).post(desk::rename))
+        .route("/api/v1/projects/{code}/desk",get(desk::list))
+        .route("/api/v1/projects/{code}/revenue",get(desk::revenue))
+        .route("/api/v1/subscriptions/{id}/payments",get(desk::payments))
         .route("/api/v1/projects",get(projects).post(create_product))
         .route("/api/v1/projects/{code}/plans",get(project_plans).post(create_plan))
         .route("/api/v1/release",get(release))

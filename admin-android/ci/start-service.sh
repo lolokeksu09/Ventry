@@ -10,7 +10,7 @@ for i in $(seq 1 60); do
     sleep 1
 done
 db() { docker exec -i ventry-admin-ci psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 "$@"; }
-for migration in delivery/migrations/001_subscriptions.sql delivery/migrations/002_api_and_downloads.sql delivery/migrations/003_projects.sql delivery/migrations/004_activation.sql delivery/migrations/005_download_retry.sql; do
+for migration in delivery/migrations/001_subscriptions.sql delivery/migrations/002_api_and_downloads.sql delivery/migrations/003_projects.sql delivery/migrations/004_activation.sql delivery/migrations/005_download_retry.sql delivery/migrations/006_customer_desk.sql; do
     db < "$migration"
 done
 printf "CREATE ROLE delivery_runtime LOGIN PASSWORD '%s' IN ROLE delivery_api;\n" "$runtime_password" | db

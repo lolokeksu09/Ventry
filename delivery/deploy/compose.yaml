@@ -21,7 +21,8 @@ services:
       - ../migrations/003_projects.sql:/docker-entrypoint-initdb.d/003.sql:ro
       - ../migrations/004_activation.sql:/docker-entrypoint-initdb.d/004.sql:ro
       - ../migrations/005_download_retry.sql:/docker-entrypoint-initdb.d/005.sql:ro
-      - ./init-runtime.sh:/docker-entrypoint-initdb.d/006-runtime.sh:ro
+      - ../migrations/006_customer_desk.sql:/docker-entrypoint-initdb.d/006.sql:ro
+      - ./init-runtime.sh:/docker-entrypoint-initdb.d/007-runtime.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d delivery"]
       interval: 3s
