@@ -40,6 +40,9 @@ def expect(base, path, code, **kwargs):
     assert result[2].get("Cache-Control") == "no-store"
     assert result[2].get("Referrer-Policy") == "no-referrer"
     assert "frame-ancestors 'none'" in result[2].get("Content-Security-Policy", "")
+    if code >= 400:
+        assert result[2].get("Content-Type","").startswith("application/json")
+        assert isinstance(json.loads(result[1])["error"],str)
     return result
 
 def admin(path, code=200, **kwargs):
@@ -74,7 +77,10 @@ admin("/subscriptions",data=payload)
 admin("/subscriptions",data=payload)
 admin("/subscriptions",409,data={**payload,"customer_id":uid()})
 admin("/subscriptions",409,data={**payload,"id":uid()})
-admin("/subscriptions",422,data={**payload,"extra":"unexpected"})
+assert admin("/subscriptions",422,data={**payload,"extra":"unexpected"})["error"]=="invalid_fields"
+expect(ADMIN,"/api/v1/subscriptions",400,token=SECRET,raw=b"{")
+expect(ADMIN,"/api/v1/subscriptions",415,token=SECRET,method="POST")
+assert admin("/subscriptions",422,data={**payload,"customer_id":"not-a-uuid"})["error"]=="invalid_fields"
 admin("/subscriptions",data={"id":second,"customer_id":uid(),"product":"raschet"})
 assert admin(f"/subscriptions/{sid}")["status"]=="not_started"
 admin(f"/subscriptions/{uid()}/history",404)

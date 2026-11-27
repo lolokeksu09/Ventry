@@ -109,6 +109,29 @@ async fn security_headers(req: Request, next: Next) -> Response {
         Ok(response) => response,
         Err(_) => ApiError(StatusCode::REQUEST_TIMEOUT,"request_timeout").into_response(),
     };
+    // Normalize framework-generated rejections, without disclosing parser/SQL details.
+    // Preserve status and protocol headers (e.g. Allow), never replace a successful APK body.
+    let status = res.status();
+    if status.is_client_error() || status.is_server_error() {
+        let json_content = res.headers().get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(|s| s.starts_with("application/json"));
+        if !json_content {
+            let code = match status {
+                StatusCode::BAD_REQUEST => "invalid_request",
+                StatusCode::NOT_FOUND => "not_found",
+                StatusCode::METHOD_NOT_ALLOWED => "method_not_allowed",
+                StatusCode::PAYLOAD_TOO_LARGE => "body_too_large",
+                StatusCode::UNSUPPORTED_MEDIA_TYPE => "unsupported_media_type",
+                StatusCode::UNPROCESSABLE_ENTITY => "invalid_fields",
+                _ => "request_failed",
+            };
+            let (mut parts, _) = res.into_parts();
+            parts.headers.remove(header::CONTENT_LENGTH);
+            parts.headers.insert(header::CONTENT_TYPE,HeaderValue::from_static("application/json"));
+            res = Response::from_parts(parts,axum::body::Body::from(json!({"error":code}).to_string()));
+        }
+    }
     let h = res.headers_mut();
     for (name, value) in [
         ("cache-control", "no-store"),
