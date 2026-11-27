@@ -8,7 +8,15 @@ pub(super) async fn customer(State(app): State<Shared>, Path(id): Path<Uuid>) ->
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct Rename { display_name: Option<String>, revision: i64 }
+pub(super) struct Rename {
+    #[serde(deserialize_with="required_name")]
+    display_name: Option<String>,
+    revision: i64,
+}
+// Missing is not null: only an explicitly supplied null clears a stored name.
+fn required_name<'de,D:serde::Deserializer<'de>>(d:D)->Result<Option<String>,D::Error> {
+    Option::<String>::deserialize(d)
+}
 pub(super) async fn rename(State(app): State<Shared>, Path(id): Path<Uuid>, Json(data): Json<Rename>) -> ApiResult {
     if data.revision<0 || data.display_name.as_ref().is_some_and(|s|
         s.trim()!=s || !(1..=80).contains(&s.chars().count()) || s.chars().any(char::is_control)) {
