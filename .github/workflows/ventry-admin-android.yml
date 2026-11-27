@@ -51,7 +51,6 @@ jobs:
         working-directory: delivery/service
         run: |
           rustup toolchain install 1.94.0 --profile minimal
-          cargo +1.94.0 generate-lockfile
           cargo +1.94.0 build --locked
       - name: Start isolated real staging API
         run: bash admin-android/ci/start-service.sh

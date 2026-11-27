@@ -32,10 +32,7 @@ jobs:
         working-directory: delivery/service
         run: |
           rustup toolchain install 1.94.0 --profile minimal
-          # Temporary lockfile handoff for this dependency addition; pin the actual result before merge.
-          cargo +1.94.0 generate-lockfile
-          printf 'DELIVERY_LOCK_SHA256='; sha256sum Cargo.lock | cut -d' ' -f1
-          printf 'DELIVERY_LOCK_B64='; base64 -w0 Cargo.lock; printf '\n'
+          test -s Cargo.lock
           cargo +1.94.0 test --locked
           cargo +1.94.0 build --locked
       - name: Preserve exact dependency resolution
@@ -113,6 +110,29 @@ jobs:
         run: python3 delivery/tests/service_http.py
       - name: Exercise activation and signed entitlement contract
         run: python3 delivery/tests/service_activation.py
+      - name: Start fresh process for independent browser quota
+        env:
+          DELIVERY_ADMIN_ADDR: 127.0.0.1:18081
+          DELIVERY_PUBLIC_ADDR: 127.0.0.1:18082
+          DELIVERY_PUBLIC_ORIGIN: http://127.0.0.1:18082
+        run: |
+          set -euo pipefail
+          # Keep the same database and key; isolate the browser scenario's rate budget.
+          old="$(cat "$RUNNER_TEMP/delivery-service.pid")"
+          kill -TERM "$old"
+          for i in $(seq 1 30); do
+            if ! kill -0 "$old" 2>/dev/null; then break; fi
+            sleep 1
+          done
+          if kill -0 "$old" 2>/dev/null; then echo 'Previous test process did not exit'; exit 1; fi
+          delivery/service/target/debug/ventry-delivery > "$RUNNER_TEMP/delivery-service.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/delivery-service.pid"
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:18081/ >/dev/null && curl -fsS http://127.0.0.1:18082/download >/dev/null; then exit 0; fi
+            kill -0 "$(cat "$RUNNER_TEMP/delivery-service.pid")" || { cat "$RUNNER_TEMP/delivery-service.log"; exit 1; }
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/delivery-service.log"; exit 1
       - name: Prepare browser
         run: |
           python3 -m pip install --quiet --break-system-packages selenium==4.38.0
