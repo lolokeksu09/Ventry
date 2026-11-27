@@ -170,17 +170,18 @@ $$;
 
 -- Status is computed from server time, never from a client-supplied timestamp.
 CREATE VIEW delivery.subscription_status AS
+WITH instant AS MATERIALIZED (SELECT clock_timestamp() AS now_at)
 SELECT s.id,s.customer_id,s.product_code,s.installation_id,s.valid_until,s.revision,
     CASE WHEN s.valid_until IS NULL THEN 'not_started'
-         WHEN s.valid_until <= statement_timestamp() THEN 'expired'
+         WHEN s.valid_until <= instant.now_at THEN 'expired'
          WHEN s.installation_id IS NULL THEN 'awaiting_activation'
          ELSE 'active' END AS status,
-    CASE WHEN s.installation_id IS NOT NULL AND s.valid_until > statement_timestamp()
+    CASE WHEN s.installation_id IS NOT NULL AND s.valid_until > instant.now_at
          THEN true ELSE false END AS may_create_debt,
     (SELECT g.plan_code FROM delivery.grant_event g
-     WHERE g.subscription_id=s.id AND g.starts_at<=statement_timestamp() AND g.ends_at>statement_timestamp()
+     WHERE g.subscription_id=s.id AND g.starts_at<=instant.now_at AND g.ends_at>instant.now_at
      ORDER BY g.starts_at DESC LIMIT 1) AS effective_plan
-FROM delivery.subscription s;
+FROM delivery.subscription s CROSS JOIN instant;
 
 REVOKE ALL ON ALL TABLES IN SCHEMA delivery FROM PUBLIC;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA delivery FROM PUBLIC;

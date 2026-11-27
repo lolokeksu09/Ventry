@@ -25,7 +25,8 @@ jobs:
           persist-credentials: false
       - name: Validate operator scripts
         run: |
-          bash -n delivery/bin/admin.sh delivery/tests/concurrency.sh
+          bash -n delivery/bin/admin.sh
+          bash -n delivery/tests/concurrency.sh
       - name: Start isolated PostgreSQL 17 (no exposed network or production data)
         run: |
           set -euo pipefail

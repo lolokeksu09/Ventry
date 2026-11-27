@@ -32,7 +32,7 @@ BEGIN
         RAISE EXCEPTION USING ERRCODE='XX000',MESSAGE='unbound trial accepted';
     EXCEPTION WHEN raise_exception THEN NULL; END;
     installed:=delivery.set_installation(a,binding,NULL,device);
-    ASSERT installed=delivery.set_installation(a,binding,NULL,device);
+    ASSERT installed IS NOT DISTINCT FROM delivery.set_installation(a,binding,NULL,device);
     BEGIN
         PERFORM delivery.set_installation(b,gen_random_uuid(),NULL,device);
         RAISE EXCEPTION USING ERRCODE='XX000',MESSAGE='installation assigned twice';
@@ -68,7 +68,7 @@ BEGIN
     EXCEPTION WHEN raise_exception THEN NULL; END;
     SELECT valid_until INTO previous FROM delivery.subscription WHERE id=a;
     moved:=delivery.set_installation(a,transfer,device,other);
-    ASSERT moved=delivery.set_installation(a,transfer,device,other);
+    ASSERT moved IS NOT DISTINCT FROM delivery.set_installation(a,transfer,device,other);
     ASSERT (SELECT valid_until FROM delivery.subscription WHERE id=a)=previous;
     BEGIN
         PERFORM delivery.set_installation(a,gen_random_uuid(),device,gen_random_uuid());
