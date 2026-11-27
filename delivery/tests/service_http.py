@@ -156,6 +156,9 @@ expect(ADMIN,f"/api/v1/customers/{customer}",401)
 expect(PUBLIC,f"/api/v1/customers/{customer}",404,token=SECRET)
 assert admin(f"/customers/{customer}")["display_name"] is None
 assert admin(f"/customers/{customer}",data={"display_name":"Test shop","revision":0})["revision"]==1
+admin(f"/customers/{customer}",422,data={"revision":1})
+admin(f"/customers/{customer}",409,data={"display_name":"Stale edit","revision":0})
+assert admin(f"/customers/{customer}")["display_name"]=="Test shop"
 assert admin("/projects/raschet/desk?q=Test%20shop")[0]["id"]==sid
 assert admin("/projects/raschet/revenue?days=7")["confirmed_kopecks"]>=79900
 assert [p["id"] for p in admin(f"/subscriptions/{sid}/payments")]==[paid["id"]]
