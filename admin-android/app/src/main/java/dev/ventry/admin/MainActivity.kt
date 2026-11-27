@@ -357,7 +357,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
     if(confirm.isNotEmpty()){
         val kind=confirm
         val title=when(kind){"grant"->"Подтвердить оплату?";"bind"->"Сохранить устройство?";"activation"->"Выдать код?";"trial_activation"->"Выдать пробный доступ?";"revoke_activation"->"Отозвать код?";else->"Отозвать ссылку?"}
-        val message=when(kind){"grant"->"Подтверждайте только полученную сумму или пробный доступ."; "bind"->"Срок не изменится. Старое устройство перестанет быть текущим.";"activation"->"Код может перенести подписку на новое устройство. Оплаченный срок сохранится.";"trial_activation"->"Однократные семь дней начнутся после активации.";else->"Неиспользованный код перестанет работать."}
+        val message=when(kind){"grant"->"Подтверждайте только полученную сумму или пробный доступ."; "bind"->"Срок не изменится. Старое устройство перестанет быть текущим.";"activation"->"Код может перенести подписку на новое устройство. Оплаченный срок сохранится.";"trial_activation"->"Однократные семь дней начнутся после активации.";"revoke_activation"->"Неиспользованный код перестанет работать.";else->"Ссылка и оставшиеся попытки скачивания перестанут работать."}
         Confirm(title,message,{confirm=""},{confirm="";when(kind){"grant"->plan?.let{vm.confirmPayment(it,price,paymentId)};"bind"->vm.bind(bindId,device);"activation"->vm.issueActivation(false);"trial_activation"->vm.issueActivation(true);"revoke_activation"->vm.revokeActivation(revokeId);else->vm.revoke(revokeId)}})
     }
 }

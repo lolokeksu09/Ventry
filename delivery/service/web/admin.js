@@ -77,7 +77,7 @@ function renderProject() {
   text('metric-expired',p.expired_subscriptions); text('metric-pending',p.pending_subscriptions);
   text('metric-confirmed',money(p.confirmed_kopecks));
   $('issue').disabled=!p.release_available;
-  text('issue-note',p.release_available?'Одна загрузка, 30 минут. При прерывании скачивания потребуется новый код. Если ссылка ещё действует, сначала отзовите её.':'Для проекта ещё нет одобренной APK-сборки. Выдача недоступна.');
+  text('issue-note',p.release_available?'Один получатель, 30 минут. При сбое — до трёх выдач в одной вкладке за пять минут. Чтобы выдать новую ссылку, отзовите действующую.':'Для проекта ещё нет одобренной APK-сборки. Выдача недоступна.');
 }
 async function loadProjects(preferred) {
   const data=await request('/projects');
