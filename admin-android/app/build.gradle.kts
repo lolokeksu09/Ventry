@@ -10,8 +10,8 @@ android {
         applicationId = "dev.ventry.admin"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0-alpha.1"
+        versionCode = 5
+        versionName = "0.5.0-alpha.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true; buildConfig = true }
