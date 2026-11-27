@@ -18,11 +18,14 @@ data class AdminState(
     val projects:List<Project> = emptyList(),val project:Project?=null,val plans:List<Plan> = emptyList(),
     val subscriptions:List<Subscription> = emptyList(),val next:String?=null,val release:ApprovedRelease?=null,
     val selected:Subscription?=null,val history:History=History(),val link:DeliveryLink?=null,val pending:PendingPayment?=null,
-    val activations:List<ActivationRecord> = emptyList(),val activation:ActivationCode?=null
+    val activations:List<ActivationRecord> = emptyList(),val activation:ActivationCode?=null,
+    val labels:Map<String,String> = emptyMap()
 )
 
 class AdminViewModel(application:Application):AndroidViewModel(application) {
     private val prefs=application.getSharedPreferences("pending_payment_v1",0)
+    private val labels=CustomerLabels(application)
+    private var labelScope=""
     private var api:DeliveryApi?=null
     private var origin=""
     private var generation=0L
@@ -67,14 +70,14 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         try { p=pending();rows=c.projects() }
         catch(e:Exception){runCatching{c.closeSession()};throw e}
         if(owner==generation){
-            api=c;origin=url;publish(owner){AdminState(connected=true,busy=true,projects=rows,pending=p)}
+            api=c;origin=url;labelScope=CustomerLabels.scope(url,ca);publish(owner){AdminState(connected=true,busy=true,projects=rows,pending=p)}
             expiry?.cancel()
             expiry=viewModelScope.launch{delay(14*60*1000L);if(owner==generation)lock("Срок сеанса истёк. Войдите снова.")}
         }else runCatching{c.closeSession()}
     }
     fun lock(message:String=""){
         val old=api
-        generation++;job?.cancel();job=null;expiry?.cancel();expiry=null;api=null;origin=""
+        generation++;job?.cancel();job=null;expiry?.cancel();expiry=null;api=null;origin="";labelScope=""
         mutable.value=AdminState(message=message,error=message.isNotEmpty())
         if(old!=null)viewModelScope.launch{runCatching{old.closeSession()}}
     }
@@ -93,17 +96,18 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         publish(owner){it.copy(projects=all,project=p,plans=plans,subscriptions=rows,
             next=if(rows.size==100)rows.last().id else null,release=release,selected=selected,history=h,
             pending=pending(),link=if(keep==it.selected?.id)it.link else null,activations=activations,
+            labels=labels.read(labelScope,code),
             activation=if(keep==it.selected?.id)it.activation else null)}
     }
     fun openProject(code:String)=task{owner->
-        publish(owner){it.copy(project=null,plans=emptyList(),subscriptions=emptyList(),selected=null,release=null,history=History(),link=null,next=null,activation=null,activations=emptyList())}
+        publish(owner){it.copy(project=null,plans=emptyList(),subscriptions=emptyList(),selected=null,release=null,history=History(),link=null,next=null,activation=null,activations=emptyList(),labels=emptyMap())}
         projectData(owner,code)
     }
     fun back(){
         if(mutable.value.busy)return
         val s=mutable.value
         if(s.selected!=null)mutable.value=s.copy(selected=null,history=History(),link=null,activation=null,activations=emptyList(),message="",error=false)
-        else if(s.project!=null)mutable.value=s.copy(project=null,plans=emptyList(),subscriptions=emptyList(),release=null,next=null,link=null,message="",error=false)
+        else if(s.project!=null)mutable.value=s.copy(project=null,plans=emptyList(),subscriptions=emptyList(),release=null,next=null,link=null,message="",error=false,labels=emptyMap())
         else lock()
     }
     fun refresh()=task{owner->
@@ -122,10 +126,26 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         client().createPlan(p.code,code,Contract.kopecks(price));projectData(owner,p.code)
         publish(owner){it.copy(message="Тариф зарегистрирован")}
     }
-    fun more()=task{owner->
-        val s=mutable.value;val p=checkNotNull(s.project);val cursor=s.next?:return@task
-        val rows=client().subscriptions(p.code,cursor)
-        publish(owner){it.copy(subscriptions=(it.subscriptions+rows).distinctBy(Subscription::id),next=if(rows.size==100)rows.last().id else null)}
+    fun more()=loadPages(1)
+    fun loadBatch()=loadPages(20)
+    private fun loadPages(maxPages:Int)=task{owner->
+        val p=checkNotNull(mutable.value.project)
+        val c=client()
+        var pages=0
+        while(pages<maxPages && owner==generation){
+            val cursor=mutable.value.next?:break
+            val rows=c.subscriptions(p.code,cursor)
+            publish(owner){it.copy(subscriptions=SubscriptionDesk.merge(it.subscriptions,rows),
+                next=if(rows.size==100)rows.last().id else null)}
+            pages++
+        }
+        publish(owner){it.copy(message=if(it.next==null)"Все страницы загружены" else "Загружено "+it.subscriptions.size+" подписок. Есть ещё страницы.")}
+    }
+    fun saveLabel(customer:String,value:String)=task{owner->
+        val s=mutable.value;val p=checkNotNull(s.project)
+        require(s.selected?.customerId==customer || s.subscriptions.any{it.customerId==customer})
+        labels.save(labelScope,p.code,customer,value)
+        publish(owner){it.copy(labels=labels.read(labelScope,p.code),message="Локальное имя сохранено")}
     }
     fun select(id:String)=task{owner->
         val p=checkNotNull(mutable.value.project)

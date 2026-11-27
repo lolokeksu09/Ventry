@@ -37,6 +37,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.ZoneId
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
@@ -234,10 +236,20 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
             item{PendingPanel(s,vm);Row(verticalAlignment=Alignment.CenterVertically){Text(p.packageName ?: p.code,Modifier.weight(1f),color=Muted,fontSize=12.sp);TextButton(onClick=vm::refresh,enabled=!s.busy){Text("Обновить")}}}
             when(tab){
                 0->{
-                    item{Panel{Fact("Активны",p.active.toString());Fact("Истекают за 7 дней",p.expiring.toString());Fact("Истекли",p.expired.toString());Fact("Ожидают",p.pending.toString());Fact("Начислено",Contract.money(p.confirmedKopecks))}}
+                    item{Panel{
+                        Heading("Подписки проекта")
+                        Fact("Активны",p.active.toString())
+                        OutlinedButton(onClick={filter="expiring";search=""},enabled=!s.busy,modifier=Modifier.fillMaxWidth().testTag("renewal_queue")){Text("Продлить в ближайшие 7 дней · "+p.expiring)}
+                        Fact("Истекли",p.expired.toString());Fact("Ожидают",p.pending.toString())
+                        Fact("Подтверждено за всё время",Contract.money(p.confirmedKopecks))
+                        Text("Сводка с сервера. Это начисления, не банковская выписка.",color=Muted,fontSize=12.sp)
+                    }}
                     item{
-                        Field("Поиск по ID среди загруженных",search,{search=it},!s.busy)
-                        Choice(listOf("all" to "Все","active" to "Активны","expired" to "Истекли","pending" to "Ожидают"),filter,{filter=it},!s.busy)
+                        Field("Имя или UUID среди загруженных",search,{search=it},!s.busy,"subscription_search")
+                        Choice(listOf("all" to "Все","expiring" to "Истекают за 7 дней","active" to "Активны","expired" to "Истекли","pending" to "Ожидают"),filter,{filter=it},!s.busy)
+                        Text("Загружено: "+s.subscriptions.size+if(s.next!=null)" · есть ещё страницы" else " · последняя страница",color=Muted,fontSize=12.sp,modifier=Modifier.testTag("loaded_count"))
+                        if(s.next!=null)Action("Загрузить до 2 000 следующих",!s.busy,"load_subscription_batch"){vm.loadBatch()}
+                        if(filter=="expiring")Text("Очередь продления по данным загруженных страниц; обновите данные перед оплатой.",color=Muted,fontSize=12.sp)
                         Secondary(if(creating)"Свернуть" else "Создать подписку",!s.busy){creating=!creating}
                         if(creating)Panel{
                             Field("ID клиента",customer,{customer=it},!s.busy,"customer_id");Field("ID подписки",subscription,{subscription=it},!s.busy,"subscription_id")
@@ -246,14 +258,16 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
                         }
                         Field("Открыть по UUID",openId,{openId=it},!s.busy,"open_subscription_id");Action("Открыть",!s.busy && openId.isNotBlank(),"open_subscription"){vm.select(openId)}
                     }
-                    val rows=s.subscriptions.filter{(search.isBlank() || it.id.contains(search,true) || it.customerId.contains(search,true)) &&
-                        (filter=="all" || it.status==filter || (filter=="pending" && it.status in listOf("not_started","awaiting_activation")))}
-                    if(rows.isEmpty())item{Text("Нет подписок в выбранном списке",color=Muted)}
+                    val now=Instant.now()
+                    val rows=SubscriptionDesk.select(s.subscriptions,s.labels,search,filter,now)
+                    if(rows.isEmpty())item{Text(if(s.next!=null)"Нет совпадений среди загруженных. Загрузите следующие страницы." else "Нет подписок в выбранном списке",color=Muted)}
                     items(rows,key={it.id}){sub->
                         Surface(Modifier.fillMaxWidth().clickable(enabled=!s.busy){vm.select(sub.id)}.testTag("subscription_"+sub.id),color=PanelColor,shape=RoundedCornerShape(12.dp),border=BorderStroke(1.dp,Line)){
                             Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
-                                Text(Contract.status(sub.status),color=if(sub.status=="active")Leaf else Muted,fontWeight=FontWeight.SemiBold)
-                                Text(sub.customerId,fontSize=13.sp);Text("До: "+(sub.validUntil ?: "—"),fontSize=12.sp,color=Muted)
+                                Text(s.labels[sub.customerId] ?: "Клиент "+sub.customerId.take(8),fontWeight=FontWeight.SemiBold)
+                                Text(if(SubscriptionDesk.expiring(sub,now))"Скоро продление" else Contract.status(sub.status),color=if(sub.status=="active")Leaf else Muted,fontSize=13.sp)
+                                Text(Contract.period(sub.effectivePlan)+" · до "+SubscriptionDesk.date(sub.validUntil),fontSize=12.sp,color=Muted)
+                                Text("Подписка "+sub.id.take(8),fontSize=12.sp,color=Muted)
                             }
                         }
                     }
@@ -289,10 +303,16 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
     var paymentId by remember(sub.id){mutableStateOf(Contract.newId())};var bindId by remember(sub.id){mutableStateOf(Contract.newId())}
     var device by remember(sub.id){mutableStateOf("")};var confirm by remember(sub.id){mutableStateOf("")};var revokeId by remember(sub.id){mutableStateOf("")}
     val plan=s.plans.firstOrNull{it.enabled && it.code==planCode}
+    var label by remember(sub.customerId,s.labels){mutableStateOf(s.labels[sub.customerId].orEmpty())}
+    var paymentDays by remember(sub.id){mutableStateOf<Int?>(null)}
     LazyColumn(Modifier.fillMaxSize().testTag("subscription_detail"),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
         item{PendingPanel(s,vm);Panel{
-            Heading(Contract.status(sub.status));Fact("Срок доступа",sub.validUntil ?: "—")
+            Heading(s.labels[sub.customerId] ?: "Клиент "+sub.customerId.take(8))
+            Fact("Статус",Contract.status(sub.status));Fact("Срок доступа",SubscriptionDesk.date(sub.validUntil))
             Fact("Тариф",Contract.period(sub.effectivePlan))
+            Field("Имя или название магазина",label,{label=it.take(80)},!s.busy,"customer_label")
+            Action(if(label.isBlank())"Убрать локальное имя" else "Сохранить локальное имя",!s.busy && label.trim()!=s.labels[sub.customerId].orEmpty(),"save_customer_label"){vm.saveLabel(sub.customerId,label)}
+            Text("Имя хранится только на этом телефоне, отдельно от сервера.",color=Muted,fontSize=12.sp)
         }}
         item{Panel{
             Heading("Действия с подпиской")
@@ -377,8 +397,25 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                     }
                     Secondary("Обновить",!s.busy){vm.refresh()}
                 }}
-                if(s.history.lines.isEmpty())item{Text("История начислений и привязок пуста",color=Muted)}
-                items(s.history.lines){line->Panel{Heading(line.title);Text(line.detail,fontSize=12.sp,color=Muted)}}
+                val payments=SubscriptionDesk.payments(s.history.payments,paymentDays,Instant.now(),ZoneId.systemDefault())
+                item{Panel{
+                    Heading("Подтверждённые оплаты")
+                    Fact("Получено по выбранным записям",Contract.money(payments.confirmed))
+                    Fact("Платежей",payments.paid.toString())
+                    Choice(listOf("all" to "Все загруженные","7" to "7 дней","30" to "30 дней","90" to "90 дней"),
+                        paymentDays?.toString()?:"all",{paymentDays=it.toIntOrNull()},!s.busy)
+                    Text("По дате подтверждения оператором. Сервер отдаёт последние 100 начислений подписки."+if(s.history.payments.size==100)" История может быть неполной." else "",color=Muted,fontSize=12.sp)
+                }}
+                if(payments.rows.isEmpty())item{Text("Нет начислений за выбранный период",color=Muted)}
+                items(payments.rows,key={it.id}){event->Panel{
+                    Heading(Contract.period(event.plan)+" · "+Contract.money(event.amount))
+                    Fact("Подтверждено",SubscriptionDesk.date(event.recordedAt))
+                    Fact("Доступ с",SubscriptionDesk.date(event.startsAt));Fact("Доступ до",SubscriptionDesk.date(event.endsAt))
+                    Fact("ID операции",event.id)
+                }}
+                item{Heading("Привязки устройств")}
+                if(s.history.bindings.isEmpty())item{Text("Нет привязок",color=Muted)}
+                items(s.history.bindings){line->Panel{Heading(line.title);Text(line.detail,fontSize=12.sp,color=Muted)}}
             }
         }
     }

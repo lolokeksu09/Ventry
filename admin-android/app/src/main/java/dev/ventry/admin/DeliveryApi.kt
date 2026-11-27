@@ -113,7 +113,8 @@ class DeliveryApi(origin: String, private val token: String, private val staging
     suspend fun subscriptions(code: String, after: String? = null): List<Subscription> =
         JSONArray(request("/api/v1/subscriptions?product=" + product(code) +
             (after?.let { "&after=" + Contract.uuid(it) } ?: ""))).mapItems { it.sub() }.also {
-            require(it.all { row -> row.product == code }) { "Ответ относится к другому проекту" }
+            require(it.size<=100 && it.all { row -> row.product == code }) { "Ответ относится к другому проекту" }
+            SubscriptionDesk.validatePage(it,after)
         }
     suspend fun subscription(id: String): Subscription = JSONObject(request(sub(id))).sub()
     suspend fun createSubscription(project: String,id: String,customer: String) {
@@ -155,15 +156,19 @@ class DeliveryApi(origin: String, private val token: String, private val staging
     }
     suspend fun history(id: String): History {
         val r=JSONObject(request(sub(id)+"/history"))
-        val grants=r.getJSONArray("grants").mapItems {
-            HistoryLine(Contract.period(it.getString("plan_code"))+" · "+Contract.money(it.getLong("amount_kopecks")),
-                it.getString("starts_at")+" → "+it.getString("ends_at")+"\n"+it.getString("id"))
+        val payments=r.getJSONArray("grants").mapItems {
+            PaymentEvent(Contract.uuid(it.getString("id")),it.getString("plan_code"),it.getLong("amount_kopecks"),
+                it.getString("recorded_at"),it.getString("starts_at"),it.getString("ends_at"))
+        }.also{rows->require(rows.size<=100 && rows.map{it.id}.distinct().size==rows.size && rows.all{it.amount>=0})}
+        val grants=payments.map {
+            HistoryLine(Contract.period(it.plan)+" · "+Contract.money(it.amount),
+                it.startsAt+" → "+it.endsAt+"\n"+it.id)
         }
         val bindings=r.getJSONArray("installations").mapItems {
             HistoryLine(if(it.isNull("old_installation")) "Привязка" else "Перенос",it.getString("recorded_at")+"\n"+it.getString("new_installation"))
         }
         return History(grants+bindings,r.getJSONArray("downloads").mapItems {
             DownloadGrant(it.getString("id"),it.getString("expires_at"),!it.isNull("consumed_at"),!it.isNull("revoked_at"),it.nullable("retry_until"),it.optInt("delivery_attempts",0))
-        })
+        },payments,bindings)
     }
 }
