@@ -1,0 +1,83 @@
+name: ventry-delivery
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    command: ["postgres", "-c", "listen_addresses=127.0.0.1"]
+    environment:
+      POSTGRES_DB: delivery
+      POSTGRES_PASSWORD_FILE: /run/delivery/db-owner
+    ports:
+      - "${DELIVERY_BIND_IP:-127.0.0.1}:18443:18443/tcp"
+      - "${DELIVERY_BIND_IP:-127.0.0.1}:18444:18444/tcp"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - "${DELIVERY_STATE:?set state}/secrets/db-owner:/run/delivery/db-owner:ro"
+      - "${DELIVERY_STATE:?set state}/secrets/db-runtime:/run/delivery/db-runtime:ro"
+      - ../migrations/001_subscriptions.sql:/docker-entrypoint-initdb.d/001.sql:ro
+      - ../migrations/002_api_and_downloads.sql:/docker-entrypoint-initdb.d/002.sql:ro
+      - ../migrations/003_projects.sql:/docker-entrypoint-initdb.d/003.sql:ro
+      - ../migrations/004_activation.sql:/docker-entrypoint-initdb.d/004.sql:ro
+      - ./init-runtime.sh:/docker-entrypoint-initdb.d/005-runtime.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d delivery"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    logging: &logs
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+  api:
+    build:
+      context: ../..
+      dockerfile: delivery/deploy/Dockerfile.api
+    restart: unless-stopped
+    network_mode: "service:db"
+    depends_on:
+      db: {condition: service_healthy}
+    user: "10001:10001"
+    environment:
+      DELIVERY_ADMIN_ADDR: 127.0.0.1:18081
+      DELIVERY_PUBLIC_ADDR: 127.0.0.1:18082
+      DELIVERY_PUBLIC_ORIGIN: "https://${DELIVERY_BIND_IP:-127.0.0.1}:18444"
+      DELIVERY_ALLOW_LEGACY_ADMIN: "false"
+      DELIVERY_DB_CONFIG_FILE: /run/delivery/db.conf
+      DELIVERY_ADMIN_TOKEN_FILE: /run/delivery/admin-token
+      DELIVERY_SIGNING_KEY_FILE: /run/delivery/signing-key
+      DELIVERY_APK: /run/delivery/Raschet.apk
+      DELIVERY_APKSIGNER: /usr/bin/apksigner
+      DELIVERY_AAPT: /usr/bin/aapt
+    volumes:
+      - "${DELIVERY_STATE:?set state}/secrets/db.conf:/run/delivery/db.conf:ro"
+      - "${DELIVERY_STATE:?set state}/secrets/admin-token:/run/delivery/admin-token:ro"
+      - "${DELIVERY_STATE:?set state}/secrets/signing-key:/run/delivery/signing-key:ro"
+      - "${DELIVERY_STATE:?set state}/Raschet.apk:/run/delivery/Raschet.apk:ro"
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logs
+
+  edge:
+    build:
+      context: ../..
+      dockerfile: delivery/deploy/Dockerfile.edge
+    restart: unless-stopped
+    network_mode: "service:db"
+    depends_on:
+      api: {condition: service_started}
+    user: "10002:10002"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - "${DELIVERY_STATE:?set state}/tls/server.pem:/run/delivery/server.pem:ro"
+      - "${DELIVERY_STATE:?set state}/tls/server-key.pem:/run/delivery/server-key.pem:ro"
+    read_only: true
+    tmpfs: ["/tmp", "/data", "/config"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logs
+
+volumes:
+  pgdata:

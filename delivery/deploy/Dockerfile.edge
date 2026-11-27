@@ -1,0 +1,8 @@
+FROM golang:1.27.4-bookworm AS build
+COPY tools/build-patched-caddy.sh /src/tools/build-patched-caddy.sh
+RUN bash /src/tools/build-patched-caddy.sh /out/caddy
+
+FROM caddy:2.11.9-alpine
+COPY --from=build --chmod=0755 /out/caddy /usr/bin/caddy
+USER 10002:10002
+ENTRYPOINT ["/usr/bin/caddy","run","--config","/etc/caddy/Caddyfile","--adapter","caddyfile"]
