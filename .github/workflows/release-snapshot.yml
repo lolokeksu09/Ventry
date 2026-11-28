@@ -8,6 +8,8 @@ on:
       - 'tools/sync-releases.py'
       - 'data/raschet-releases.json'
       - 'data/raschet-release-notes.json'
+      - 'site/releases/index.html'
+      - 'tests/test_release_sync.py'
   push:
     branches: [main]
     paths:
@@ -15,6 +17,8 @@ on:
       - 'tools/sync-releases.py'
       - 'data/raschet-releases.json'
       - 'data/raschet-release-notes.json'
+      - 'site/releases/index.html'
+      - 'tests/test_release_sync.py'
   schedule:
     - cron: '37 5 * * *'
   workflow_dispatch:
