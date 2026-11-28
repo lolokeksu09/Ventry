@@ -344,7 +344,13 @@ private fun ProjectScreen(s:AdminState,vm:AdminViewModel){
                 2->item{Panel{
                     Heading("Одобренная сборка");val r=s.release
                     if(r==null)Text("Для этого проекта APK ещё не зарегистрирован.",color=Muted)
-                    else{Fact("Версия",r.version);Fact("Тег",r.tag);Fact("SHA-256",r.sha);Text("Предварительный релиз. Выдача не активирует подписку.",color=Muted)}
+                    else{
+                        Fact("Версия",r.version+" · "+r.versionCode);Fact("Тег",r.tag)
+                        Fact("Размер",String.format(java.util.Locale("ru"),"%.1f МиБ",r.size/1048576.0))
+                        Fact("Ревизия",r.revision);Fact("SHA-256 APK",r.sha);Fact("Сертификат SHA-256",r.certificate)
+                        Text(if(r.prerelease)"Предварительная сборка: не подтверждает коммерческую готовность." else "Зарегистрированный релиз.",color=Muted)
+                        Text("Выдача не активирует подписку.",color=Muted)
+                    }
                 }}
             }
         }
@@ -362,6 +368,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
     val savedName=if(s.serverDesk)s.customerCard?.name else s.labels[sub.customerId]
     var label by remember(sub.customerId,savedName){mutableStateOf(savedName.orEmpty())}
     var paymentDays by remember(sub.id){mutableStateOf<Int?>(null)}
+    var issueRelease by remember(sub.id){mutableStateOf<ApprovedRelease?>(null)}
     LazyColumn(Modifier.fillMaxSize().testTag("subscription_detail"),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
         item{PendingPanel(s,vm);Panel{
             Heading(savedName ?: "Клиент "+sub.customerId.take(8))
@@ -421,7 +428,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
                             },"Передать код"))
                         }
                     }
-                    Text("Для активации нужен лицензируемый APK. Публичный кандидат пока не поддерживает коды; закрытая сборка владельца работает через защищённый туннель.",color=Muted,fontSize=12.sp)
+                    Text("Для активации нужен лицензируемый APK. Зарегистрированная сборка выдачи может отличаться от тестового лицензируемого кандидата.",color=Muted,fontSize=12.sp)
                 }}
                 items(s.activations,key={it.id}){a->Panel{
                     Heading(if(a.consumed)"Активирован" else if(a.revoked)"Отозван" else if(a.trial)"Пробный код" else "Код активации")
@@ -432,8 +439,14 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
             "download"->{
                 item{Panel{
                     Heading("Персональная выдача APK");Text("Один получатель, 30 минут. При сбое — до трёх выдач в одной вкладке за пять минут. Код активации отдельно.",color=Muted)
-                    Action("Создать ссылку",!s.busy && s.project?.releaseAvailable==true){vm.issue()}
-                    if(s.project?.releaseAvailable!=true)Text("Нет одобренной сборки.",color=Muted)
+                    val release=s.release
+                    if(release!=null){
+                        Fact("Выдаваемая версия",release.version+" · "+release.versionCode)
+                        Fact("SHA-256",release.sha)
+                        if(release.prerelease)Text("Предварительная сборка. Не выдавайте её за коммерчески принятую.",color=Muted)
+                    }
+                    Action("Создать ссылку",!s.busy && s.project?.releaseAvailable==true && release!=null){issueRelease=release}
+                    if(release==null)Text("Нет зарегистрированной сборки.",color=Muted)
                     s.link?.let{link->Fact("Истекает",link.expires);Text(link.url,fontSize=12.sp,color=Leaf)
                         Action("Поделиться ссылкой",!s.busy){context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,link.url)},"Передать APK"))}
                     }
@@ -481,6 +494,7 @@ private fun Detail(s:AdminState,vm:AdminViewModel){
             }
         }
     }
+    issueRelease?.let{r->Confirm("Создать ссылку на "+r.version+"?","Будет выдан именно APK с SHA-256 "+r.sha+". Если сборка изменилась, сервер отклонит запрос.",{issueRelease=null},{issueRelease=null;vm.issue(r.sha)})}
     if(confirm.isNotEmpty()){
         val kind=confirm
         val title=when(kind){"grant"->"Подтвердить оплату?";"bind"->"Сохранить устройство?";"activation"->"Выдать код?";"trial_activation"->"Выдать пробный доступ?";"revoke_activation"->"Отозвать код?";else->"Отозвать ссылку?"}

@@ -8,6 +8,7 @@ import io
 import json
 from pathlib import Path
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -88,6 +89,26 @@ def verify_android(apk, apksigner, aapt, cert, code, name):
             require(names.count(member) == 1 and payload.getinfo(member).file_size > 0,
                     "Missing native library: " + abi)
 
+def stage(root, data, receipt):
+    # The caller selects an existing staging root. Never replace a release, a
+    # symlink target or a previously prepared bundle. Ready marker is written last.
+    require(root.is_dir(), "Staging root must already exist")
+    work = Path(tempfile.mkdtemp(prefix="candidate-", dir=root))
+    try:
+        for name, payload in ((APK, data), ("candidate.json", (json.dumps(receipt, indent=2)+"\n").encode())):
+            with (work/name).open("xb") as stream:
+                stream.write(payload)
+                stream.flush()
+                import os
+                os.fsync(stream.fileno())
+        require(digest(bounded_read(work/APK, MAX_APK)) == receipt["sha256"], "Staged APK mismatch")
+        with (work/"VERIFIED_NOT_APPROVED").open("x") as marker:
+            marker.write(receipt["sha256"]+"\n")
+        return str(work)
+    except Exception:
+        shutil.rmtree(work)
+        raise
+
 def run(args):
     old = json.loads(RELEASE.read_text())
     cert = hex_value(old["certificate_sha256"], 64)
@@ -101,11 +122,14 @@ def run(args):
         verify_android(apk, args.apksigner, args.aapt, cert, args.version_code, args.version_name)
         require(digest(bounded_read(apk, MAX_APK)) == checksum, "APK changed during verification")
     # Receipt is evidence of artifact identity, not acceptance or an active release manifest.
-    return {"status": "verified_candidate_not_approved", "package_name": "dev.ventry.raschet",
+    receipt = {"status": "verified_candidate_not_approved", "package_name": "dev.ventry.raschet",
             "version_code": args.version_code, "version_name": args.version_name,
             "revision": args.revision, "size": len(data), "sha256": checksum,
             "certificate_sha256": cert, "archive_sha256": args.archive_sha256,
             "license_public_key": args.public_key, "physical_device_acceptance": "not_verified"}
+    if args.stage_root is not None:
+        receipt["staged_directory"] = stage(args.stage_root, data, receipt)
+    return receipt
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -117,6 +141,7 @@ def main():
     parser.add_argument("--version-name", required=True)
     parser.add_argument("--apksigner", default="apksigner")
     parser.add_argument("--aapt", default="aapt")
+    parser.add_argument("--stage-root", type=Path, help="Optional existing isolated staging directory; never activates release")
     try:
         receipt = run(parser.parse_args())
         print(json.dumps(receipt, ensure_ascii=False, indent=2))

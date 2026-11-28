@@ -85,8 +85,16 @@ assert admin("/subscriptions",422,data={**payload,"customer_id":"not-a-uuid"})["
 admin("/subscriptions",data={"id":second,"customer_id":uid(),"product":"raschet"})
 assert admin(f"/subscriptions/{sid}")["status"]=="not_started"
 admin(f"/subscriptions/{uid()}/history",404)
+# Stale selection must not allocate a grant or block a valid subsequent issue.
+before=admin(f"/subscriptions/{sid}/history")["downloads"]
+wrong="0"*64 if RELEASE["sha256"]!="0"*64 else "1"*64
+assert admin(f"/subscriptions/{sid}/download",409,data={"event_id":uid(),"expected_release_sha256":wrong})["error"]=="release_changed"
+assert admin(f"/subscriptions/{sid}/download",400,data={"event_id":uid(),"expected_release_sha256":"invalid"})["error"]=="invalid_release"
+assert admin(f"/subscriptions/{sid}/history")["downloads"]==before
 # Bootstrap download works before installation, but never activates subscription.
-event, token = issue(sid)
+receipt=admin(f"/subscriptions/{sid}/download",data={"event_id":uid(),"expected_release_sha256":RELEASE["sha256"]})
+assert receipt["grant"]["release_sha256"]==RELEASE["sha256"]
+event,token=receipt["grant"]["id"],urlsplit(receipt["url"]).fragment
 assert admin(f"/subscriptions/{sid}")["status"]=="not_started"
 admin(f"/subscriptions/{sid}/download",409,data={"event_id":uid()})
 admin(f"/subscriptions/{second}/downloads/{event}/revoke",409,data={})

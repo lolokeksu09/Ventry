@@ -135,7 +135,7 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         val activations=if(selected==null)emptyList() else c.activations(selected.id)
         publish(owner){it.copy(projects=all,project=p,plans=plans,subscriptions=rows,
             next=if(rows.size==100)rows.last().id else null,release=release,selected=selected,history=h,
-            pending=pending(),link=if(keep==it.selected?.id)it.link else null,activations=activations,
+            pending=pending(),link=if(keep==it.selected?.id && it.link?.releaseSha==release?.sha)it.link else null,activations=activations,
             labels=labels.read(labelScope,code),serverDesk=online,deskQuery=if(online)q else "",deskFilter=if(online)filter else "all",
             revenue=revenue,revenueDays=days,customerCard=card,paymentNext=if(full?.size==100)full.last().id else null,
             activation=if(keep==it.selected?.id)it.activation else null)}
@@ -256,9 +256,19 @@ class AdminViewModel(application:Application):AndroidViewModel(application) {
         projectData(owner,s.product,s.id)
     }
     fun discardPending()=task{owner->clear();publish(owner){it.copy(pending=null,message="Локальный журнал очищен. Серверные операции не изменены.")}}
-    fun issue()=task{owner->
-        val s=checkNotNull(mutable.value.selected);require(mutable.value.project?.releaseAvailable==true)
-        val link=client().issue(s.id,Contract.newId());publish(owner){it.copy(link=link,message="Ссылка создана")}
+    fun issue(expectedSha:String)=task{owner->
+        val state=mutable.value;val s=checkNotNull(state.selected)
+        require(state.project?.releaseAvailable==true && state.release?.sha==expectedSha)
+        val link=try{client().issue(s.id,Contract.newId(),expectedSha)}
+        catch(e:DeliveryApi.Failure){
+            if(e.status==409){
+                projectData(owner,s.product,s.id)
+                publish(owner){it.copy(link=null,error=true,message="Выдача не подтверждена: сборка могла измениться или уже есть действующая ссылка. Проверьте версию и историю.")}
+                return@task
+            }
+            throw e
+        }
+        publish(owner){it.copy(link=link,message="Ссылка создана")}
         projectData(owner,s.product,s.id)
     }
     fun issueActivation(trial:Boolean)=task{owner->
