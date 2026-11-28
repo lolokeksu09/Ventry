@@ -90,6 +90,41 @@ jobs:
           "$sdkmanager_bin" --install 'build-tools;35.0.0'
           printf 'DELIVERY_APK=%s\nDELIVERY_APKSIGNER=%s\nDELIVERY_AAPT=%s\n' \
             "$RUNNER_TEMP/Raschet.apk" "$ANDROID_HOME/build-tools/35.0.0/apksigner" "$ANDROID_HOME/build-tools/35.0.0/aapt" >> "$GITHUB_ENV"
+      - name: Verify explicit release bundle without DB or credentials
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/release-bundle"
+          mkdir "$bundle"
+          cp "$DELIVERY_APK" "$bundle/Raschet.apk"
+          cp delivery/service/release.json "$bundle/release.json"
+          expected="$(sha256sum "$bundle/Raschet.apk" | cut -d' ' -f1)"
+          binary="$PWD/delivery/service/target/debug/ventry-delivery"
+          verify() {
+            env -u DELIVERY_DB_CONFIG_FILE -u DELIVERY_ADMIN_TOKEN_FILE -u DELIVERY_SIGNING_KEY_FILE \
+              DELIVERY_RELEASE_DIR="$bundle" DELIVERY_EXPECTED_RELEASE_SHA="$expected" "$binary" --verify-release
+          }
+          verify > "$RUNNER_TEMP/verified-release.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          assert json.loads((Path(os.environ["RUNNER_TEMP"])/"verified-release.json").read_text()) == json.loads(Path("delivery/service/release.json").read_text())
+          PY
+          if DELIVERY_RELEASE_DIR="$bundle" "$binary" --verify-release; then exit 1; fi
+          if DELIVERY_RELEASE_DIR="$bundle" DELIVERY_EXPECTED_RELEASE_SHA="$(printf '%064d' 0)" "$binary" --verify-release; then exit 1; fi
+          python3 - "$bundle/release.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          p=Path(sys.argv[1]); r=json.loads(p.read_text()); r["certificate_sha256"]="0"*64; p.write_text(json.dumps(r))
+          PY
+          if verify; then echo 'Untrusted signer accepted'; exit 1; fi
+          cp delivery/service/release.json "$bundle/release.json"
+          mv "$bundle/Raschet.apk" "$bundle/real.apk"
+          ln -s real.apk "$bundle/Raschet.apk"
+          if verify; then echo 'Symlink accepted'; exit 1; fi
+          rm "$bundle/Raschet.apk"
+          mv "$bundle/real.apk" "$bundle/Raschet.apk"
+          verify >/dev/null
+          echo DELIVERY_RELEASE_SELECTION_PASS
       - name: Start verified staging service and reject damaged APK
         env:
           DELIVERY_ADMIN_ADDR: 127.0.0.1:18081
