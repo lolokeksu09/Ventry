@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -69,6 +70,38 @@ class ReleaseSwitchTest(unittest.TestCase):
             self.store.transition(self.store.load(),self.target,fail)
         self.assertFalse(self.store.path.exists())
         self.assertTrue(all(mode=="--verify-worker" for mode,_ in self.calls))
+
+    def test_prepare_pins_staged_bytes_and_license_public_key(self):
+        self.store.baseline.update({"package_name":"dev.ventry.raschet","certificate_sha256":"a"*64})
+        (self.root/"license-public-key.hex").write_text("b"*64+"\n")
+        stage=self.root/"stage"
+        stage.mkdir()
+        apk=b"synthetic receipt fixture"
+        digest=hashlib.sha256(apk).hexdigest()
+        (stage/"Raschet-licensed-candidate.apk").write_bytes(apk)
+        (stage/"VERIFIED_NOT_APPROVED").write_text(digest+"\n")
+        receipt={"status":"verified_candidate_not_approved","sha256":digest,
+                 "certificate_sha256":"a"*64,"package_name":"dev.ventry.raschet",
+                 "revision":"c"*40,"license_public_key":"b"*64,"version_code":38,
+                 "version_name":"0.31.0-beta.3","size":len(apk)}
+        def save():
+            (stage/"candidate.json").write_text(json.dumps(receipt))
+        save()
+        state=self.store.load()
+        for key,bad in (("license_public_key","d"*64),("version_code",35),("certificate_sha256","e"*64)):
+            good=receipt[key]
+            receipt[key]=bad
+            save()
+            with self.assertRaises(ValueError):
+                self.store.prepare(stage,digest,state)
+            receipt[key]=good
+        save()
+        with self.assertRaises(ValueError):
+            self.store.prepare(stage,"f"*64,state)
+        self.assertEqual(self.store.prepare(stage,digest,state),digest)
+        self.assertEqual(self.store.manifest(digest)["version_code"],38)
+        self.assertEqual(self.store.prepare(stage,digest,state),digest)
+        self.assertFalse(self.store.path.exists())
 
 if __name__=="__main__":
     unittest.main()

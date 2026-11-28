@@ -10,7 +10,7 @@ case "$mode" in
   ""|--cloud) [[ $# -le 2 ]];;
   --verify-worker|--release-worker|--stop-worker)
     [[ $# = 3 && "${DELIVERY_LOCK_FD:-}" =~ ^[0-9]+$ ]]
-    [[ "/proc/$/fd/$DELIVERY_LOCK_FD" -ef "$state/upgrade-006.lock" ]]
+    [[ "/proc/$$/fd/$DELIVERY_LOCK_FD" -ef "$state/upgrade-006.lock" ]]
     flock -n "$DELIVERY_LOCK_FD"
     worker=true
     selection="$3"
@@ -25,7 +25,7 @@ import ipaddress,sys
 a=ipaddress.IPv4Address(sys.argv[1])
 assert a.is_loopback or any(a in ipaddress.ip_network(n) for n in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16'))
 PY
-if [[ "$bind" != 127.0.0.1 ]]; then
+if [[ "$mode" != --stop-worker && "$bind" != 127.0.0.1 ]]; then
   found=false
   for iface in $(wg show interfaces); do
     if ip -4 -o addr show dev "$iface" | awk '{print $4}' | cut -d/ -f1 | grep -Fxq "$bind"; then found=true; fi

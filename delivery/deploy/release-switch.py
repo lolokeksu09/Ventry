@@ -209,7 +209,15 @@ def main():
                            env=env,pass_fds=(lock.fileno(),),check=True)
         if a.recover:
             # Rebuild/verify committed pair if a prior interrupted run left no image.
-            worker("--verify-worker",state["current"])
+            require(state["pending"] is not None,"No pending release operation")
+            try:
+                worker("--verify-worker",state["current"])
+            except BaseException:
+                try:
+                    worker("--stop-worker","legacy")
+                finally:
+                    store.save(state,"recovery_preflight_failed",state["pending"])
+                raise
             store.recover(state,worker)
             print("DELIVERY_RELEASE_RECOVERED")
             return
