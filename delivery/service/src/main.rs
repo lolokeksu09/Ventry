@@ -264,9 +264,14 @@ async fn grant(State(app): State<Shared>, Path(id): Path<Uuid>, Json(data): Json
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Issue { event_id: Uuid }
+struct Issue { event_id: Uuid, expected_release_sha256: Option<String> }
 async fn issue(State(app): State<Shared>, Path(id): Path<Uuid>, Json(data): Json<Issue>) -> ApiResult {
     if data.event_id.is_nil() { return Err(ApiError(StatusCode::BAD_REQUEST,"invalid_event")); }
+    // Reject a stale admin selection before allocating a token or mutating the DB.
+    if let Some(expected) = &data.expected_release_sha256 {
+        if token_digest(expected).is_none() { return Err(ApiError(StatusCode::BAD_REQUEST,"invalid_release")); }
+        if expected != &app.artifact.release.sha256 { return Err(ApiError(StatusCode::CONFLICT,"release_changed")); }
+    }
     let mut random = [0u8; 32];
     getrandom::fill(&mut random).map_err(|_| ApiError(StatusCode::SERVICE_UNAVAILABLE, "random_unavailable"))?;
     let token = hex::encode(random);

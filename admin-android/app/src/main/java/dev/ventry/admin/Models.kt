@@ -23,10 +23,10 @@ data class DownloadGrant(val id: String, val expires: String, val consumed: Bool
 }
 data class History(val lines: List<HistoryLine> = emptyList(), val downloads: List<DownloadGrant> = emptyList(),
     val payments:List<PaymentEvent> = emptyList(),val bindings:List<HistoryLine> = emptyList())
-data class DeliveryLink(val url: String, val expires: String)
+data class DeliveryLink(val url: String, val expires: String, val releaseSha: String)
 data class ActivationCode(val code:String,val expires:String,val trial:Boolean)
 data class ActivationRecord(val id:String,val expires:String,val trial:Boolean,val consumed:Boolean,val revoked:Boolean)
-data class ApprovedRelease(val product: String, val tag: String, val version: String, val sha: String)
+data class ApprovedRelease(val product: String, val tag: String, val version: String, val sha: String, val versionCode: Long, val certificate: String, val revision: String, val size: Long, val prerelease: Boolean)
 
 object Contract {
     private val code = Regex("[a-z][a-z0-9_-]{0,31}")

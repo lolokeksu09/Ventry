@@ -164,9 +164,12 @@ class DeliveryApi(origin: String, private val token: String, private val staging
         request(sub(id)+"/installation",objectOf("event_id" to Contract.uuid(event),"old_installation" to old?.let(Contract::uuid),
             "new_installation" to Contract.uuid(next)))
     }
-    suspend fun issue(id: String,event: String): DeliveryLink {
-        val r=JSONObject(request(sub(id)+"/download",objectOf("event_id" to Contract.uuid(event))))
-        return DeliveryLink(Contract.downloadUrl(r.getString("url"),staging),r.getJSONObject("grant").getString("expires_at"))
+    suspend fun issue(id: String,event: String,expectedSha: String): DeliveryLink {
+        require(Contract.token(expectedSha))
+        val r=JSONObject(request(sub(id)+"/download",objectOf("event_id" to Contract.uuid(event),"expected_release_sha256" to expectedSha)))
+        val grant=r.getJSONObject("grant")
+        require(grant.getString("release_sha256")==expectedSha) { "Сборка изменилась" }
+        return DeliveryLink(Contract.downloadUrl(r.getString("url"),staging),grant.getString("expires_at"),expectedSha)
     }
     suspend fun revoke(id: String,event: String) {
         request(sub(id)+"/downloads/"+Contract.uuid(event)+"/revoke",JSONObject())
@@ -187,7 +190,10 @@ class DeliveryApi(origin: String, private val token: String, private val staging
     suspend fun release(project: String): ApprovedRelease {
         val r=JSONObject(request("/api/v1/release"))
         require(r.getString("product")==project) { "Сборка другого проекта" }
-        return ApprovedRelease(project,r.getString("tag"),r.getString("version_name"),r.getString("sha256"))
+        val sha=r.getString("sha256");val cert=r.getString("certificate_sha256")
+        val revision=r.getString("revision");val size=r.getLong("size");val code=r.getLong("version_code")
+        require(Contract.token(sha) && Contract.token(cert) && revision.matches(Regex("[0-9a-f]{40}")) && size in 1L..(64L*1024*1024) && code>0)
+        return ApprovedRelease(project,r.getString("tag"),r.getString("version_name"),sha,code,cert,revision,size,r.getBoolean("prerelease"))
     }
     suspend fun history(id: String): History {
         val r=JSONObject(request(sub(id)+"/history"))

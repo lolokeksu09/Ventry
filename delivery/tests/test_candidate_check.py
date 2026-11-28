@@ -30,6 +30,19 @@ class IntakeTest(unittest.TestCase):
     def unpack(self, data, **kwargs):
         return candidate.unpack(data, kwargs.get("sha", candidate.digest(data)),
                                 kwargs.get("revision",REV), kwargs.get("pin",PIN), kwargs.get("cert",CERT))
+    def test_staging_is_unique_and_not_approved(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            receipt={"sha256":candidate.digest(APK),"status":"verified_candidate_not_approved"}
+            first=Path(candidate.stage(root,APK,receipt))
+            second=Path(candidate.stage(root,APK,receipt))
+            self.assertNotEqual(first,second)
+            self.assertEqual((first/candidate.APK).read_bytes(),APK)
+            self.assertTrue((first/"VERIFIED_NOT_APPROVED").exists())
+            self.assertFalse((first/"release.json").exists())
+            with self.assertRaises(ValueError):
+                candidate.stage(root,b"wrong",receipt)
+            self.assertEqual(len(list(root.iterdir())),2)
     def test_exact_identity(self):
         self.assertEqual(self.unpack(archive()),(APK,candidate.digest(APK)))
     def test_reject_wrong_external_identity(self):
