@@ -15,7 +15,7 @@
 ## Подтверждённое состояние
 | Компонент | Доказательство | Остаток |
 |---|---|---|
-| Ventry main | fcdd22c40f196ce86d6bc758367b0d7a972fc930; #95 5/5 CI | [main core](https://github.com/lolokeksu09/Ventry/actions/runs/46125066653) и [service](https://github.com/lolokeksu09/Ventry/actions/runs/46125066739) success; [Admin](https://github.com/lolokeksu09/Ventry/actions/runs/46125066743) выполнялся |
+| Ventry main | fcdd22c40f196ce86d6bc758367b0d7a972fc930; #95 5/5 CI | Postmerge 3/3 success: [core](https://github.com/lolokeksu09/Ventry/actions/runs/46125066653), [service](https://github.com/lolokeksu09/Ventry/actions/runs/46125066739), [Admin](https://github.com/lolokeksu09/Ventry/actions/runs/46125066743); обновление Delivery VDS отдельно |
 | Production сайта | f170413777dedc80284d7711b1dd7fd9cba90b45, [46111671534 attempt 2](https://github.com/lolokeksu09/Ventry/actions/runs/46111671534), VENTRY_DEPLOY_OK, LICENSE_PUBLIC_HTTPS_OK | Не доказывает обновление Delivery |
 | Delivery VDS | Владелец подтвердил schema cloud_backup, DELIVERY_CLOUD_PRIVATE_READY, DELIVERY_PRIVATE_TLS_STAGING_OK, DELIVERY_PUBLIC_CLOUD_GATEWAY_READY; синтетические POST 404 activation_unavailable / backup_unavailable | Не новая SSH-проверка; реальная авторизация и запись не приняты |
 | Расчёт main | dcbf02c0d91e5bce730e74b6bb0ac58fa419be09, #31 7/7 CI; [main contract](https://github.com/lolokeksu09/dolg-book/actions/runs/46123275955) success | Автокопирование ещё не проверено в signed candidate |
