@@ -41,4 +41,6 @@ E-01/E-02 независимы до поставки; E-03 после CI; E-04 �
 Модель разработки: trial 7 дней, 299 ₽/месяц, 799 ₽/3 месяца, 2490 ₽/год; источник реализации delivery.plan. Не оферта. Истечение блокирует новые долги, не чтение/оплату/экспорт. Cloud: три слота до 16 МиБ каждый, 1/2 ручные, 3 opt-in автоматический. Пароль восстановления вне сервера; при утрате сервер не расшифрует книгу. Новая запись требует активного доступа; чтение прежней — при сохранённой привязке. Cloud backup не синхронизация. Не обещать бессрочное хранение.
 
 ## Навигация
-[Аудит](ECOSYSTEM-AUDIT-2026-11-28.md) · [Эксплуатация](DELIVERY-OPERATIONS.md) · [Восстановление Delivery](DELIVERY-RECOVERY.md) · [Готовность к выдаче](RASCHET-DISTRIBUTION-READINESS.md) · [Cloud](VENTRY-CLOUD-BACKUPS.md) · [Admin](VENTRY-ADMIN-0.8.md) · [Расчёт: локальный статус](https://github.com/lolokeksu09/dolg-book/blob/main/docs/CONTINUATION.md). Планы 2.0–4.0 и предыдущие отчёты — история.
+[Аудит](ECOSYSTEM-AUDIT-2026-11-28.md) · [Эксплуатация](DELIVERY-OPERATIONS.md) · [Восстановление Delivery](DELIVERY-RECOVERY.md) · [Готовность к выдаче](RASCHET-DISTRIBUTION-READINESS.md) · [Облачные копии](VENTRY-CLOUD-BACKUPS.md) · [Admin](VENTRY-ADMIN-ANDROID.md) · [Расчёт: локальный статус](https://github.com/lolokeksu09/dolg-book/blob/main/docs/CONTINUATION.md).
+
+[Планы, исследование дизайна и отчёты 2.0–4.0 в истории Git](https://github.com/lolokeksu09/Ventry/tree/a6878a804f3773aa226ae725691df0b6d0789589/docs).
