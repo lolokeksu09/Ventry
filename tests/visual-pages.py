@@ -279,8 +279,27 @@ try:
             if route == "/releases/":
                 assert js("return document.querySelectorAll('.release-entry a').length") == 0
                 assert js("return !document.body.innerText.toLowerCase().includes('github')")
-                assert js("return document.querySelectorAll('.release-changes li').length") >= 5
-                assert js("return document.querySelector('.release-changes').innerText.includes('CSV и PDF')")
+                root = Path(__file__).resolve().parents[1]
+                snapshot = json.loads((root / "data/raschet-releases.json").read_text(encoding="utf-8"))
+                notes = json.loads((root / "data/raschet-release-notes.json").read_text(encoding="utf-8"))
+                expected = []
+                for item in snapshot:
+                    note = notes.get(item["tag"])
+                    expected.append({
+                        "title": note["title"] if note else "Расчёт " + item["tag"].removeprefix("raschet-v"),
+                        "date": item["published_at"],
+                        "kind": "Предварительный релиз" if item["prerelease"] else "Опубликованный релиз",
+                        "changes": note["changes"] if note else [],
+                        "pending": note is None,
+                    })
+                actual = js("""return [...document.querySelectorAll('.release-entry')].map(card=>({
+                    title:card.querySelector('h3').textContent.trim(),
+                    date:card.querySelector('time').dateTime,
+                    kind:card.querySelector('.release-kind').textContent.trim(),
+                    changes:[...card.querySelectorAll('.release-changes li')].map(li=>li.textContent.trim()),
+                    pending:!!card.querySelector('.release-notes-pending')
+                }))""")
+                assert actual == expected, (actual, expected)
                 assert js("return document.querySelector('.release-list').innerText.length > 10")
             elif route == "/docs/":
                 assert js("return document.querySelectorAll('.guide-steps li').length") == 4
