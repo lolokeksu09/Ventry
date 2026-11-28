@@ -21,9 +21,7 @@ Caddy получает и продлевает публичный сертифи
 - `site/og-cover.png` — обложка ссылки 1200×630, согласованная с оформлением сайта.
 - `site/projects/raschet/` — отдельная страница проекта «Расчёт», доступная по прямой ссылке и без JavaScript.
 - `tools/verify-site.py` — проверка внутренних маршрутов, фрагментов и метаданных.
-- [Единое состояние и очередь работ](docs/ECOSYSTEM-STATUS.md) · [аудит 28.11.2026](docs/ECOSYSTEM-AUDIT-2026-11-28.md) · [восстановление Delivery](docs/DELIVERY-RECOVERY.md).
-- `docs/VENTRY-DESIGN-CONCEPT-2.0.md` — предлагаемая концепция корпоративного сайта Ventry 2.0, архитектура страниц, контент, визуальная система и доступность.
-- `docs/VENTRY-DESIGN-ROADMAP-2.0.md` — этапы согласования, макетирования, реализации, проверки и публикации Ventry 2.0.
+- [Восстановление Delivery](docs/DELIVERY-RECOVERY.md) и [работа Ventry Admin](docs/VENTRY-ADMIN-ANDROID.md).
 - `deploy/Caddyfile` — Caddy, HTTPS, CSP, фильтрация опасных URL, перенаправление HTTP и `/healthz`.
 - `deploy/Dockerfile` — официальный runtime Caddy с заменённым бинарником, собранным из Caddy v2.11.9 с `golang.org/x/net v0.62.0`.
 - `tools/build-patched-caddy.sh` — сборка патченного Caddy в CI на Go 1.27.4; бинарник не хранится в Git.
@@ -93,9 +91,8 @@ VENTRY_CADDY_IMAGE=ventry-caddy:patched-test bash tests/security-http.sh
 - Собственный домен `ventrylab.top` используется как основной. Старый `sslip.io` остаётся техническим и не заменяет основной в SEO-метаданных.
 
 
-## Ventry 3.0
+## Документация продукта и релизы
 
-- [План развития продуктовой площадки](docs/VENTRY-3.0-PLAN.md).
 - `/releases/` — история версий и проверенных изменений «Расчёта» непосредственно на Ventry, включая предварительные сборки; без ссылок на репозиторий и прямой выдачи APK.
 - `/docs/` — быстрый старт, обновления, резервные копии и выгрузка прежней веб-книги.
 - `/support/` — FAQ, маршрутизация обращений и инструкции.
@@ -119,6 +116,6 @@ VENTRY_CADDY_IMAGE=ventry-caddy:patched-test bash tests/security-http.sh
 
 `data/navigation.json` содержит проверенные маршруты меню, футера и поискового каталога `/explore/`. После редактирования выполнить `python3 tools/build-navigation.py --write`; CI проверяет `--check`. Поиск работает локально по названиям и описаниям каталога, с фильтрами и статическим fallback без JavaScript. Не индексирует данные пользователей.
 
-### Аудит качества Ventry 3.0
+### Аудит качества сайта
 
 Workflow `quality-audit.yml` запускает Lighthouse 13.4.1 на локальном preview и прикладывает JSON-отчёты по всем мобильным страницам и трём ключевым desktop-маршрутам. Для трёх маршрутов записывается сравнение с базовым SHA. Баллы и оставшиеся замечания нужно читать из артефактов; это не подтверждение WCAG и не полевая статистика. Чек-лист коммерческой готовности: [RASCHET-DISTRIBUTION-READINESS.md](docs/RASCHET-DISTRIBUTION-READINESS.md).

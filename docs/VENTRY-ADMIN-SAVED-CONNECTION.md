@@ -1,7 +1,0 @@
-# Saved connection (Ventry Admin 0.7)
-
-First login: enter HTTPS origin, administrator key and optional private CA; opt into remembering the connection and confirm the device credential. The connection is saved only after successful login and project load. Subsequent login: open the saved connection and confirm the device credential. Android Keystore AES-256-GCM protects a single encrypted envelope with a device-authentication-bound key. No HTTP staging profile can be saved. A private CA remains bound to its origin; normal hostname verification remains enabled.
-
-Server sessions still expire after 15 minutes; the app locks after 14 minutes. Logout revokes the current session and preserves the optional saved connection. Forget connection deletes the encrypted envelope and key without changing the server or pending payment record. If the device credential or CA changes, manually reconnect; forgetting is available without reading the saved secret. Do not copy the master key to another app or share it.
-
-No change to the server login token, public licensing or private networking. This is not a new account system; the initial private VPN/TLS setup remains necessary. The operator must explicitly opt in because remembering a master credential increases the impact of a compromised unlocked device. Manual login remains available. CI tests the existing login path and rejects saving HTTP; testing the actual credential prompt and key invalidation requires a secured device.
