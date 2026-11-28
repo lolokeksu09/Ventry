@@ -29,7 +29,7 @@
 Информационный маршрут завершён: посетитель может изучить продукт, сравнить версии, проверить системные требования, подготовить обращение и узнать о резервных копиях. Фактическое коммерческое предоставление остаётся отдельной задачей владельца; не считать её закрытой до выполнения условий таблицы.
 
 ## Подготовка подписанного кандидата
-Перед выбором нового артефакта проверьте успешный ручной запуск `Raschet public licensed candidate` на `main`, точный SHA и срок хранения ZIP. Возьмите SHA-256 ZIP из GitHub Actions API, публичный ключ из действующего Delivery, а `VERSION_CODE` и `VERSION_NAME` из Gradle принятой ревизии. Сверьте версию с обоими ожиданиями `aapt` в workflow и последним установленным тестовым кандидатом. Выполните локально с Android SDK build-tools:
+Перед выбором артефакта проверьте успешный запуск `Raschet public licensed candidate` на `main` после изменения профиля или ручного запуска, SHA и срок хранения ZIP. Возьмите SHA-256 ZIP из GitHub Actions API, публичный ключ из действующего Delivery, а `VERSION_CODE` и `VERSION_NAME` из [release-profile.properties](https://github.com/lolokeksu09/dolg-book/blob/main/android/release-profile.properties) принятой ревизии. Сверьте их с метаданными APK и последней установленной подписанной версией. Выполните локально с Android SDK build-tools:
 
 ```bash
 python3 delivery/bin/verify-candidate.py Raschet-licensed-candidate.zip \
