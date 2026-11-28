@@ -1,5 +1,5 @@
 """End-to-end on isolated CI: actual public route -> Go gateway -> verified private TLS -> Rust -> PG."""
-import hashlib,json,secrets,ssl,sys
+import hashlib,json,secrets,ssl,sys,subprocess
 from pathlib import Path
 from urllib import request,error
 from uuid import uuid4
@@ -35,6 +35,21 @@ assert saved["sha256"]==hashlib.sha256(payload).hexdigest()
 data,h=call(public,"/backups/1/read",token,headers={**headers,"X-Ventry-Backup-Version":v})
 assert data==payload and h["X-Ventry-Backup-SHA256"]==saved["sha256"] and h["Cache-Control"]=="no-store"
 call(public,"/backups/1/read",secret(),headers={**headers,"X-Ventry-Backup-Version":v},status=404)
-call(public,"/backups/1/put",token,payload+b"x",upload,status=413)
+# urllib writes the entire body before reading the HTTP response. A peer that
+# correctly rejects Content-Length early can close that write with EPIPE instead
+# of exposing 413 to urllib. Curl supports concurrent response handling and
+# Expect: 100-continue; still require the exact rejection status, not EPIPE.
+oversize_headers={**upload,"X-Ventry-Backup-Version":uid(),"X-Ventry-Backup-Expected":v}
+args=["curl","--silent","--show-error","--http1.1","--max-time","110",
+      "--expect100-timeout","3","--output","/dev/null","--write-out","%{http_code}",
+      "--header","Host: license.ventrylab.top:18089",
+      "--header","Authorization: Bearer "+token,"--header","Expect: 100-continue"]
+for k,value in oversize_headers.items():args.extend(["--header",k+": "+value])
+args.extend(["--data-binary","@-",public+"/api/v1/backups/1/put"])
+rejected=subprocess.run(args,input=payload+b"x",capture_output=True,check=True)
+assert rejected.stdout==b"413",("oversize HTTP status",rejected.stdout)
+# The rejected request must not replace the previously valid 16 MiB slot.
+assert json.loads(call(public,"/backups/list",token,headers=headers)[0])==[saved]
+assert call(public,"/backups/1/read",token,headers={**headers,"X-Ventry-Backup-Version":v})[0]==payload
 call(public,"/projects",session,status=404)
 assert j(admin,"/session/logout",session,{})["revoked"]
