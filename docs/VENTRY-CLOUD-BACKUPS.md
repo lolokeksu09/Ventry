@@ -1,5 +1,7 @@
 # Cloud backup staging contract (Issue #89)
 
+> Снимок 28.11.2026: [актуальный статус и план](ECOSYSTEM-STATUS.md). Ниже — контракты и исторические доказательства этапа; прежние утверждения о неразвёрнутом сервисе не описывают текущее состояние.
+
 Phase 1: SQL migration 007 and opt-in Rust storage boundary. Not yet mounted into fresh Compose, applied to production, or allowed through private/public Caddy. DELIVERY_BACKUP_ENABLED=true requires migration; default false. Existing licenses, release metadata and customer rows unchanged.
 
 Authorization uses existing refresh secret and installation UUID, with current binding revision checked inside the same SQL transaction as the operation. Subscription owns its slots; authorized device transfer preserves ciphertext. No caller-supplied subscription ID. Read/list after expiry for the still-bound device; upload requires active trial/paid entitlement. Existing server policy for reactivation on a replacement device after expiry remains unchanged and is a rollout decision, not a guarantee of lifetime recovery.

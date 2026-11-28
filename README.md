@@ -1,5 +1,7 @@
 # Ventry
 
+> [Единый план и состояние](docs/ECOSYSTEM-STATUS.md) · [Аудит](docs/ECOSYSTEM-AUDIT-2026-11-28.md) · [Эксплуатация Delivery](docs/DELIVERY-OPERATIONS.md) · [Расчёт](https://github.com/lolokeksu09/dolg-book).
+
 Ventry — сайт цифровых проектов. Первый представленный проект — «Расчёт» (в разработке).
 
 ## Публичный сайт
@@ -19,7 +21,7 @@ Caddy получает и продлевает публичный сертифи
 - `site/og-cover.png` — обложка ссылки 1200×630, согласованная с оформлением сайта.
 - `site/projects/raschet/` — отдельная страница проекта «Расчёт», доступная по прямой ссылке и без JavaScript.
 - `tools/verify-site.py` — проверка внутренних маршрутов, фрагментов и метаданных.
-- `docs/AUDIT.md` — аудит, реестр текущего улучшения и точка продолжения.
+- [Единое состояние и очередь работ](docs/ECOSYSTEM-STATUS.md) · [аудит 28.11.2026](docs/ECOSYSTEM-AUDIT-2026-11-28.md) · [восстановление Delivery](docs/DELIVERY-RECOVERY.md).
 - `docs/VENTRY-DESIGN-CONCEPT-2.0.md` — предлагаемая концепция корпоративного сайта Ventry 2.0, архитектура страниц, контент, визуальная система и доступность.
 - `docs/VENTRY-DESIGN-ROADMAP-2.0.md` — этапы согласования, макетирования, реализации, проверки и публикации Ventry 2.0.
 - `deploy/Caddyfile` — Caddy, HTTPS, CSP, фильтрация опасных URL, перенаправление HTTP и `/healthz`.
