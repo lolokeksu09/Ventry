@@ -4,9 +4,9 @@
     servers {
         protocols h1 h2
         timeouts {
-            read_body 15s
+            read_body 75s
             read_header 5s
-            write 30s
+            write 110s
             idle 30s
         }
     }
@@ -44,6 +44,26 @@ https://:18444 {
     handle @client {
         request_body {
             max_size 2KB
+        }
+        reverse_proxy 127.0.0.1:18082
+    }
+    @cloud_read {
+        method POST
+        path /api/v1/backups/list /api/v1/backups/1/read /api/v1/backups/2/read /api/v1/backups/3/read
+    }
+    handle @cloud_read {
+        request_body {
+            max_size 2KB
+        }
+        reverse_proxy 127.0.0.1:18082
+    }
+    @cloud_put {
+        method POST
+        path /api/v1/backups/1/put /api/v1/backups/2/put /api/v1/backups/3/put
+    }
+    handle @cloud_put {
+        request_body {
+            max_size 16777216
         }
         reverse_proxy 127.0.0.1:18082
     }

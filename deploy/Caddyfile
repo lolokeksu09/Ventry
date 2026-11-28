@@ -80,6 +80,30 @@ license.ventrylab.top {
             header_up X-Ventry-Client-IP {http.request.remote.host}
         }
     }
+    @cloud_read {
+        method POST
+        path /api/v1/backups/list /api/v1/backups/1/read /api/v1/backups/2/read /api/v1/backups/3/read
+    }
+    handle @cloud_read {
+        request_body {
+            max_size 2KB
+        }
+        reverse_proxy ventry-public-gateway:18090 {
+            header_up X-Ventry-Client-IP {http.request.remote.host}
+        }
+    }
+    @cloud_put {
+        method POST
+        path /api/v1/backups/1/put /api/v1/backups/2/put /api/v1/backups/3/put
+    }
+    handle @cloud_put {
+        request_body {
+            max_size 16777216
+        }
+        reverse_proxy ventry-public-gateway:18090 {
+            header_up X-Ventry-Client-IP {http.request.remote.host}
+        }
+    }
     handle {
         respond 404
     }

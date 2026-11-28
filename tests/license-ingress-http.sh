@@ -39,8 +39,11 @@ for path in / /download /download.js /api/v1/download /api/v1/session /api/v1/pr
     test "$(curl -sS -H 'Host: license.ventrylab.top' -X "$method" -o /dev/null -w '%{http_code}' "$url$path")" = 404
   done
 done
-for path in /api/v1/activate /api/v1/entitlement; do
+for path in /api/v1/activate /api/v1/entitlement /api/v1/backups/list /api/v1/backups/1/read /api/v1/backups/3/put; do
   test "$(curl -sS -H 'Host: license.ventrylab.top' -X GET -o /dev/null -w '%{http_code}' "$url$path")" = 404
   test "$(curl -sS -H 'Host: license.ventrylab.top' -X POST -o /dev/null -w '%{http_code}' "$url$path")" = 200
+done
+for path in /api/v1/backups/0/put /api/v1/backups/4/read /api/v1/backups/delete /api/v1/backups/1/put/; do
+  test "$(curl -sS -H 'Host: license.ventrylab.top' -X POST -o /dev/null -w '%{http_code}' "$url$path")" = 404
 done
 echo LICENSE_INGRESS_BOUNDARY_OK

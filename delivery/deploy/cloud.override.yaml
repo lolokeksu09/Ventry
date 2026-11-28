@@ -1,0 +1,5 @@
+# Only selected by start-private.sh after successful schema verification.
+services:
+  api:
+    environment:
+      DELIVERY_BACKUP_ENABLED: "true"
