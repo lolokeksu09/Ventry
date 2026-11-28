@@ -32,4 +32,5 @@ Manual dispatch на main dolg-book с действующим публичным
 E-01: реализовать контролируемое переключение APK+manifest и возврат при сбое; пока не существует. Не копировать APK поверх active file вручную: mismatch встроенной metadata блокирует startup. #95 Admin выдаёт ссылку с expected SHA; API обновить до клиента. Старый grant не подменяет новую сборку. Public download закрыт до отдельного решения.
 
 ## Резервы
-backup.sh создаёт PostgreSQL custom dump + SHA и проверяет список pg_restore. Проверка restore в отдельной БД, не live. План независимой защищённой копии, расписание, retention и диск — E-04. Локальная книга Android, cloud envelope и DB metadata — разные уровни. Утрата пароля восстановления необратима для Ventry.
+
+[Комплект восстановления Delivery и критерии приёмки](DELIVERY-RECOVERY.md). Локальная книга Android, шифротекст облачного слота и состояние Delivery на VDS восстанавливаются отдельно.

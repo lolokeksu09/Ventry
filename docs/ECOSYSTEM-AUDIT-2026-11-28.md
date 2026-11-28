@@ -23,6 +23,9 @@ Admin: MainActivity.kt 39472 bytes, AdminViewModel.kt 17944 bytes, DeliveryApi.k
 | A-11 | P1 | Правовой отчёт 18.11 описывает сайт; теперь Delivery имеет customer name, UUID, начисления, encrypted envelopes | E-04: актуальная карта потоков, правовая проверка без утверждения о соответствии |
 | A-12 | P2 | Старые PR #9/#11/#19/#20/#45/#48/#53 открыты | Сопоставить diff/main; не удалять ветки или закрывать вслепую |
 | A-13 | P2 | Исторические server/dist остаются; production sync не доказан | E-07: отдельный контракт до интеграции |
+| A-14 | P1 | [CloudBookService](https://github.com/lolokeksu09/dolg-book/blob/dcbf02c0d91e5bce730e74b6bb0ac58fa419be09/android/app/src/main/kotlin/dev/ventry/raschet/cloud/CloudBookService.kt) отклоняет JSON сверх `16 МиБ − 48 байт`; [AutoBackup](https://github.com/lolokeksu09/dolg-book/blob/dcbf02c0d91e5bce730e74b6bb0ac58fa419be09/android/app/src/main/kotlin/dev/ventry/raschet/cloud/AutoBackup.kt) сообщает об общем сбое и следующей попытке по сети. В то же время предел локального импорта — 256 МиБ | E-05: точный статус и дата последней успешной копии в сценарии роста книги, сохранение слота 3 и проверенный экспорт JSON |
+| A-15 | P0 | [backup.sh](../delivery/deploy/backup.sh) выгружает одну PostgreSQL БД. Роли `delivery_api` и `delivery_runtime`, Ed25519-сид Delivery, TLS, параметры Compose и точный APK нужны отдельно для восстановления сервиса | E-04: восстановить полный комплект на независимой площадке, сверить ключи по публичным отпечаткам, проверить работу runtime-роли, бэкапов и выдачи |
+| A-16 | P1 | [Витрина](https://ventrylab.top/releases/) показывает `0.29.0-beta.1`, а [GitHub Releases](https://github.com/lolokeksu09/dolg-book/releases/tag/raschet-v0.30.0-beta.1-rc.1) уже содержит `0.30.0-beta.1-rc.1`. [Монитор](../.github/workflows/release-snapshot.yml) готовит патч для просмотра | E-06: синхронизировать проверенный снимок и заметки в отдельном обновлении сайта |
 
 P0 — блокеры коммерческой поставки/сохранности, не доказанный взлом. Нет доказательства утечки. Очередь действий только [ECOSYSTEM-STATUS](ECOSYSTEM-STATUS.md).
 
@@ -31,3 +34,9 @@ PR #95: оба Android CI не компилировались из-за преж
 
 ## Ограничения
 Не выполнены свежий SSH, проверка mount/hash/backup schedule, независимый security review, полный dependency audit, физический телефон, визуальные снимки новой версии. Точные CI и rollout evidence в едином статусе. Этот PR изменяет документацию и процесс, не runtime, сайт, APK, данные, секреты или доступы.
+
+## Повторная сверка 28.11.2026
+
+- Чтение `version.json`, `healthz` и страницы релизов подтвердило ревизию сайта, его доступность и расхождение витрины с GitHub. Список ручных запусков публичного профиля содержит два кандидата. Самый новый собран до `#31`.
+- `delivery/bin/verify-candidate.py` сравнивает `version_code` со встроенным `release.json`; сейчас этот порог равен `35`. Сборка повторного `36` может пройти этот порог, хотя предыдущий подписанный кандидат тоже `36`. Версию следующего APK надо сверить также с последним выданным тестовым APK. Оба ожидания `aapt` в Android Actions и значение в Gradle должны совпадать.
+- Запущены шесть тестов проверяющего кандидата, `sync-releases.py --check`, `verify-site.py` и 45 проверок Android-исходников. Все прошли. Проверка снимка подтверждает согласованность JSON и HTML локально. Расхождение с GitHub выявляется сверкой внешних метаданных. Android-проверки не запускали приложение.
