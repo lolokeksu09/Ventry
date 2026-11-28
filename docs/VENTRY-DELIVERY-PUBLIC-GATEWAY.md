@@ -1,5 +1,7 @@
 # Public license gateway — staged owner opt-in
 
+> Снимок 28.11.2026: [актуальный статус и план](ECOSYSTEM-STATUS.md). Ниже — контракты и исторические доказательства этапа; прежние утверждения о неразвёрнутом сервисе не описывают текущее состояние.
+
 Proposed canonical hostname: license.ventrylab.top (not yet verified or configured in DNS). No change to the deployed site Caddyfile, private TLS, tokens, license signature keys, APK or production database. This patch supplies a separate gateway and optional configuration, not a live publication.
 
 Topology: public HTTPS Caddy → dedicated external Docker network ventry-delivery-public → gateway → authenticated private TLS to db:18444 on the existing Delivery default network. Only gateway is attached to both networks. Website never joins Delivery default network; DB/admin ports are not published by the gateway. The gateway has no DB credentials or signing seed. TLS trusts only the existing private CA and checks the actual private IP SAN. Public HTTPS terminates at the site Caddy using a publicly trusted certificate. Caddy overwrites X-Ventry-Client-IP with its actual socket peer IP; do not install behind another proxy/CDN without revisiting trusted-source configuration. Only these two trusted containers may join the public-ingress network. The header is not a standalone authentication mechanism.
