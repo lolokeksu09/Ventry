@@ -39,6 +39,46 @@ fn command_output(tool: &Path, args: &[&str]) -> Result<String, Box<dyn Error>> 
 
 pub fn load(apk: &Path, apksigner: &Path, aapt: &Path) -> Result<Artifact, Box<dyn Error>> {
     let release: Release = serde_json::from_str(include_str!("../release.json"))?;
+    verify(apk, apksigner, aapt, release)
+}
+
+/// Operator-selected local immutable bundle. The embedded release remains the
+/// compatibility default and the independent trust anchor for the APK signer.
+/// The expected hash must come from the operator, not from the bundle itself.
+pub fn load_bundle(dir: &Path, expected: &str, apksigner: &Path, aapt: &Path) -> Result<Artifact, Box<dyn Error>> {
+    if !dir.is_absolute() || !is_hex(expected, 64) {
+        return Err("Invalid release bundle selection".into());
+    }
+    let manifest = dir.join("release.json");
+    let apk = dir.join("Raschet.apk");
+    for path in [&manifest, &apk] {
+        if !fs::symlink_metadata(path)?.file_type().is_file() {
+            return Err("Release bundle members must be regular files".into());
+        }
+    }
+    if fs::metadata(&manifest)?.len() > 8192 {
+        return Err("Release manifest too large".into());
+    }
+    let release: Release = serde_json::from_slice(&fs::read(&manifest)?)?;
+    let anchor: Release = serde_json::from_str(include_str!("../release.json"))?;
+    validate_selection(&release, &anchor, expected)?;
+    verify(&apk, apksigner, aapt, release)
+}
+
+fn validate_selection(release: &Release, anchor: &Release, expected: &str) -> Result<(), Box<dyn Error>> {
+    if !is_hex(expected, 64) || release.sha256 != expected
+        || release.certificate_sha256 != anchor.certificate_sha256
+        || release.product != anchor.product || release.package_name != anchor.package_name
+        || release.version_code < anchor.version_code
+        || (release.version_code == anchor.version_code && release.sha256 != anchor.sha256)
+        || release.version_name.is_empty() || release.version_name.len() > 128
+    {
+        return Err("Release bundle does not match approved identity".into());
+    }
+    Ok(())
+}
+
+fn verify(apk: &Path, apksigner: &Path, aapt: &Path, release: Release) -> Result<Artifact, Box<dyn Error>> {
     if release.product != "raschet" || release.package_name != "dev.ventry.raschet"
         || !is_hex(&release.sha256, 64) || !is_hex(&release.certificate_sha256, 64)
         || !is_hex(&release.revision, 40) || release.size == 0 || release.size > 64 * 1024 * 1024
@@ -74,4 +114,36 @@ pub fn load(apk: &Path, apksigner: &Path, aapt: &Path) -> Result<Artifact, Box<d
         return Err("APK changed during verification".into());
     }
     Ok(Artifact { release, bytes: Bytes::from(bytes) })
+}
+
+#[cfg(test)]
+mod selection_tests {
+    use super::*;
+    fn baseline() -> Release { serde_json::from_str(include_str!("../release.json")).unwrap() }
+
+    #[test]
+    fn explicit_selection_pins_hash_signer_and_package() {
+        let base = baseline();
+        let mut next = base.clone();
+        next.version_code += 1;
+        next.sha256 = "1".repeat(64);
+        assert!(validate_selection(&next, &base, &next.sha256).is_ok());
+        assert!(validate_selection(&next, &base, &base.sha256).is_err());
+        next.certificate_sha256 = "2".repeat(64);
+        assert!(validate_selection(&next, &base, &next.sha256).is_err());
+        next.certificate_sha256 = base.certificate_sha256.clone();
+        next.package_name = "other.package".into();
+        assert!(validate_selection(&next, &base, &next.sha256).is_err());
+    }
+
+    #[test]
+    fn baseline_can_be_restored_but_version_reuse_and_older_versions_are_rejected() {
+        let base = baseline();
+        assert!(validate_selection(&base, &base, &base.sha256).is_ok());
+        let mut other = base.clone();
+        other.sha256 = "1".repeat(64);
+        assert!(validate_selection(&other, &base, &other.sha256).is_err());
+        other.version_code -= 1;
+        assert!(validate_selection(&other, &base, &other.sha256).is_err());
+    }
 }

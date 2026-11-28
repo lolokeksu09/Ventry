@@ -73,6 +73,35 @@ jobs:
           dc exec -T -u postgres db psql -X -U postgres -d delivery -v ON_ERROR_STOP=1 < delivery/tests/customer_desk_after.sql
       - name: Start exact private TLS Docker stack
         run: bash delivery/deploy/start-private.sh "$RUNNER_TEMP/ventry-private-state" --cloud
+      - name: Recover interrupted release selection without replacing the database
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/ventry-private-state"
+          dc() { docker compose --env-file "$state/compose.env" -f delivery/deploy/compose.yaml "$@"; }
+          before="$(dc ps -q db)"
+          python3 delivery/deploy/release-switch.py "$state" --check-current
+          python3 - "$state" <<'PY'
+          import json,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          base=json.loads(Path("delivery/service/release.json").read_text())
+          journal={"current":"legacy","previous":None,"pending":"1"*64,
+                   "high_water":base["version_code"]+1,"history":[]}
+          (root/"release-selection.json").write_text(json.dumps(journal))
+          PY
+          if bash delivery/deploy/start-private.sh "$state" --cloud; then
+            echo 'Unfinished release operation accepted'; exit 1
+          fi
+          python3 delivery/deploy/release-switch.py "$state" --recover | tee "$RUNNER_TEMP/release-recovery.log"
+          grep -Fx DELIVERY_RELEASE_RECOVERED "$RUNNER_TEMP/release-recovery.log"
+          test "$(dc ps -q db)" = "$before"
+          test "$(python3 delivery/deploy/release-switch.py "$state" --active)" = legacy
+          python3 - "$state" <<'PY'
+          import json,sys
+          from pathlib import Path
+          r=json.loads((Path(sys.argv[1])/"release-selection.json").read_text())
+          assert r["pending"] is None and r["history"][-1]["event"]=="restored"
+          PY
       - name: Exercise actual gateway and private TLS cloud routes
         run: bash delivery/deploy/test-cloud-ingress.sh "$RUNNER_TEMP/ventry-private-state"
       - name: Validate isolation and restore backup in fresh synthetic database

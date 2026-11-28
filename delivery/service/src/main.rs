@@ -394,6 +394,17 @@ fn approved_origin() -> Result<url::Url,Box<dyn Error>> {
     }
     Ok(origin)
 }
+fn configured_artifact() -> Result<Artifact, Box<dyn Error>> {
+    let apksigner = file_setting("DELIVERY_APKSIGNER")?;
+    let aapt = file_setting("DELIVERY_AAPT")?;
+    match (env::var("DELIVERY_RELEASE_DIR"), env::var("DELIVERY_EXPECTED_RELEASE_SHA")) {
+        (Ok(dir), Ok(expected)) => artifact::load_bundle(&PathBuf::from(dir), &expected, &apksigner, &aapt),
+        (Err(env::VarError::NotPresent), Err(env::VarError::NotPresent)) =>
+            load(&file_setting("DELIVERY_APK")?, &apksigner, &aapt),
+        _ => Err("Incomplete release bundle selection".into()),
+    }
+}
+
 async fn run() -> Result<(),Box<dyn Error>> {
     let admin = local_addr("DELIVERY_ADMIN_ADDR")?;
     let public = local_addr("DELIVERY_PUBLIC_ADDR")?;
@@ -402,7 +413,7 @@ async fn run() -> Result<(),Box<dyn Error>> {
     let secret = fs::read_to_string(file_setting("DELIVERY_ADMIN_TOKEN_FILE")?)?;
     let admin_digest = token_digest(secret.trim()).ok_or("Invalid administrator credential")?;
     drop(secret);
-    let artifact = load(&file_setting("DELIVERY_APK")?,&file_setting("DELIVERY_APKSIGNER")?,&file_setting("DELIVERY_AAPT")?)?;
+    let artifact = configured_artifact()?;
     let database = fs::read_to_string(file_setting("DELIVERY_DB_CONFIG_FILE")?)?;
     let mut cfg: Config = database.trim().parse()?;
     drop(database);
@@ -449,6 +460,21 @@ async fn run() -> Result<(),Box<dyn Error>> {
 #[tokio::main]
 async fn main() {
     // Never print connection strings, SQL inputs, capability credentials or tokens.
+    let args: Vec<_> = env::args().skip(1).collect();
+    if args.len() == 1 && args[0] == "--verify-release" {
+        match configured_artifact().and_then(|a| Ok(serde_json::to_string(&a.release)?)) {
+            Ok(metadata) => println!("{metadata}"),
+            Err(_) => {
+                eprintln!("Delivery release verification failed");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if !args.is_empty() {
+        eprintln!("Unknown Delivery argument");
+        std::process::exit(2);
+    }
     if run().await.is_err() {
         eprintln!("Delivery startup/serve failed; verify local configuration, database role and approved APK");
         std::process::exit(1);
