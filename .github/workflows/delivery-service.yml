@@ -29,6 +29,8 @@ jobs:
           node --check delivery/service/web/download.js
           python3 -m py_compile delivery/tests/service_http.py delivery/tests/service_browser.py delivery/tests/service_sessions.py
           python3 -m unittest discover -s delivery/tests -p test_candidate_check.py
+          python3 -m unittest discover -s delivery/tests -p test_release_switch.py
+          bash -n delivery/deploy/start-private.sh
       - name: Compile Rust and run unit tests
         working-directory: delivery/service
         run: |

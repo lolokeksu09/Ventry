@@ -1,0 +1,8 @@
+# Owner-selected immutable release; base legacy mount remains untouched.
+services:
+  api:
+    environment:
+      DELIVERY_RELEASE_DIR: /run/selected-release
+      DELIVERY_EXPECTED_RELEASE_SHA: "${DELIVERY_EXPECTED_RELEASE_SHA:?select exact release}"
+    volumes:
+      - "${DELIVERY_BUNDLE_PATH:?select bundle}:/run/selected-release:ro"
