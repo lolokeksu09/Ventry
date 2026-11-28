@@ -15,23 +15,23 @@
 ## Подтверждённое состояние
 | Компонент | Доказательство | Остаток |
 |---|---|---|
-| Ventry main | fcdd22c40f196ce86d6bc758367b0d7a972fc930; #95 5/5 CI | Postmerge 3/3 success: [core](https://github.com/lolokeksu09/Ventry/actions/runs/46125066653), [service](https://github.com/lolokeksu09/Ventry/actions/runs/46125066739), [Admin](https://github.com/lolokeksu09/Ventry/actions/runs/46125066743); обновление Delivery VDS отдельно |
-| Production сайта | [version.json](https://ventrylab.top/version.json) вернул `f170413777dedc80284d7711b1dd7fd9cba90b45`, [healthz](https://ventrylab.top/healthz) вернул `ok` при сверке 28.11.2026. [Production Actions](https://github.com/lolokeksu09/Ventry/actions/runs/46111671534) прошёл | Образ и APK Delivery на VDS проверяются отдельно |
+| Ventry main | `3307b472c241ecbd75b9e0351b620d8eed0fb385`; #99 4/4, #100 5/5 PR workflows success | Postmerge [core](https://github.com/lolokeksu09/Ventry/actions/runs/46146951646) success, [service](https://github.com/lolokeksu09/Ventry/actions/runs/46146951631) и [Admin](https://github.com/lolokeksu09/Ventry/actions/runs/46146951636) success; Delivery rollout отдельно |
+| Production сайта | `934ff550dca68931d25e40eb4b7d0e1a4be5867b` — [Production Actions](https://github.com/lolokeksu09/Ventry/actions/runs/46143023166) success: SSH, healthz, точное совпадение version.json, внешний HTTPS лицензирования | Свежая независимая проверка URL недоступна в текущей среде; образ и APK Delivery отдельно |
 | Delivery VDS | Владелец подтвердил schema cloud_backup, DELIVERY_CLOUD_PRIVATE_READY, DELIVERY_PRIVATE_TLS_STAGING_OK, DELIVERY_PUBLIC_CLOUD_GATEWAY_READY; синтетические POST 404 activation_unavailable / backup_unavailable | Не новая SSH-проверка; реальная авторизация и запись не приняты |
-| Расчёт main | dcbf02c0d91e5bce730e74b6bb0ac58fa419be09, #31 7/7 CI; [main contract](https://github.com/lolokeksu09/dolg-book/actions/runs/46123275955) success | Автокопирование ещё не проверено в signed candidate |
-| Единый release «Расчёта» | `0.31.0-beta.2` / `37`, Android SHA `1cb645bf84b6c280dccb009d4841929d7b813ab8`, [сборка и статус в Actions](https://github.com/lolokeksu09/dolg-book/actions/runs/46133123937) | После проверки подписи и комплекта пройти физическую приёмку. Активный APK Delivery проверяется отдельно |
+| Расчёт main | `91bfbe76b8c519f336e0124087caa351d7aee733`; #37 и #38 по 6/6 PR workflows success; [main contract](https://github.com/lolokeksu09/dolg-book/actions/runs/46148808045) success | Физическая приёмка отдельно |
+| Единый release «Расчёта» | `0.31.0-beta.3` / `38`, Android SHA `91bfbe76b8c519f336e0124087caa351d7aee733`, [signed CI](https://github.com/lolokeksu09/dolg-book/actions/runs/46148807987) success, [ZIP](https://github.com/lolokeksu09/dolg-book/actions/runs/46148807987/artifacts/15265081013), ZIP SHA-256 `71293a90491df8c0f91aa38ebdaff3b482cc7c97248e1754813b0ffd7841563b` | До 05.12.2026 16:19 МСК; независимая проверка содержимого и физическая приёмка не выполнены; active APK отдельно |
 | Зарегистрированная выдача | delivery/service/release.json: code35 0.30.0-beta.1, sha 02ae25ba938e103574ce2b5234a292b5787fc22e382797e228f4f30abeb2d8dc | Старый нелицензируемый RC; фактический mount отдельно проверить; не продавать как licensed |
-| Витрина релизов | [Сайт](https://ventrylab.top/releases/) показывает `0.29.0-beta.1`, в [GitHub Releases](https://github.com/lolokeksu09/dolg-book/releases/tag/raschet-v0.30.0-beta.1-rc.1) уже есть `0.30.0-beta.1-rc.1` | E-06: обновить проверенный снимок и примечания без ссылки на APK |
-| Admin | #85 0.8, #95 подтверждение конкретного SHA при выдаче | Новый API сначала, новый Admin потом; физическая приёмка отдельно |
+| Витрина релизов | #99 обновил проверенный снимок до публичного `0.30.0-beta.1-rc.1`; [visual QA](https://github.com/lolokeksu09/Ventry/actions/runs/46142738858) success и production deploy выше | Остальные E-06 UX/справка/доступность независимо |
+| Admin | `0.8.0-alpha.1`, #95, [main CI](https://github.com/lolokeksu09/Ventry/actions/runs/46146951636) success; [staging ZIP](https://github.com/lolokeksu09/Ventry/actions/runs/46146951636/artifacts/15264147104) до 12.12.2026 15:58 МСК | Staging package dev.ventry.admin.staging, debug signer; сначала rollout API; физическая приёмка отдельно |
 
 ## Единый план
 | ID | Приоритет | Следующее действие | Критерий |
 |---|---|---|---|
-| E-01 | P0 | Переключение active APK/manifest с откатом; #92/#94 закрывают только intake и привязку выдачи | Изолированный тест смены, сбоя, возврата; старые grant не подменяют новую версию |
+| E-01 | P0 | Код переключения active APK/manifest с журналом и откатом слит #100; [изолированная проверка](https://github.com/lolokeksu09/Ventry/actions/runs/46143191717) success. Осталось испытание двух реальных подписанных APK и owner-run rollout | Изолированный тест смены, сбоя, возврата; старые grant не подменяют новую версию |
 | E-02 | P0 | Принять единый подписанный APK с локальной книгой и облаком | Точный SHA и подпись, физическое обновление, активация, истечение, перенос, восстановление, JobScheduler после перезагрузки |
-| E-03 | P0 | Обновление Delivery #95 и Admin | Postmerge CI, owner-run rollout, private TLS, внешний HTTPS, Admin совместимость |
+| E-03 | P0 | Обновление Delivery #95/#100 и Admin | Postmerge CI success; owner-run rollout, private TLS, внешний HTTPS, Admin совместимость остаются |
 | E-04 | P0 | Сроки хранения и удаление, перенос после истечения, защищённая копия вне VDS, коммерческая приёмка | Решение владельца, ёмкость, [приёмка восстановления Delivery](DELIVERY-RECOVERY.md), правовая проверка фактических потоков и оплаты, отдельное включение выдачи |
-| E-05 | P1 | Разделить MainActivity и состояние, показать точную причину устаревшей автокопии | Проверки lifecycle и SAF. На книге сверх облачного лимита предыдущая копия сохраняется, интерфейс сообщает причину и предлагает экспорт JSON |
+| E-05 | P1 | Разделить MainActivity и состояние; точная причина превышения лимита автокопии реализована #37, физическая проверка в E-02 | Проверки lifecycle и SAF. На книге сверх облачного лимита предыдущая копия сохраняется, интерфейс сообщает причину и предлагает экспорт JSON |
 | E-06 | P1 | Сайт: согласованность, доступность, актуальные релизы и справка, производительность | Проверенный снимок релизов, реальные действия в браузере, снимки, Lighthouse точной ревизии |
 | E-07 | P2 | Общая книга/сотрудники | Отдельный утверждённый контракт: tenant isolation, роли, журнал, idempotency, offline conflicts |
 
