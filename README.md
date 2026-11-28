@@ -1,5 +1,7 @@
 # Ventry
 
+> [Единый план и состояние](docs/ECOSYSTEM-STATUS.md) · [Аудит](docs/ECOSYSTEM-AUDIT-2026-11-28.md) · [Эксплуатация Delivery](docs/DELIVERY-OPERATIONS.md) · [Расчёт](https://github.com/lolokeksu09/dolg-book).
+
 Ventry — сайт цифровых проектов. Первый представленный проект — «Расчёт» (в разработке).
 
 ## Публичный сайт
